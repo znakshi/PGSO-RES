@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - PGSO</title>
+    <link rel="icon" type="image/png" href="pgso.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .pgso-blue { background-color: #3c5473; }
+        .pgso-btn { background-color: #3c5473; }
+        .pgso-btn:hover { background-color: #2c3e50; }
+        .form-input { background-color: #f3f4f6; border: none; }
+        .form-input:focus { background-color: #ffffff; box-shadow: 0 0 0 2px #e5e7eb; outline: none; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex items-center justify-center relative">
+
+    <a href="index.html" class="absolute top-8 left-8 bg-white border border-gray-200 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-50 transition shadow-sm flex items-center gap-2">
+        <i class="fa-solid fa-arrow-left"></i> Back to Customer View
+    </a>
+
+    <div class="bg-white w-full max-w-md p-10 rounded-2xl shadow-xl">
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold text-gray-900 mb-1">PGSO-RES Admin</h1>
+            <p class="text-gray-500 font-light text-sm">Sign in to access the dashboard</p>
+        </div>
+
+        <form id="login-form">
+            <div class="mb-5">
+                <label for="email" class="block text-sm font-bold mb-2 text-gray-900">Email</label>
+                <input type="email" id="email" class="form-input w-full rounded-lg p-3 text-gray-700" required>
+            </div>
+
+            <div class="mb-8">
+                <label for="password" class="block text-sm font-bold mb-2 text-gray-900">Password</label>
+                <input type="password" id="password" class="form-input w-full rounded-lg p-3 text-gray-700" required>
+            </div>
+
+            <button type="submit" id="login-btn" class="w-full pgso-btn text-white font-bold py-3 rounded-lg hover:shadow-lg transition duration-200">
+                Sign In
+            </button>
+            
+            <p id="error-msg" class="text-red-500 text-xs text-center mt-4 hidden font-bold"></p>
+        </form>
+    </div>
+
+    <script type="module">
+        // 1. IMPORT FIREBASE AUTH
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+        // 2. CONFIGURATION (Same as your other files)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAP1Be3j515EWLvwHN_tQswa2f4FpKIAcE",
+            authDomain: "pgso-res.firebaseapp.com",
+            projectId: "pgso-res",
+            storageBucket: "pgso-res.firebasestorage.app",
+            messagingSenderId: "790940912470",
+            appId: "1:790940912470:web:014b85641f74ee513f24f7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // 3. HANDLE LOGIN
+        document.getElementById('login-form').addEventListener('submit', async (event) => {
+            event.preventDefault(); // Stop page reload
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('login-btn');
+            const errorMsg = document.getElementById('error-msg');
+
+            // Reset UI
+            btn.innerText = "Verifying...";
+            btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
+            errorMsg.classList.add('hidden');
+
+            try {
+                // Attempt login
+                await signInWithEmailAndPassword(auth, email, password);
+                
+                // If successful, redirect
+                window.location.href = "admin-dashboard.html";
+                
+            } catch (error) {
+                console.error("Login Error:", error.code);
+                
+                // Show Error
+                btn.innerText = "Sign In";
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                errorMsg.classList.remove('hidden');
+
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    errorMsg.innerText = "Incorrect email or password.";
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMsg.innerText = "Too many failed attempts. Try again later.";
+                } else {
+                    errorMsg.innerText = "Login failed: Try Again ";
+                }
+            }
+        });
+    </script>
+</body>
+</html>
