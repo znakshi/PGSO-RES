@@ -1,136 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Make a Reservation - PGSO</title>
-    <link rel="icon" type="image/png" href="pgso.png">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .pgso-blue { background-color: #3c5473; }
-        .pgso-btn { background-color: #3c5473; }
-        .pgso-btn:hover { background-color: #2c3e50; }
-        .form-input { background-color: #f3f4f6; border: none; }
-        .form-input:focus { background-color: #ffffff; box-shadow: 0 0 0 2px #e5e7eb; }
-        .cal-cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; user-select: none; }
-        .cal-past { color: #d1d5db; cursor: not-allowed; }
-        .cal-reserved { background-color: #e5e7eb; color: #9ca3af; text-decoration: line-through; cursor: not-allowed; }
-        .cal-selected { background-color: #3c5473; color: white; font-weight: bold; }
-        .cal-available:hover { background-color: #f3f4f6; cursor: pointer; }
-    </style>
-</head>
-<body class="bg-gray-50 text-gray-800">
-
-    <nav class="bg-white border-b border-gray-200 py-4 px-6 flex justify-between items-center sticky top-0 z-50">
-        <div class="flex items-center gap-3">
-            <a href="index.html" class="text-3xl text-slate-600 no-underline">
-                <img src="pgso.png" alt="PGSO Logo" class="w-12 h-12">
-            </a>
-            <div>
-                <h1 class="text-xl font-semibold tracking-tight text-gray-800">PGSO-RES</h1>
-                <p class="text-xs text-gray-500 font-light">Provincial General Services Offices</p>
-            </div>
-        </div>
-    </nav>
-
-    <main class="container mx-auto px-4 py-8 max-w-5xl">
-        <a href="index.html" class="inline-flex items-center text-sm font-medium text-gray-600 mb-6 hover:text-pgso-blue transition">
-            <i class="fa-solid fa-arrow-left mr-2"></i> Back to Venues
-        </a>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-            <h2 class="text-2xl font-bold mb-2">Provincial Gymnasium</h2>
-            <p class="text-gray-500 mb-8">Fill out the form below to reserve your venue</p>
-
-            <form id="reservation-form">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div><label class="block text-sm font-bold mb-2">Full Name *</label><input type="text" class="form-input w-full rounded-md p-3" placeholder=""></div>
-                    <div><label class="block text-sm font-bold mb-2">Contact Number *</label><input type="text" class="form-input w-full rounded-md p-3" placeholder=""></div>
-                    <div class="md:col-span-2"><label class="block text-sm font-bold mb-2">Email Address *</label><input type="email" class="form-input w-full rounded-md p-3" placeholder="e.g., juan@email.com"></div>
-                </div>
-
-                <div class="mb-6"><label class="block text-sm font-bold mb-2">Event Type</label><input type="text" class="form-input w-full rounded-md p-3" placeholder="e.g., Sports, Conference, Tournament"></div>
-
-                <div class="mb-8">
-                    <label class="block text-sm font-bold mb-3">Registration Details *</label>
-                    <div class="flex gap-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <div class="flex items-center">
-                            <input type="radio" name="regFee" id="reg-with" value="With Registration Fee" class="w-4 h-4 text-pgso-blue bg-gray-100 border-gray-300">
-                            <label for="reg-with" class="ml-2 text-sm text-gray-700">With Registration Fee</label>
-                        </div>
-                        <div class="flex items-center">
-                            <input type="radio" name="regFee" id="reg-without" value="Without Registration Fee" class="w-4 h-4 text-pgso-blue bg-gray-100 border-gray-300" checked>
-                            <label for="reg-without" class="ml-2 text-sm text-gray-700">Without Registration Fee</label>
-                        </div>
-                    </div>
-                </div>
-
-                <h3 class="text-lg font-bold mb-2">Duration *</h3>
-                <p class="text-gray-500 mb-2">Rental of Open Gym (6:00 am to 5:00 pm Only)</p>
-                <div class="space-y-3 mb-2">
-                    <div class="flex items-center"><input id="duration-4" name="duration" type="radio" class="w-4 h-4 text-pgso-blue bg-gray-100 border-gray-300" data-duration-value="4"><label for="duration-4" class="ml-3 font-bold text-gray-800">4 hours and below (₱1,500)</label></div>
-                    <div class="flex items-center"><input id="duration-8" name="duration" type="radio" class="w-4 h-4 text-pgso-blue bg-gray-100 border-gray-300" data-duration-value="8"><label for="duration-8" class="ml-3 font-bold text-gray-800">8 hours (₱2,500)</label></div>
-                </div>
-                <p class="text-s text-gray-500 mb-8">₱400 for every additional hour or a fraction thereof</p>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div><label class="block text-sm font-bold mb-2">Start Time *</label><input type="time" class="form-input w-full rounded-md p-3 text-gray-500"></div>
-                    <div><label class="block text-sm font-bold mb-2">End Time *</label><input type="time" class="form-input w-full rounded-md p-3 text-gray-500"></div>
-                </div>
-
-                <div class="mb-8">
-                     <label class="block text-sm font-bold mb-4">Select Date *</label>
-                     <div class="border border-gray-100 rounded-xl p-6 max-w-md mx-auto">
-                        <div class="flex justify-between items-center mb-6">
-                            <button type="button" id="prevMonth" class="text-gray-800 hover:bg-gray-100 p-2 rounded-full"><i class="fa-solid fa-chevron-left"></i></button>
-                            <h4 id="currentMonthYear" class="text-lg font-bold">Month Year</h4>
-                            <button type="button" id="nextMonth" class="text-gray-800 hover:bg-gray-100 p-2 rounded-full"><i class="fa-solid fa-chevron-right"></i></button>
-                        </div>
-                        <div class="grid grid-cols-7 gap-2 text-center mb-4 font-bold text-gray-800"><div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div></div>
-                        <div id="calendar-grid" class="grid grid-cols-7 gap-2 justify-items-center text-gray-700"></div>
-                     </div>
-                </div>
-
-                <h3 class="text-lg font-bold mb-4">Other Equipment</h3>
-                <div class="overflow-x-auto mb-8">
-                    <table class="min-w-full text-sm text-left text-gray-500">
-                        <thead class="text-xs text-gray-700 uppercase border-b">
-                            <tr>
-                                <th class="p-4">Select</th>
-                                <th class="py-3">Equipment Name</th>
-                                <th class="py-3">Unit</th>
-                                <th class="py-3">Price</th>
-                                <th class="py-3 w-24">Quantity</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100" id="equipment-table-body">
-                            </tbody>
-                    </table>
-                </div>
-
-                <div class="mb-8"><label class="block text-sm font-bold mb-2">Notes / Remarks (Optional)</label><textarea class="form-input w-full rounded-md p-3 h-24 resize-none" placeholder="Any special requests..."></textarea></div>
-
-                <div class="bg-slate-100 rounded-lg p-6 mb-8">
-                    <div class="flex justify-between text-sm mb-2 text-gray-700"><span>Venue Base Price:</span><span id="base-price-display" class="font-medium">₱0</span></div>
-                    <div class="flex justify-between text-sm mb-2 text-gray-700"><span>Total Days:</span><span id="days-reserved-display" class="font-medium">0 days</span></div>
-                     <div class="flex justify-between text-sm mb-2 text-gray-700"><span>Equipment Cost:</span><span id="equipment-cost-display" class="font-medium">₱0</span></div>
-                    <div class="flex justify-between text-sm mb-2 text-gray-700"><span>Sub-Total:</span><span id="subtotal-display" class="font-medium">₱0</span></div>
-                    <div class="flex justify-between text-sm mb-4 text-gray-700 border-b border-gray-300 pb-4"><span>Security Deposit:</span><span class="font-medium">₱3,000</span></div>
-                    <div class="flex justify-between items-center"><span class="text-xl font-bold text-gray-800">Estimated Total:</span><span id="estimated-total-display" class="text-3xl font-bold text-pgso-blue">₱3,000</span></div>
-                </div>
-
-                <button type="button" class="w-full pgso-btn text-white font-bold py-4 rounded-lg text-lg transition shadow-md">View Reservation Summary</button>
-            </form>
-        </div>
-    </main>
-
-    <footer class="text-center py-8 text-gray-400 text-sm">&copy; 2025 Provincial General Services Office.</footer>
-
-    <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -146,42 +14,37 @@
     const db = getFirestore(app);
 
     document.addEventListener('DOMContentLoaded', async function() {
-        // --- CONSTANTS ---
         const OVERTIME_RATE = 400; 
         const SECURITY_DEPOSIT = 3000;
-        const VENUE_NAME = "Provincial Gymnasium";
-
-        // --- DOM ELEMENTS ---
+        const VENUE_NAME = "PCL Hall"; // Updated for this file
+        
         const allTextInputs = document.querySelectorAll('input[type="text"]');
-        const nameInput = allTextInputs[0]; 
-        const contactInput = allTextInputs[1]; 
+        const nameInput = allTextInputs[0];
+        const contactInput = allTextInputs[1];
         const eventTypeInput = allTextInputs[2];
         const emailInput = document.querySelector('input[type="email"]');
         const notesInput = document.querySelector('textarea');
         const durationRadios = document.getElementsByName('duration');
-        const startTimeInput = document.querySelectorAll('input[type="time"]')[0];
-        const endTimeInput = document.querySelectorAll('input[type="time"]')[1];
-        
-        // IMPORTANT: matches the ID added in HTML
-        const tableBody = document.getElementById('equipment-table-body'); 
-        const summaryBtn = document.querySelector('button.pgso-btn');
+        // Updated Selectors to use IDs present in PCL HTML
+        const startTimeInput = document.getElementById('start-time');
+        const endTimeInput = document.getElementById('end-time');
+        const tableBody = document.getElementById('equipment-table-body');
+        const summaryBtn = document.querySelector('.save-btn'); 
         const calendarGrid = document.getElementById('calendar-grid');
         const currentMonthYear = document.getElementById('currentMonthYear');
         const prevMonthBtn = document.getElementById('prevMonth');
         const nextMonthBtn = document.getElementById('nextMonth');
 
-        // --- STATE ---
         let currentDate = new Date();
         let today = new Date();
         let selectedDates = [];
         let BLOCKED_DATES = [];
-        let globalInventory = []; 
+        let globalInventory = [];
 
         // ==========================================
         // 1. IMPROVED EVENT LISTENERS (Delegation)
         // ==========================================
         if(tableBody) {
-            // Checkbox Click Logic
             tableBody.addEventListener('change', (e) => {
                 if(e.target.classList.contains('equipment-checkbox')) {
                     const row = e.target.closest('tr');
@@ -192,7 +55,6 @@
                 }
             });
 
-            // Quantity Input Logic with Alert
             tableBody.addEventListener('input', (e) => {
                 if(e.target.classList.contains('equipment-quantity')) {
                     const input = e.target;
@@ -201,7 +63,7 @@
 
                     if (currentVal > max) {
                         alert(`Sorry, only ${max} units are available for these dates.`);
-                        input.value = max; // Snap back to max
+                        input.value = max;
                     }
                     calculateTotal();
                 }
@@ -253,7 +115,7 @@
         async function updateInventoryLimits() {
             const equipmentRows = document.querySelectorAll('#equipment-table-body tr');
             
-            // Step A: Reset UI First
+            // Step A: Reset UI
             equipmentRows.forEach(row => {
                 const nameCell = row.querySelector('.equipment-name');
                 const cleanName = row.dataset.name;
@@ -268,7 +130,7 @@
                    qtyInput.value = 0;
                 }
             });
-                    
+            
             if (selectedDates.length === 0) return;
 
             // Step B: Calculate Usage
@@ -289,7 +151,7 @@
                 }
             });
 
-            // Step C: Apply Limits based on Usage
+            // Step C: Apply Limits
             equipmentRows.forEach(row => {
                 const itemId = row.dataset.id;
                 const itemName = row.dataset.name;
@@ -307,7 +169,6 @@
                 qtyInput.max = available;
 
                 if (available <= 0) {
-                    // Out of Stock Logic
                     checkbox.checked = false;
                     checkbox.disabled = true;
                     qtyInput.value = 0;
@@ -315,14 +176,9 @@
                     nameCell.innerHTML = `${itemName} <span class="text-red-500 text-xs font-bold">(Out of Stock)</span>`;
                     row.classList.add('bg-gray-100', 'opacity-50');
                 } else {
-                    // Available Logic
                     if(checkbox.disabled) checkbox.disabled = false;
                     nameCell.innerHTML = `${itemName} <span class="text-green-600 text-xs">(${available} available)</span>`;
-                    
-                    // Auto-correct if they already typed too much
-                    if (parseInt(qtyInput.value) > available) {
-                        qtyInput.value = available;
-                    }
+                    if (parseInt(qtyInput.value) > available) qtyInput.value = available;
                 }
             });
             calculateTotal();
@@ -390,70 +246,62 @@
         // 5. CALCULATE TOTAL
         // ==========================================
         function calculateTotal() {
-            const equipmentRows = document.querySelectorAll('#equipment-table-body tr');
             const totalDays = selectedDates.length || 0;
-            let baseDuration = 0; 
+            let baseDuration = 0;
             let basePrice = 0;
-            let durationLabel = ""; 
+            let durationLabel = "";
 
-            const selectedRadio = document.querySelector('input[name="duration"]:checked');
-            if (selectedRadio) {
-                baseDuration = parseInt(selectedRadio.dataset.durationValue);
-                durationLabel = selectedRadio.nextElementSibling.innerText.trim();
+            const radio = document.querySelector('input[name="duration"]:checked');
+            if (radio) {
+                baseDuration = parseInt(radio.dataset.durationValue);
+                durationLabel = radio.nextElementSibling.innerText.trim();
                 basePrice = baseDuration === 4 ? 1500 : 2500;
             }
 
-            let hoursDuration = baseDuration; 
-            let overtimeCost = 0;
+            let hours = baseDuration;
+            let overtime = 0;
 
             if (startTimeInput.value && endTimeInput.value) {
-                const start = new Date(`1970-01-01T${startTimeInput.value}Z`);
-                const end = new Date(`1970-01-01T${endTimeInput.value}Z`);
-                let diffMs = end - start;
-                if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000; 
-                const exactHours = diffMs / (1000 * 60 * 60);
-                if(exactHours > 0) hoursDuration = exactHours;
-                if (hoursDuration > baseDuration && baseDuration > 0) overtimeCost = Math.ceil(hoursDuration - baseDuration) * OVERTIME_RATE;
+                const s = new Date(`1970-01-01T${startTimeInput.value}Z`);
+                const e = new Date(`1970-01-01T${endTimeInput.value}Z`);
+                let diff = (e - s) / (1000 * 60 * 60);
+                if (diff < 0) diff += 24;
+                if (diff > 0) hours = diff;
+                if (hours > baseDuration && baseDuration > 0) overtime = Math.ceil(hours - baseDuration) * OVERTIME_RATE;
             }
 
-            const totalVenueCost = (basePrice + overtimeCost) * (totalDays || 1); 
-            let totalEquipmentCost = 0;
-
+            const venueTotal = (basePrice + overtime) * (totalDays || 1);
+            let equipTotal = 0;
+            
+            const equipmentRows = document.querySelectorAll('#equipment-table-body tr');
             equipmentRows.forEach(row => {
-                const checkbox = row.querySelector('.equipment-checkbox');
+                const cb = row.querySelector('.equipment-checkbox');
                 const qtyInput = row.querySelector('.equipment-quantity');
-                
-                if (checkbox && checkbox.checked) {
+                if (cb && cb.checked) {
                     const price = parseFloat(row.dataset.price);
                     const qty = parseInt(qtyInput.value) || 0;
+                    const billingHours = Math.ceil(hours) > 0 ? Math.ceil(hours) : 1;
                     const days = totalDays || 1;
-                    
-                    if (row.dataset.unit.includes('hour')) {
-                        const billingHours = Math.ceil(hoursDuration) > 0 ? Math.ceil(hoursDuration) : 1;
-                        totalEquipmentCost += price * qty * billingHours * days;
-                    } else {
-                        totalEquipmentCost += price * qty * days;
-                    }
+                    if(row.dataset.unit.includes('hour')) equipTotal += price * qty * billingHours * days;
+                    else equipTotal += price * qty * days;
                 }
             });
 
-            const displayVenue = totalDays === 0 ? 0 : totalVenueCost;
-            const subTotal = displayVenue + totalEquipmentCost;
-            const grandTotal = subTotal + SECURITY_DEPOSIT;
-            
+            const displayVenue = totalDays === 0 ? 0 : venueTotal;
+            const subTotal = displayVenue + equipTotal;
+            const total = subTotal + SECURITY_DEPOSIT;
+
             document.getElementById('days-reserved-display').textContent = `${totalDays} day(s)`;
-            
-            if(overtimeCost > 0) {
-                 document.getElementById('base-price-display').innerHTML = `₱${(basePrice * (totalDays||1)).toLocaleString()} <span class="text-xs text-red-500">(+₱${(overtimeCost * (totalDays||1)).toLocaleString()} OT)</span>`;
+            if(overtime > 0) {
+                 document.getElementById('base-price-display').innerHTML = `₱${(basePrice * (totalDays||1)).toLocaleString()} <span class="text-xs text-red-500">(+₱${(overtime*(totalDays||1)).toLocaleString()} OT)</span>`;
             } else {
                  document.getElementById('base-price-display').textContent = `₱${displayVenue.toLocaleString()}`;
             }
-
-            document.getElementById('equipment-cost-display').textContent = `₱${totalEquipmentCost.toLocaleString()}`;
+            document.getElementById('equipment-cost-display').textContent = `₱${equipTotal.toLocaleString()}`;
             document.getElementById('subtotal-display').textContent = `₱${subTotal.toLocaleString()}`;
-            document.getElementById('estimated-total-display').textContent = `₱${grandTotal.toLocaleString()}`;
+            document.getElementById('estimated-total-display').textContent = `₱${total.toLocaleString()}`;
 
-            return { totalVenueCost, totalEquipmentCost, grandTotal, hoursDuration, durationLabel, totalDays };
+            return { venueTotal, equipTotal, total, hours, durationLabel, totalDays };
         }
 
         // --- LISTENERS ---
@@ -462,41 +310,30 @@
         endTimeInput.addEventListener('change', calculateTotal);
 
         summaryBtn.addEventListener('click', (e) => {
-            e.preventDefault(); 
+            e.preventDefault();
             if (!nameInput.value.trim() || !contactInput.value.trim() || !emailInput.value.trim() || !eventTypeInput.value.trim()) {
-                alert("Please fill out all required fields (Name, Contact No, Email, Event Type).");
+                alert("Please fill out all required fields.");
                 return; 
             }
-            if (selectedDates.length === 0) {
-                alert("Please select at least one date on the calendar.");
-                return;
-            }
-            if (!startTimeInput.value || !endTimeInput.value) {
-                alert("Please set a Start Time and End Time.");
-                return;
-            }
-            const phoneRegex = /^\d{11}$/; 
-            if (!phoneRegex.test(contactInput.value.trim())) {
-                alert("Invalid Contact Number. It must contain exactly 11 digits (e.g., 09123456789).");
-                return;
-            }
+            if (selectedDates.length === 0) { alert("Please select at least one date."); return; }
+            if (!startTimeInput.value || !endTimeInput.value) { alert("Please set a Start Time and End Time."); return; }
+            if (!/^\d{11}$/.test(contactInput.value.trim())) { alert("Invalid Contact Number."); return; }
 
             const calc = calculateTotal();
             const regFee = document.querySelector('input[name="regFee"]:checked').value;
-            const equipmentList = [];
+            const equipList = [];
             
             const equipmentRows = document.querySelectorAll('#equipment-table-body tr');
             equipmentRows.forEach(row => {
-                const checkbox = row.querySelector('.equipment-checkbox');
+                const cb = row.querySelector('.equipment-checkbox');
                 const qtyInput = row.querySelector('.equipment-quantity');
-                
-                if (checkbox && checkbox.checked) {
+                if (cb && cb.checked) {
                     const price = parseFloat(row.dataset.price);
                     const qty = parseInt(qtyInput.value);
                     const days = calc.totalDays || 1;
-                    let sub = row.dataset.unit.includes('hour') ? price * qty * (Math.ceil(calc.hoursDuration)||1) * days : price * qty * days;
+                    const sub = row.dataset.unit.includes('hour') ? price * qty * (Math.ceil(calc.hours)||1) * days : price * qty * days;
                     
-                    equipmentList.push({ 
+                    equipList.push({ 
                         id: row.dataset.id, 
                         name: row.dataset.name, 
                         unit: row.dataset.unit, 
@@ -507,7 +344,7 @@
                 }
             });
 
-            const reservationData = {
+            const data = {
                 contact: { fullName: nameInput.value, contactNumber: contactInput.value, email: emailInput.value },
                 event: { 
                     venue: VENUE_NAME, 
@@ -517,20 +354,18 @@
                     startTime: startTimeInput.value, 
                     endTime: endTimeInput.value, 
                     durationLabel: calc.durationLabel, 
-                    totalHours: Math.ceil(calc.hoursDuration) 
+                    totalHours: Math.ceil(calc.hours) 
                 },
-                equipment: equipmentList,
-                pricing: { venueTotal: calc.totalVenueCost, equipmentTotal: calc.totalEquipmentCost, securityDeposit: SECURITY_DEPOSIT, grandTotal: calc.grandTotal },
+                equipment: equipList,
+                pricing: { venueTotal: calc.venueTotal, equipmentTotal: calc.equipTotal, securityDeposit: SECURITY_DEPOSIT, grandTotal: calc.total },
                 notes: notesInput.value
             };
 
-            localStorage.setItem('pgsoReservationData', JSON.stringify(reservationData));
-            window.location.href = 'summary.html';
+            localStorage.setItem('pgsoReservationData', JSON.stringify(data));
+            window.location.href = '../summary/summary.html';
         });
 
-        // ==========================================
-        // 6. RESTORE DATA
-        // ==========================================
+        // --- RESTORE SAVED DATA ---
         function loadSavedData() {
             const savedJSON = localStorage.getItem('pgsoReservationData');
             if (!savedJSON) return;
@@ -548,7 +383,6 @@
                 eventTypeInput.value = clean(data.event.eventType);
                 startTimeInput.value = data.event.startTime || "";
                 endTimeInput.value = data.event.endTime || "";
-                
                 if (data.event.durationLabel) {
                     if (data.event.durationLabel.includes('4')) document.getElementById('duration-4').checked = true;
                     else document.getElementById('duration-8').checked = true;
@@ -588,8 +422,5 @@
         await fetchBlockedDates(); 
         loadSavedData(); 
         updateInventoryLimits(); 
-        calculateTotal();  
+        calculateTotal(); 
     });
-    </script>
-</body>
-</html>
