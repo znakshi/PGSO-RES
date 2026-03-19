@@ -350,10 +350,31 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         };
 
+        const emailVal = emailInput.value.trim().toLowerCase();
+        const contactValBase = contactInput.value.trim();
+        const fullContactVal = "09" + contactValBase;
+
+        const isEmailValid = emailVal !== '' && emailVal.endsWith('@gmail.com');
+        const isContactValid = contactValBase !== '' && contactValBase.length === 9;
+
+        if (emailVal !== '' && !isEmailValid) {
+            emailInput.setCustomValidity("Please enter a valid @gmail.com address.");
+            emailInput.reportValidity();
+        } else {
+            emailInput.setCustomValidity("");
+        }
+
+        if (contactValBase !== '' && !isContactValid) {
+            contactInput.setCustomValidity("Please enter the remaining 9 digits of your contact number.");
+            contactInput.reportValidity();
+        } else {
+            contactInput.setCustomValidity("");
+        }
+
         checkField(nameInput, nameInput.value.trim() !== '');
-        checkField(emailInput, emailInput.value.trim() !== '');
+        checkField(emailInput, isEmailValid);
         checkField(eventTypeInput, eventTypeInput.value.trim() !== '');
-        checkField(contactInput, contactInput.value.trim() !== '' && /^\d{11}$/.test(contactInput.value.trim()));
+        checkField(contactInput, isContactValid);
         checkField(calendarGrid.parentElement, selectedDates.length > 0);
         checkField(startTimeInput, startTimeInput.value !== '');
         checkField(endTimeInput, endTimeInput.value !== '');
@@ -390,7 +411,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
 
         const reservationData = {
-            contact: { fullName: nameInput.value, contactNumber: contactInput.value, email: emailInput.value },
+            contact: { fullName: nameInput.value, contactNumber: fullContactVal, email: emailVal },
             event: {
                 venue: VENUE_NAME,
                 eventType: eventTypeInput.value,

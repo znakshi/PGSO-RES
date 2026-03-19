@@ -29,8 +29,14 @@
             <form id="reservation-form">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div><label class="block text-sm font-bold mb-2">Full Name *</label><input type="text" class="form-input w-full rounded-md p-3" placeholder=""></div>
-                    <div><label class="block text-sm font-bold mb-2">Contact Number *</label><input type="text" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="form-input w-full rounded-md p-3" placeholder=""></div>
-                    <div class="md:col-span-2"><label class="block text-sm font-bold mb-2">Email Address *</label><input type="email" class="form-input w-full rounded-md p-3" placeholder="e.g., juan@email.com"></div>
+                    <div>
+                        <label class="block text-sm font-bold mb-2">Contact Number *</label>
+                        <div class="flex">
+                            <span class="inline-flex items-center px-4 rounded-l-md border border-r-[1px] border-gray-100 bg-gray-50 text-gray-500 font-bold text-sm">09</span>
+                            <input type="text" maxlength="9" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="form-input w-full rounded-r-md p-3 rounded-l-none" placeholder="123456789">
+                        </div>
+                    </div>
+                    <div class="md:col-span-2"><label class="block text-sm font-bold mb-2">Email Address *</label><input type="email" class="form-input w-full rounded-md p-3" placeholder="e.g., juan@gmail.com"></div>
                 </div>
 
                 <div class="mb-6"><label class="block text-sm font-bold mb-2">Event Type</label><input type="text" class="form-input w-full rounded-md p-3" placeholder="e.g., Workshop, Conference"></div>
