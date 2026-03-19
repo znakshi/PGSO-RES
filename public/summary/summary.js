@@ -1,25 +1,10 @@
-// 1. IMPORT FIREBASE
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-
-    // 2. CONFIGURATION
-    const firebaseConfig = {
-      apiKey: "AIzaSyAP1Be3j515EWLvwhN_tQswa2f4FpKIacE",
-      authDomain: "pgso-res.firebaseapp.com",
-      projectId: "pgso-res",
-      storageBucket: "pgso-res.firebasestorage.app",
-      messagingSenderId: "790940912470",
-      appId: "1:790940912470:web:014b85641f74ee513f24f7"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+import { supabase } from "../supabase-config.js";
 
     // Helpers
     const formatCurrency = (amount) => '₱' + parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const safeText = (text) => (text && text !== "") ? text : "N/A";
 
-    window.returnHome = function() { window.location.href = '../homepage/index.html'; }
+    window.returnHome = function() { window.location.href = '../index.html'; }
     
     // --- RULES POPUP LOGIC ---
     window.openRules = function() {
@@ -48,9 +33,9 @@
 
     window.goBack = function() {
         const data = JSON.parse(localStorage.getItem('pgsoReservationData'));
-        if(!data) return window.location.href = '../homepage/index.html';
+        if(!data) return window.location.href = '../index.html';
         const venueName = data.event.venue;
-        let backUrl = "../homepage/index.html";
+        let backUrl = "../index.html";
         if (venueName.includes("Palispis")) backUrl = "../palispis-reservation/palispis-reservation.html";
         else if (venueName.includes("PCL")) backUrl = "../pcl-reservation/pcl-reservation.html";
         else if (venueName.includes("Gymnasium")) backUrl = "../gym-reservation/gym-reservation.html";
@@ -67,12 +52,14 @@
         submitBtn.disabled = true;
 
         try {
-            await addDoc(collection(db, "reservations"), {
+            const { error } = await supabase.from('reservations').insert([{
                 ...data,
                 status: "pending",
                 submittedAt: new Date().toISOString(),
-                timestamp: new Date()
-            });
+                timestamp: new Date().toISOString()
+            }]);
+            
+            if (error) throw error;
 
             document.getElementById('rulesModal').classList.add('hidden'); // Close rules
             document.getElementById('successModal').classList.remove('hidden'); // Show success
@@ -90,7 +77,7 @@
         const data = JSON.parse(localStorage.getItem('pgsoReservationData'));
         if (!data) {
             alert("No reservation data found. Redirecting to home.");
-            window.location.href = '../homepage/index.html';
+            window.location.href = '../index.html';
             return;
         }
 
@@ -127,7 +114,7 @@
         document.getElementById('summary-total-amount').textContent = formatCurrency(data.pricing.grandTotal);
         
         const editLink = document.getElementById('edit-reservation-link');
-        let backUrl = "../homepage/index.html";
+        let backUrl = "../index.html";
         if (data.event.venue.includes("Palispis")) backUrl = "../palispis-reservation/palispis-reservation.html";
         else if (data.event.venue.includes("PCL")) backUrl = "../pcl-reservation/pcl-reservation.html";
         else if (data.event.venue.includes("Gymnasium")) backUrl = "../gym-reservation/gym-reservation.html";

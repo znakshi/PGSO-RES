@@ -1,17 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyAP1Be3j515EWLvwhN_tQswa2f4FpKIacE",
-      authDomain: "pgso-res.firebaseapp.com",
-      projectId: "pgso-res",
-      storageBucket: "pgso-res.firebasestorage.app",
-      messagingSenderId: "790940912470",
-      appId: "1:790940912470:web:014b85641f74ee513f24f7"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+import { supabase } from "../supabase-config.js";
 
     document.addEventListener('DOMContentLoaded', async function() {
         // --- CONSTANTS ---
@@ -62,9 +49,27 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebas
                 table.addEventListener('change', (e) => {
                     if(e.target.classList.contains('equipment-checkbox')) {
                         const row = e.target.closest('tr');
+                        const isChecked = e.target.checked;
+                        
+                        // If it's the packages table, uncheck everything else first
+                        if (table === packagesBody && isChecked) {
+                            const allPackageRows = packagesBody.querySelectorAll('tr');
+                            allPackageRows.forEach(pr => {
+                                if (pr !== row) {
+                                    const pCb = pr.querySelector('.equipment-checkbox');
+                                    const pQty = pr.querySelector('.equipment-quantity');
+                                    if (pCb && pCb.checked) {
+                                        pCb.checked = false;
+                                        pQty.disabled = true;
+                                        pQty.value = 0;
+                                    }
+                                }
+                            });
+                        }
+                        
                         const qtyInput = row.querySelector('.equipment-quantity');
-                        qtyInput.disabled = !e.target.checked;
-                        qtyInput.value = e.target.checked ? 1 : 0;
+                        qtyInput.disabled = !isChecked;
+                        qtyInput.value = isChecked ? 1 : 0;
                         calculateTotal();
                     }
                 });
@@ -89,24 +94,24 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebas
         // ==========================================
         async function loadInventory() {
             try {
-                const snapshot = await getDocs(collection(db, "inventory"));
+                const { data: snapshot, error } = await supabase.from('inventory').select('*');
+                if (error) throw error;
                 globalInventory = [];
                 servicesBody.innerHTML = "";
                 packagesBody.innerHTML = "";
                 equipmentBody.innerHTML = "";
 
-                if (snapshot.empty) {
+                if (!snapshot || snapshot.length === 0) {
                     equipmentBody.innerHTML = "<tr><td colspan='5' class='text-center p-4'>No items found.</td></tr>";
                     return;
                 }
 
-                snapshot.forEach(doc => {
-                    const item = doc.data();
-                    globalInventory.push({ ...item, id: doc.id });
+                snapshot.forEach(item => {
+                    globalInventory.push({ ...item });
 
                     // Create Row
                     const row = document.createElement('tr');
-                    row.dataset.id = doc.id;
+                    row.dataset.id = item.id;
                     row.dataset.price = item.price;
                     row.dataset.unit = item.unit;
                     row.dataset.name = item.name;
@@ -159,13 +164,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebas
                 }
             });
 
+            if (selectedDates.length === 0) return;
+
             // Step B: Calculate Usage
-            const resSnapshot = await getDocs(collection(db, "reservations"));
+            const { data: resSnapshot, error } = await supabase.from('reservations').select('*');
+            if (error) { console.error(error); return; }
             const usageMap = {}; 
 
-            if (selectedDates.length > 0) {
-                resSnapshot.forEach(doc => {
-                    const data = doc.data();
+            resSnapshot.forEach(data => {
                     if (data.status !== 'declined' && data.event.dates && data.equipment) {
                         const bookedDates = data.event.dates.split(', ');
                         if (bookedDates.some(date => selectedDates.includes(date))) {
@@ -177,7 +183,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebas
                         }
                     }
                 });
-            }
 
             // Step C: Apply Limits
             allRows.forEach(row => {
@@ -216,11 +221,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebas
         // 4. CALENDAR & BLOCKED DATES
         // ==========================================
         async function fetchBlockedDates() {
-            const q = query(collection(db, "reservations"), where("event.venue", "==", VENUE_NAME));
-            const querySnapshot = await getDocs(q);
+            const { data: querySnapshot, error } = await supabase
+                .from('reservations')
+                .select('*')
+                .eq('event->>venue', VENUE_NAME);
+            if (error) { console.error(error); return; }
+            
             BLOCKED_DATES = [];
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
+            querySnapshot.forEach((data) => {
                 if (data.status !== 'declined' && data.event.dates) {
                     const datesArray = data.event.dates.split(', ');
                     datesArray.forEach(date => { if(!BLOCKED_DATES.includes(date)) BLOCKED_DATES.push(date); });
@@ -342,15 +350,49 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebas
         startTimeInput.addEventListener('change', calculateTotal);
         endTimeInput.addEventListener('change', calculateTotal);
 
+        // Clear validation highlights
+        [nameInput, contactInput, emailInput, eventTypeInput, startTimeInput, endTimeInput].forEach(el => {
+            if(el) {
+                el.addEventListener('input', () => el.classList.remove('border-red-500', 'ring-2', 'ring-red-500', 'bg-red-50'));
+                el.addEventListener('change', () => el.classList.remove('border-red-500', 'ring-2', 'ring-red-500', 'bg-red-50'));
+            }
+        });
+        if(calendarGrid) {
+            calendarGrid.addEventListener('click', () => calendarGrid.parentElement.classList.remove('border-red-500', 'ring-2', 'ring-red-500', 'bg-red-50'));
+        }
+
         summaryBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            if (!nameInput.value.trim() || !contactInput.value.trim() || !emailInput.value.trim() || !eventTypeInput.value.trim()) {
-                alert("Please fill out all required fields.");
-                return; 
+            
+            // Reset previous highlights
+            const allInputsElements = [nameInput, contactInput, emailInput, eventTypeInput, startTimeInput, endTimeInput, calendarGrid.parentElement];
+            allInputsElements.forEach(el => {
+                if(el) el.classList.remove('border-red-500', 'ring-2', 'ring-red-500', 'bg-red-50');
+            });
+            
+            let isValid = true;
+            let firstInvalidEl = null;
+
+            const checkField = (el, condition) => {
+                if (!condition && el) {
+                    el.classList.add('border-red-500', 'ring-2', 'ring-red-500', 'bg-red-50');
+                    isValid = false;
+                    if (!firstInvalidEl) firstInvalidEl = el;
+                }
+            };
+
+            checkField(nameInput, nameInput.value.trim() !== '');
+            checkField(emailInput, emailInput.value.trim() !== '');
+            checkField(eventTypeInput, eventTypeInput.value.trim() !== '');
+            checkField(contactInput, contactInput.value.trim() !== '' && /^\d{11}$/.test(contactInput.value.trim()));
+            checkField(calendarGrid.parentElement, selectedDates.length > 0);
+            checkField(startTimeInput, startTimeInput.value !== '');
+            checkField(endTimeInput, endTimeInput.value !== '');
+
+            if (!isValid) {
+                if (firstInvalidEl) firstInvalidEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
             }
-            if (selectedDates.length === 0) { alert("Please select at least one date."); return; }
-            if (!startTimeInput.value || !endTimeInput.value) { alert("Please set a Start Time and End Time."); return; }
-            if (!/^\d{11}$/.test(contactInput.value.trim())) { alert("Invalid Contact Number."); return; }
 
             const calc = calculateTotal();
             const regFee = document.querySelector('input[name="regFee"]:checked').value;

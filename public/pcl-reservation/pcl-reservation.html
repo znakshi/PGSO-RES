@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reserve PCL Hall - PGSO</title>
-    <link rel="icon" type="image/png" href="../homepage/pgso.png">
+    <link rel="icon" type="image/png" href="../pgso.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link rel="stylesheet" href="pcl-reservation.css">
@@ -13,13 +13,14 @@
 
     <nav class="bg-white border-b border-gray-200 py-4 px-6 flex justify-between items-center sticky top-0 z-50">
         <div class="flex items-center gap-3">
-            <a href="../homepage/index.html" class="text-3xl text-slate-600 no-underline"><img src="../homepage/pgso.png" alt="PGSO Logo" class="w-12 h-12"></a>
+            <a href="../index.html" class="text-3xl text-slate-600 no-underline"><img src="../pgso.png" alt="PGSO Logo" class="w-12 h-12"></a>
             <div><h1 class="text-xl font-semibold tracking-tight text-gray-800">PGSO-RES</h1><p class="text-xs text-gray-500 font-light">PCL Hall</p></div>
         </div>
+        <button class="open-client-login bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 py-2 px-4 rounded font-medium transition text-sm shadow-sm">Client Login</button>
     </nav>
 
     <main class="container mx-auto px-4 py-8 max-w-5xl">
-        <a href="../homepage/index.html" class="inline-flex items-center text-sm font-medium text-gray-600 mb-6 hover:text-pgso-blue transition"><i class="fa-solid fa-arrow-left mr-2"></i> Back to Venues</a>
+        <a href="../index.html" class="inline-flex items-center text-sm font-medium text-gray-600 mb-6 hover:text-pgso-blue transition"><i class="fa-solid fa-arrow-left mr-2"></i> Back to Venues</a>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
             <h2 class="text-2xl font-bold mb-2">PCL Hall</h2>
@@ -28,7 +29,7 @@
             <form id="reservation-form">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div><label class="block text-sm font-bold mb-2">Full Name *</label><input type="text" class="form-input w-full rounded-md p-3" placeholder=""></div>
-                    <div><label class="block text-sm font-bold mb-2">Contact Number *</label><input type="text" class="form-input w-full rounded-md p-3" placeholder=""></div>
+                    <div><label class="block text-sm font-bold mb-2">Contact Number *</label><input type="text" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="form-input w-full rounded-md p-3" placeholder=""></div>
                     <div class="md:col-span-2"><label class="block text-sm font-bold mb-2">Email Address *</label><input type="email" class="form-input w-full rounded-md p-3" placeholder="e.g., juan@email.com"></div>
                 </div>
 
@@ -110,5 +111,6 @@
     <footer class="text-center py-8 text-gray-400 text-sm">&copy; 2025 Provincial General Services Office.</footer>
 
     <script type="module" src="pcl-reservation.js"></script>
+    <script type="module" src="../client-login.js"></script>
 </body>
 </html>

@@ -1,18 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-
-        // CONFIGURATION
-        const firebaseConfig = {
-        apiKey: "AIzaSyAP1Be3j515EWLvwHN_tQswa2f4FpKIAcE",
-        authDomain: "pgso-res.firebaseapp.com",
-        projectId: "pgso-res",
-        storageBucket: "pgso-res.firebasestorage.app",
-        messagingSenderId: "790940912470",
-        appId: "1:790940912470:web:014b85641f74ee513f24f7"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+import { supabase } from "../supabase-config.js";
 
         // --- GLOBAL STATE ---
         let reservations = [];
@@ -21,6 +7,11 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebas
         let charts = {};
         
         // --- DEFINE FUNCTIONS GLOBALLY ---
+        window.logoutAdmin = async function() {
+            await supabase.auth.signOut();
+            window.location.href = "../admin-login/admin-login.html";
+        };
+
         window.switchTab = function(t) {
             ['calendar','analytics','inventory'].forEach(id => {
                 document.getElementById('section-'+id).classList.add('hidden');
@@ -68,22 +59,39 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebas
             const originalText = submitBtn.innerText;
             submitBtn.innerText = "Saving...";
 
+            const res = reservations.find(r => r.id === id);
             try {
-                const updatedData = {
-                    "contact.fullName": document.getElementById('edit-name').value,
-                    "contact.contactNumber": document.getElementById('edit-contact').value,
-                    "contact.email": document.getElementById('edit-email').value,
-                    "event.venue": document.getElementById('edit-venue').value,
-                    "event.eventType": document.getElementById('edit-type').value,
-                    "event.dates": document.getElementById('edit-dates').value,
-                    "event.startTime": document.getElementById('edit-start').value,
-                    "event.endTime": document.getElementById('edit-end').value,
-                    "status": document.getElementById('edit-status').value,
-                    "pricing.grandTotal": parseFloat(document.getElementById('edit-price').value),
-                    "notes": document.getElementById('edit-notes').value
+                const updatedContact = { 
+                    ...res.contact, 
+                    fullName: document.getElementById('edit-name').value,
+                    contactNumber: document.getElementById('edit-contact').value,
+                    email: document.getElementById('edit-email').value
+                };
+                
+                const updatedEvent = {
+                    ...res.event,
+                    venue: document.getElementById('edit-venue').value,
+                    eventType: document.getElementById('edit-type').value,
+                    dates: document.getElementById('edit-dates').value,
+                    startTime: document.getElementById('edit-start').value,
+                    endTime: document.getElementById('edit-end').value
+                };
+                
+                const updatedPricing = {
+                    ...res.pricing,
+                    grandTotal: parseFloat(document.getElementById('edit-price').value)
                 };
 
-                await updateDoc(doc(db, "reservations", id), updatedData);
+                const { error } = await supabase.from('reservations').update({
+                    contact: updatedContact,
+                    event: updatedEvent,
+                    pricing: updatedPricing,
+                    status: document.getElementById('edit-status').value,
+                    notes: document.getElementById('edit-notes').value
+                }).eq('id', id);
+                
+                if (error) throw error;
+
                 alert("Reservation updated successfully!");
                 closeModal('reservationModal');
             } catch (error) {
@@ -331,29 +339,41 @@ window.printReservation = function(id, event) {
     printWindow.document.close();
 };
 
-        // --- FIREBASE LISTENERS ---
-        const q = collection(db, "reservations");
-        onSnapshot(q, (snapshot) => {
-            reservations = [];
-            snapshot.forEach((doc) => { reservations.push({ id: doc.id, ...doc.data() }); });
+        // --- SUPABASE LISTENERS ---
+        const fetchReservations = async () => {
+            const { data } = await supabase.from('reservations').select('*');
+            reservations = data || [];
             renderCalendar(); 
             const todayStr = new Date().toISOString().split('T')[0];
             renderReservationList(todayStr);
             renderAnalytics();
             if(!document.getElementById('section-inventory').classList.contains('hidden')) renderInventory();
-        });
+        };
+
+        supabase.channel('reservations-channel')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, () => {
+                fetchReservations();
+            }).subscribe();
+
+        fetchReservations();
 
         // --- STATUS & DELETE ACTIONS ---
         window.setStatus = async function(id, status, event) {
             if(event) event.stopPropagation();
-            try { await updateDoc(doc(db, "reservations", id), { status: status }); }
+            try { 
+                const { error } = await supabase.from('reservations').update({ status: status }).eq('id', id); 
+                if (error) throw error;
+            }
             catch(e) { alert("Error: " + e.message); }
         };
 
         window.deleteRes = async function(id, event) {
             if(event) event.stopPropagation();
             if(confirm("Delete this reservation?")) {
-                try { await deleteDoc(doc(db, "reservations", id)); }
+                try { 
+                    const { error } = await supabase.from('reservations').delete().eq('id', id);
+                    if (error) throw error;
+                }
                 catch(e) { alert("Error: " + e.message); }
             }
         };
@@ -467,12 +487,18 @@ window.printReservation = function(id, event) {
         }
 
         // --- INVENTORY LOGIC (UPDATED WITH CATEGORY) ---
-        const invCol = collection(db, "inventory");
-        onSnapshot(invCol, (snapshot) => {
-            inventory = [];
-            snapshot.forEach((doc) => { inventory.push({ id: doc.id, ...doc.data() }); });
+        const fetchInventory = async () => {
+            const { data } = await supabase.from('inventory').select('*');
+            inventory = data || [];
             renderInventory(); 
-        });
+        };
+
+        supabase.channel('inventory-channel')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, () => {
+                fetchInventory();
+            }).subscribe();
+
+        fetchInventory();
 
 
 
@@ -587,9 +613,11 @@ function renderInventory() {
 
             try {
                 if(id) {
-                    await updateDoc(doc(db, "inventory", id), itemData);
+                    const { error } = await supabase.from('inventory').update(itemData).eq('id', id);
+                    if (error) throw error;
                 } else {
-                    await addDoc(collection(db, "inventory"), itemData);
+                    const { error } = await supabase.from('inventory').insert([itemData]);
+                    if (error) throw error;
                 }
                 document.getElementById('inventoryModal').classList.add('hidden');
                 alert("Inventory updated!");
@@ -604,7 +632,8 @@ function renderInventory() {
         window.deleteInventoryItem = async function(id) {
             if(!confirm("Permanently delete this item?")) return;
             try {
-                await deleteDoc(doc(db, "inventory", id));
+                const { error } = await supabase.from('inventory').delete().eq('id', id);
+                if (error) throw error;
             } catch(err) {
                 alert("Error deleting: " + err.message);
             }
