@@ -231,9 +231,9 @@
 
                     if (error) throw error;
 
-                    // Filter by user email
-                    const userEmail = session.user.email;
-                    const myReservations = allRes.filter(r => r.contact && r.contact.email === userEmail);
+                    // Filter by user email (case-insensitive to prevent mismatch bugs)
+                    const userEmail = session.user.email.toLowerCase();
+                    const myReservations = allRes.filter(r => r.contact && r.contact.email && r.contact.email.toLowerCase() === userEmail);
 
                     document.getElementById('loading-spinner').classList.add('hidden');
 

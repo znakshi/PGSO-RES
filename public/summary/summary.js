@@ -52,6 +52,13 @@ import { supabase } from "../supabase-config.js";
         submitBtn.disabled = true;
 
         try {
+            // Force binding to the currently logged in user to avoid "missing reservation" bug
+            const { data: authData } = await supabase.auth.getSession();
+            if (authData && authData.session && authData.session.user) {
+                if (!data.contact) data.contact = {};
+                data.contact.email = authData.session.user.email.toLowerCase();
+            }
+
             let error;
             if (data.id) {
                 const updatePayload = {
