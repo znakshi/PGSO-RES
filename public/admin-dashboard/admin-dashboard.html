@@ -13,10 +13,13 @@
 <body class="bg-slate-50 text-slate-800 font-sans overflow-hidden">
 
     <!-- Layout Wrapper -->
-    <div class="flex h-screen w-full">
+    <div class="flex h-screen w-full relative">
         
+        <!-- Mobile Sidebar Overlay -->
+        <div id="admin-sidebar-mobile-overlay" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 md:hidden" onclick="toggleSidebar()"></div>
+
         <!-- Sidebar -->
-        <aside class="w-72 bg-[#1C1F2D] flex-shrink-0 border-r border-slate-800 flex flex-col z-20 shadow-2xl overflow-hidden hidden md:flex">
+        <aside id="admin-sidebar" class="w-72 bg-[#1C1F2D] flex-shrink-0 border-r border-slate-800 flex flex-col z-40 shadow-2xl h-full fixed md:relative transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
             <!-- Brand -->
             <div class="h-20 flex items-center px-6 border-b border-white/5">
                 <div class="w-10 h-10 bg-gradient-to-tr from-blue-700 to-blue-800 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-white/10">
@@ -41,6 +44,12 @@
                 <button onclick="switchTab('inventory')" id="tab-inventory" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition font-medium tracking-wide">
                     <i class="fa-solid fa-box w-5 text-center text-lg"></i> Inventory
                 </button>
+
+                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-8 mb-4 px-2">History</p>
+                
+                <button onclick="switchTab('archive')" id="tab-archive" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition font-medium tracking-wide">
+                    <i class="fa-solid fa-box-archive w-5 text-center text-lg"></i> Archive
+                </button>
             </nav>
 
             <!-- Bottom Actions -->
@@ -52,12 +61,15 @@
         </aside>
 
         <!-- Main Content Wrapper -->
-        <div class="flex-1 flex flex-col h-screen overflow-hidden relative bg-slate-50/50">
+        <div class="flex-1 flex flex-col h-screen overflow-hidden relative bg-slate-50/50 w-full min-w-0">
             
             <!-- Top Header -->
-            <header class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex justify-between items-center px-8 z-10 flex-shrink-0 sticky top-0">
-                <div>
-                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight" id="dash-title">Calendar & Bookings</h1>
+            <header class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex justify-between items-center px-4 md:px-8 z-10 flex-shrink-0 sticky top-0">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleSidebar()" class="md:hidden bg-slate-100 hover:bg-slate-200 text-slate-600 w-10 h-10 rounded-lg transition flex items-center justify-center">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight truncate" id="dash-title">Calendar & Bookings</h1>
                 </div>
                 <div class="flex items-center gap-4">
                     <button onclick="window.location.reload()" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 w-10 h-10 rounded-full transition shadow-sm flex items-center justify-center group" title="Refresh Data">
@@ -156,6 +168,45 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 font-medium" id="inventory-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="section-archive" class="hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 flex flex-col h-full min-h-[650px]">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 pb-4 border-b border-slate-100 gap-4">
+                    <h2 class="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-3"><i class="fa-solid fa-box-archive text-blue-600"></i> Discarded Records</h2>
+                    <div class="flex gap-2">
+                        <button onclick="switchArchiveTab('res')" id="arch-tab-res" class="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-sm">Reservations</button>
+                        <button onclick="switchArchiveTab('inv')" id="arch-tab-inv" class="bg-slate-100 text-slate-600 hover:bg-slate-200 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-sm">Inventory</button>
+                    </div>
+                </div>
+                
+                <div id="archive-res-view" class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-slate-600">
+                        <thead class="text-[11px] text-slate-400 uppercase tracking-widest bg-slate-50 border-y border-slate-200">
+                            <tr>
+                                <th class="py-4 px-5 font-bold w-1/4">Client Name</th>
+                                <th class="py-4 px-5 font-bold w-1/4">Event & Date</th>
+                                <th class="py-4 px-5 font-bold w-1/4">Former Status</th>
+                                <th class="py-4 px-5 text-right font-bold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 font-medium" id="archive-res-tbody-list"></tbody>
+                    </table>
+                </div>
+
+                <div id="archive-inv-view" class="hidden overflow-x-auto">
+                    <table class="w-full text-sm text-left text-slate-600">
+                        <thead class="text-[11px] text-slate-400 uppercase tracking-widest bg-slate-50 border-y border-slate-200">
+                            <tr>
+                                <th class="py-4 px-5 font-bold">Item Identifier</th>
+                                <th class="py-4 px-5 font-bold">Base Unit</th>
+                                <th class="py-4 px-5 text-right font-bold w-48">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 font-medium" id="archive-inv-tbody-list"></tbody>
                     </table>
                 </div>
             </div>

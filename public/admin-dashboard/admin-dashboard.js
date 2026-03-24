@@ -3,6 +3,8 @@ import { supabase } from "../supabase-config.js";
         // --- GLOBAL STATE ---
         let reservations = [];
         let inventory = [];
+        let archivedReservations = [];
+        let archivedInventory = [];
         let currentDate = new Date();
         let charts = {};
         
@@ -77,15 +79,43 @@ import { supabase } from "../supabase-config.js";
         };
 
         window.switchTab = function(t) {
-            ['calendar','analytics','inventory'].forEach(id => {
+            ['calendar','analytics','inventory','archive'].forEach(id => {
                 document.getElementById('section-'+id).classList.add('hidden');
-                document.getElementById('tab-'+id).className = "px-4 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition";
+                document.getElementById('tab-'+id).className = "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition font-medium tracking-wide";
             });
             document.getElementById('section-'+t).classList.remove('hidden');
-            document.getElementById('tab-'+t).className = "px-4 py-2 rounded-md text-sm font-medium bg-white shadow-sm transition text-gray-900";
+            document.getElementById('tab-'+t).className = "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl bg-blue-600/10 text-blue-500 font-bold tracking-wide transition";
+            
+            // Update Title based on Tab
+            let title = "Calendar & Bookings";
+            if(t==='analytics') title = "Analytics Dashboard";
+            if(t==='inventory') title = "Equipment Management";
+            if(t==='archive') title = "Archive Center";
+            document.getElementById('dash-title').innerText = title;
+
+            // Render content
             if(t === 'analytics') renderAnalytics();
             if(t === 'inventory') renderInventory();
+            if(t === 'archive') switchArchiveTab();
+            
+            // Auto-hide sidebar on mobile if a tab is clicked
+            const sidebarBtn = document.getElementById('admin-sidebar-mobile-overlay');
+            if (sidebarBtn && !document.getElementById('admin-sidebar').classList.contains('-translate-x-full')) {
+                toggleSidebar();
+            }
         };
+
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('admin-sidebar');
+            const overlay = document.getElementById('admin-sidebar-mobile-overlay');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                if(overlay) overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                if(overlay) overlay.classList.add('hidden');
+            }
+        }
 
         window.closeModal = function(id) { document.getElementById(id).classList.add('hidden'); };
 
@@ -406,12 +436,19 @@ window.printReservation = function(id, event) {
         // --- SUPABASE LISTENERS ---
         const fetchReservations = async () => {
             const { data } = await supabase.from('reservations').select('*');
-            reservations = data || [];
+            if (data) {
+                reservations = data.filter(r => !r.is_archived);
+                archivedReservations = data.filter(r => r.is_archived);
+            } else {
+                reservations = [];
+                archivedReservations = [];
+            }
             renderCalendar(); 
             const todayStr = new Date().toISOString().split('T')[0];
             renderReservationList(todayStr);
             renderAnalytics();
             if(!document.getElementById('section-inventory').classList.contains('hidden')) renderInventory();
+            if(!document.getElementById('section-archive').classList.contains('hidden')) switchArchiveTab();
         };
 
         supabase.channel('reservations-channel')
@@ -433,11 +470,11 @@ window.printReservation = function(id, event) {
 
         window.deleteRes = async function(id, event) {
             if(event) event.stopPropagation();
-            showAwesomeConfirm("Permanently delete this reservation? This cannot be undone.", async () => {
+            showAwesomeConfirm("Send this reservation to the archive?", async () => {
                 try { 
-                    const { error } = await supabase.from('reservations').delete().eq('id', id);
+                    const { error } = await supabase.from('reservations').update({ is_archived: true }).eq('id', id);
                     if (error) throw error;
-                    showAwesomeAlert("Reservation deleted successfully!");
+                    showAwesomeAlert("Reservation sent to archive.");
                 }
                 catch(e) { showAwesomeAlert("Error: " + e.message, true); }
             });
@@ -554,8 +591,15 @@ window.printReservation = function(id, event) {
         // --- INVENTORY LOGIC (UPDATED WITH CATEGORY) ---
         const fetchInventory = async () => {
             const { data } = await supabase.from('inventory').select('*');
-            inventory = data || [];
+            if(data) {
+                inventory = data.filter(i => !i.is_archived);
+                archivedInventory = data.filter(i => i.is_archived);
+            } else {
+                inventory = [];
+                archivedInventory = [];
+            }
             renderInventory(); 
+            if(!document.getElementById('section-archive').classList.contains('hidden')) switchArchiveTab();
         };
 
         supabase.channel('inventory-channel')
@@ -695,13 +739,104 @@ function renderInventory() {
         };
 
         window.deleteInventoryItem = async function(id) {
-            showAwesomeConfirm("Permanently delete this item? This action cannot be undone.", async () => {
+            showAwesomeConfirm("Send this item to the archive?", async () => {
                 try {
-                    const { error } = await supabase.from('inventory').delete().eq('id', id);
+                    const { error } = await supabase.from('inventory').update({ is_archived: true }).eq('id', id);
                     if (error) throw error;
-                    showAwesomeAlert("Item deleted successfully!");
+                    showAwesomeAlert("Item sent to archive.");
+                } catch(err) {
+                    showAwesomeAlert("Error archiving: " + err.message, true);
+                }
+            });
+        }
+
+        // --- ARCHIVE LOGIC ---
+        let currentArchiveTab = 'res';
+        window.switchArchiveTab = function(tab = currentArchiveTab) {
+            currentArchiveTab = tab;
+            document.getElementById('archive-res-view').classList.add('hidden');
+            document.getElementById('archive-inv-view').classList.add('hidden');
+            document.getElementById('arch-tab-res').className = "bg-slate-100 text-slate-600 hover:bg-slate-200 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-sm";
+            document.getElementById('arch-tab-inv').className = "bg-slate-100 text-slate-600 hover:bg-slate-200 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-sm";
+            
+            document.getElementById(`arch-tab-${tab}`).className = "bg-blue-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-sm";
+            document.getElementById(`archive-${tab}-view`).classList.remove('hidden');
+
+            if(tab === 'res') renderArchiveReservations();
+            if(tab === 'inv') renderArchiveInventory();
+        };
+
+        function renderArchiveReservations() {
+            const tbody = document.getElementById('archive-res-tbody-list');
+            tbody.innerHTML = "";
+            if(archivedReservations.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-slate-400 font-medium">No archived reservations.</td></tr>`;
+                return;
+            }
+            archivedReservations.forEach(r => {
+                let badge = r.status === 'pending' ? "bg-yellow-100 text-yellow-800" : r.status === 'confirmed' ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-4 px-5">
+                            <p class="font-bold text-slate-800">${r.contact.fullName}</p>
+                            <p class="text-xs text-slate-500">${r.contact.email}</p>
+                        </td>
+                        <td class="py-4 px-5">
+                            <p class="font-bold text-slate-800">${r.event.venue}</p>
+                            <p class="text-xs text-slate-500">${r.event.dates}</p>
+                        </td>
+                        <td class="py-4 px-5"><span class="${badge} text-[10px] px-2 py-1 rounded-md uppercase font-bold tracking-widest">${r.status}</span></td>
+                        <td class="py-4 px-5 text-right flex justify-end gap-3">
+                            <button onclick="restoreRecord('reservations', '${r.id}')" class="text-green-600 hover:text-green-800 text-xs font-bold uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-rotate-left"></i> Restore</button>
+                            <button onclick="hardDeleteRecord('reservations', '${r.id}')" class="text-red-500 hover:text-red-700 text-xs font-bold uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-trash"></i> Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderArchiveInventory() {
+            const tbody = document.getElementById('archive-inv-tbody-list');
+            tbody.innerHTML = "";
+            if(archivedInventory.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="py-8 text-center text-slate-400 font-medium">No archived inventory.</td></tr>`;
+                return;
+            }
+            archivedInventory.forEach(i => {
+                const cat = (i.category || 'EQUIPMENT').toUpperCase();
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-4 px-5 font-bold text-slate-800"><span class="text-[10px] px-2 py-1 rounded bg-slate-200 text-slate-600 mr-2">${cat}</span>${i.name}</td>
+                        <td class="py-4 px-5 text-slate-500">${i.unit}</td>
+                        <td class="py-4 px-5 text-right flex justify-end gap-3">
+                            <button onclick="restoreRecord('inventory', '${i.id}')" class="text-green-600 hover:text-green-800 text-xs font-bold uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-rotate-left"></i> Restore</button>
+                            <button onclick="hardDeleteRecord('inventory', '${i.id}')" class="text-red-500 hover:text-red-700 text-xs font-bold uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-trash"></i> Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        window.restoreRecord = async function(table, id) {
+            showAwesomeConfirm("Restore this record back to active views?", async () => {
+                try {
+                    const { error } = await supabase.from(table).update({ is_archived: false }).eq('id', id);
+                    if (error) throw error;
+                    showAwesomeAlert("Record restored successfully!");
+                } catch(err) {
+                    showAwesomeAlert("Error restoring: " + err.message, true);
+                }
+            });
+        };
+
+        window.hardDeleteRecord = async function(table, id) {
+            showAwesomeConfirm("PERMANENTLY DELETE this record? This absolutely cannot be undone.", async () => {
+                try {
+                    const { error } = await supabase.from(table).delete().eq('id', id);
+                    if (error) throw error;
+                    showAwesomeAlert("Record permanently deleted.");
                 } catch(err) {
                     showAwesomeAlert("Error deleting: " + err.message, true);
                 }
             });
-        }
+        };
