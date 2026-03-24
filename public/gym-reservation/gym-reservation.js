@@ -494,4 +494,14 @@ document.addEventListener('DOMContentLoaded', async function () {
     loadSavedData();
     updateInventoryLimits();
     calculateTotal();
+
+    // Auto-fill and lock email if logged in
+    const { data: authData } = await supabase.auth.getSession();
+    if (authData && authData.session && authData.session.user) {
+        if (!emailInput.value) {
+            emailInput.value = authData.session.user.email;
+        }
+        emailInput.readOnly = true;
+        emailInput.classList.add('bg-gray-100', 'cursor-not-allowed', 'text-gray-500');
+    }
 });
