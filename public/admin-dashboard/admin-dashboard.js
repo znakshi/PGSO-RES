@@ -2,7 +2,6 @@ import { supabase } from "../supabase-config.js";
 
         let reservations = [];
         let inventory = [];
-        let venues = [];
         let archivedReservations = [];
         let archivedInventory = [];
         let currentDate = new Date();
@@ -79,25 +78,24 @@ import { supabase } from "../supabase-config.js";
         };
 
         window.switchTab = function(t) {
-            ['calendar','analytics','inventory','venues','archive'].forEach(id => {
-                document.getElementById('section-'+id).classList.add('hidden');
-                document.getElementById('tab-'+id).className = "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition font-medium tracking-wide";
+            ['calendar','analytics','inventory','archive'].forEach(id => {
+                const sec = document.getElementById('section-'+id);
+                if(sec) sec.classList.add('hidden');
+                const tab = document.getElementById('tab-'+id);
+                if(tab) tab.className = "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition font-medium tracking-wide";
             });
             document.getElementById('section-'+t).classList.remove('hidden');
             document.getElementById('tab-'+t).className = "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl bg-blue-600/10 text-blue-500 font-bold tracking-wide transition";
             
-            // Update Title based on Tab
             let title = "Calendar & Bookings";
             if(t==='analytics') title = "Analytics Dashboard";
             if(t==='inventory') title = "Equipment Management";
-            if(t==='venues') title = "Facilities & Venues";
             if(t==='archive') title = "Archive Center";
             document.getElementById('dash-title').innerText = title;
 
             // Render content
             if(t === 'analytics') renderAnalytics();
             if(t === 'inventory') renderInventory();
-            if(t === 'venues') renderVenues();
             if(t === 'archive') switchArchiveTab();
             
             // Auto-hide sidebar on mobile if a tab is clicked
@@ -737,145 +735,6 @@ window.printReservation = function(id, event) {
 
         fetchInventory();
 
-        // --- VENUES LOGIC ---
-        const fetchVenues = async () => {
-            const { data } = await supabase.from('venues').select('*').order('name');
-            if(data) {
-                venues = data;
-            } else {
-                venues = [];
-            }
-            if(!document.getElementById('section-venues').classList.contains('hidden')) renderVenues();
-        };
-
-        supabase.channel('venues-channel')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'venues' }, () => {
-                fetchVenues();
-            }).subscribe();
-
-        fetchVenues();
-
-        window.renderVenues = function() {
-            const container = document.getElementById('venues-grid-container');
-            if(!container) return;
-            container.innerHTML = "";
-            if (venues.length === 0) {
-                container.innerHTML = `<div class="col-span-full h-32 flex items-center justify-center text-slate-400"><p>No venues configured. Click Add Venue.</p></div>`;
-                return;
-            }
-            venues.forEach(venue => {
-                const card = document.createElement('div');
-                card.className = "bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col group relative";
-                card.innerHTML = `
-                    <div class="h-48 relative overflow-hidden bg-slate-100">
-                        <img src="../${venue.image_url}" onerror="this.src='../pgso-building.jpg'" alt="${venue.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80"></div>
-                        <div class="absolute bottom-4 left-4 text-white">
-                            <span class="bg-blue-700 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm shadow-sm inline-block mb-1">${venue.tag || 'Facility'}</span>
-                            <h3 class="font-bold text-lg drop-shadow-md truncate w-48">${venue.name}</h3>
-                        </div>
-                    </div>
-                    <div class="p-5 flex-1 flex flex-col items-center text-center">
-                        <p class="text-xs text-slate-500 mb-4 font-light leading-relaxed line-clamp-3">${venue.description || 'No description provided.'}</p>
-                        <div class="flex items-center gap-2 text-xs text-slate-700 font-semibold mb-4 uppercase tracking-wider bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 w-full justify-center">
-                            <i class="fa-solid fa-users text-blue-700"></i> Max Capacity: ${venue.capacity || 'N/A'}
-                        </div>
-                        <div class="mt-auto w-full pt-4 border-t border-gray-100">
-                            <div class="flex flex-col mb-4">
-                                <span class="text-xl font-bold text-slate-900 tracking-tight">${venue.price_text || 'Free'}</span>
-                                <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block mt-0.5">${venue.price_subtext || ''}</span>
-                                ${venue.additional_price_text ? `<span class="text-[9px] text-slate-400 font-medium block mt-0.5">${venue.additional_price_text}</span>` : ''}
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="editVenue('${venue.id}')" class="flex-1 border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold py-2 rounded-lg text-xs uppercase tracking-wider transition-colors shadow-sm"><i class="fa-solid fa-pen mr-1"></i> Edit</button>
-                                <button onclick="deleteVenue('${venue.id}')" class="w-10 flex-shrink-0 border border-red-100 hover:bg-red-50 text-red-500 font-bold py-2 rounded-lg text-xs transition-colors shadow-sm"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        };
-
-        window.openVenueModal = function() {
-            document.getElementById('venue-id').value = '';
-            document.getElementById('venue-name').value = '';
-            document.getElementById('venue-desc').value = '';
-            document.getElementById('venue-capacity').value = '';
-            document.getElementById('venue-price-text').value = '';
-            document.getElementById('venue-price-subtext').value = '';
-            document.getElementById('venue-add-price').value = '';
-            document.getElementById('venue-image').value = '';
-            document.getElementById('venue-tag').value = '';
-            document.getElementById('venue-link').value = '';
-            document.getElementById('venue-modal-title').innerText = 'Add New Venue';
-            document.getElementById('venueModal').classList.remove('hidden');
-        };
-
-        window.editVenue = function(id) {
-            const venue = venues.find(v => v.id === id);
-            if(!venue) return;
-            document.getElementById('venue-id').value = venue.id;
-            document.getElementById('venue-name').value = venue.name || '';
-            document.getElementById('venue-desc').value = venue.description || '';
-            document.getElementById('venue-capacity').value = venue.capacity || '';
-            document.getElementById('venue-price-text').value = venue.price_text || '';
-            document.getElementById('venue-price-subtext').value = venue.price_subtext || '';
-            document.getElementById('venue-add-price').value = venue.additional_price_text || '';
-            document.getElementById('venue-image').value = venue.image_url || '';
-            document.getElementById('venue-tag').value = venue.tag || '';
-            document.getElementById('venue-link').value = venue.reservation_link || '';
-            document.getElementById('venue-modal-title').innerText = 'Edit Venue Details';
-            document.getElementById('venueModal').classList.remove('hidden');
-        };
-
-        window.saveVenue = async function(e) {
-            e.preventDefault();
-            const id = document.getElementById('venue-id').value;
-            const payload = {
-                name: document.getElementById('venue-name').value,
-                description: document.getElementById('venue-desc').value,
-                capacity: document.getElementById('venue-capacity').value,
-                price_text: document.getElementById('venue-price-text').value,
-                price_subtext: document.getElementById('venue-price-subtext').value,
-                additional_price_text: document.getElementById('venue-add-price').value,
-                image_url: document.getElementById('venue-image').value,
-                tag: document.getElementById('venue-tag').value,
-                reservation_link: document.getElementById('venue-link').value
-            };
-            const btn = e.target.querySelector('button[type="submit"]');
-            const orig = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-            
-            try {
-                if(id) {
-                    const { error } = await supabase.from('venues').update(payload).eq('id', id);
-                    if(error) throw error;
-                    showAwesomeAlert("Venue updated successfully!");
-                } else {
-                    const { error } = await supabase.from('venues').insert([payload]);
-                    if(error) throw error;
-                    showAwesomeAlert("Venue created successfully!");
-                }
-                closeModal('venueModal');
-            } catch(error) {
-                showAwesomeAlert(error.message, true);
-            } finally {
-                btn.innerHTML = orig;
-            }
-        };
-
-        window.deleteVenue = function(id) {
-            showAwesomeConfirm("Are you sure you want to delete this venue? It will be removed from the public pages immediately.", async () => {
-                try {
-                    const { error } = await supabase.from('venues').delete().eq('id', id);
-                    if(error) throw error;
-                    showAwesomeAlert("Venue deleted successfully.");
-                } catch(e) {
-                    showAwesomeAlert(e.message, true);
-                }
-            });
-        };
 
 
 function renderInventory() {
