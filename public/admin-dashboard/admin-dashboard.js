@@ -7,6 +7,70 @@ import { supabase } from "../supabase-config.js";
         let charts = {};
         
         // --- DEFINE FUNCTIONS GLOBALLY ---
+        const injectGlobalModals = () => {
+            if(document.getElementById('pgsoGlobalModals')) return;
+            document.body.insertAdjacentHTML('beforeend', `
+                <div id="pgsoGlobalModals">
+                    <!-- Success/Alert Modal -->
+                    <div id="pgsoAlertModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[999] p-4 transition-opacity duration-300">
+                        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm relative text-center border-t-8 border-blue-600 mt-8">
+                            <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-md border-4 border-white">
+                                <div class="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center" id="pgsoAlertIconWrap"><i class="fa-solid fa-check text-white text-2xl" id="pgsoAlertIcon"></i></div>
+                            </div>
+                            <h3 class="text-xl font-bold text-slate-800 mt-6 tracking-tight" id="pgsoAlertTitle">Success</h3>
+                            <p class="text-sm text-slate-500 mt-2 font-medium" id="pgsoAlertMessage">Operation completed.</p>
+                            <button onclick="document.getElementById('pgsoAlertModal').classList.add('hidden')" id="pgsoAlertBtn" class="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl uppercase tracking-wider text-sm transition shadow-md">Continue</button>
+                        </div>
+                    </div>
+                    <!-- Confirm Modal -->
+                    <div id="pgsoConfirmModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[999] p-4 transition-opacity duration-300">
+                        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm relative text-center border-t-8 border-red-500 mt-8">
+                            <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-md border-4 border-white">
+                                <div class="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center"><i class="fa-solid fa-triangle-exclamation text-white text-xl"></i></div>
+                            </div>
+                            <h3 class="text-xl font-bold text-slate-800 mt-6 tracking-tight" id="pgsoConfirmTitle">Confirm Action</h3>
+                            <p class="text-sm text-slate-500 mt-2 font-medium" id="pgsoConfirmMessage">Are you sure?</p>
+                            <div class="flex gap-4 mt-8">
+                                <button onclick="document.getElementById('pgsoConfirmModal').classList.add('hidden')" class="flex-1 py-3 border-2 border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold uppercase tracking-wider text-sm transition">Cancel</button>
+                                <button id="pgsoConfirmBtn" class="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold uppercase tracking-wider text-sm transition shadow-md">Confirm</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `);
+        };
+        document.addEventListener('DOMContentLoaded', injectGlobalModals);
+
+        window.showAwesomeAlert = function(msg, isError = false) {
+            document.getElementById('pgsoAlertMessage').innerText = msg;
+            document.getElementById('pgsoAlertTitle').innerText = isError ? "Error" : "Success";
+            const iconWrap = document.getElementById('pgsoAlertIconWrap');
+            const icon = document.getElementById('pgsoAlertIcon');
+            const borderTop = document.querySelector('#pgsoAlertModal > div');
+            const btn = document.getElementById('pgsoAlertBtn');
+            if (isError) {
+                iconWrap.className = 'w-14 h-14 bg-red-500 rounded-full flex items-center justify-center';
+                icon.className = 'fa-solid fa-xmark text-white text-2xl';
+                borderTop.className = 'bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm relative text-center border-t-8 border-red-500 mt-8';
+                btn.className = 'w-full mt-8 bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-xl uppercase tracking-wider text-sm transition shadow-md';
+            } else {
+                iconWrap.className = 'w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center';
+                icon.className = 'fa-solid fa-check text-white text-2xl';
+                borderTop.className = 'bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm relative text-center border-t-8 border-blue-600 mt-8';
+                btn.className = 'w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl uppercase tracking-wider text-sm transition shadow-md';
+            }
+            document.getElementById('pgsoAlertModal').classList.remove('hidden');
+        };
+
+        window.showAwesomeConfirm = function(msg, callback) {
+            document.getElementById('pgsoConfirmMessage').innerText = msg;
+            const btn = document.getElementById('pgsoConfirmBtn');
+            btn.onclick = () => {
+                document.getElementById('pgsoConfirmModal').classList.add('hidden');
+                callback();
+            };
+            document.getElementById('pgsoConfirmModal').classList.remove('hidden');
+        };
         window.logoutAdmin = async function() {
             await supabase.auth.signOut();
             window.location.href = "../admin-login/admin-login.html";
@@ -92,11 +156,11 @@ import { supabase } from "../supabase-config.js";
                 
                 if (error) throw error;
 
-                alert("Reservation updated successfully!");
+                showAwesomeAlert("Reservation updated successfully!");
                 closeModal('reservationModal');
             } catch (error) {
                 console.error("Error updating:", error);
-                alert("Error saving changes: " + error.message);
+                showAwesomeAlert("Error saving changes: " + error.message, true);
             } finally {
                 submitBtn.innerText = originalText;
             }
@@ -108,7 +172,7 @@ import { supabase } from "../supabase-config.js";
 window.printReservation = function(id, event) {
     if(event) event.stopPropagation();
     const res = reservations.find(r => r.id === id);
-    if(!res) { alert("Reservation data not found."); return; }
+    if(!res) { showAwesomeAlert("Reservation data not found.", true); return; }
 
     const printWindow = window.open('', '_blank', 'width=900,height=1100');
     
@@ -364,18 +428,19 @@ window.printReservation = function(id, event) {
                 const { error } = await supabase.from('reservations').update({ status: status }).eq('id', id); 
                 if (error) throw error;
             }
-            catch(e) { alert("Error: " + e.message); }
+            catch(e) { showAwesomeAlert("Error updating status: " + e.message, true); }
         };
 
         window.deleteRes = async function(id, event) {
             if(event) event.stopPropagation();
-            if(confirm("Delete this reservation?")) {
+            showAwesomeConfirm("Permanently delete this reservation? This cannot be undone.", async () => {
                 try { 
                     const { error } = await supabase.from('reservations').delete().eq('id', id);
                     if (error) throw error;
+                    showAwesomeAlert("Reservation deleted successfully!");
                 }
-                catch(e) { alert("Error: " + e.message); }
-            }
+                catch(e) { showAwesomeAlert("Error: " + e.message, true); }
+            });
         };
 
         // --- CALENDAR LOGIC ---
@@ -620,21 +685,23 @@ function renderInventory() {
                     if (error) throw error;
                 }
                 document.getElementById('inventoryModal').classList.add('hidden');
-                alert("Inventory updated!");
+                showAwesomeAlert("Inventory updated successfully!");
             } catch(err) {
                 console.error(err);
-                alert("Error saving: " + err.message);
+                showAwesomeAlert("Error saving: " + err.message, true);
             } finally {
                 btn.innerText = originalText;
             }
         };
 
         window.deleteInventoryItem = async function(id) {
-            if(!confirm("Permanently delete this item?")) return;
-            try {
-                const { error } = await supabase.from('inventory').delete().eq('id', id);
-                if (error) throw error;
-            } catch(err) {
-                alert("Error deleting: " + err.message);
-            }
+            showAwesomeConfirm("Permanently delete this item? This action cannot be undone.", async () => {
+                try {
+                    const { error } = await supabase.from('inventory').delete().eq('id', id);
+                    if (error) throw error;
+                    showAwesomeAlert("Item deleted successfully!");
+                } catch(err) {
+                    showAwesomeAlert("Error deleting: " + err.message, true);
+                }
+            });
         }
