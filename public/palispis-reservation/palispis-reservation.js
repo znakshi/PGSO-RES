@@ -525,8 +525,14 @@ import { supabase } from "../supabase-config.js";
         // Auto-fill and lock email if logged in
         const { data: authData } = await supabase.auth.getSession();
         if (authData && authData.session && authData.session.user) {
-            if (!emailInput.value) {
-                emailInput.value = authData.session.user.email;
+            const currentUserEmail = authData.session.user.email;
+            if (emailInput.value && emailInput.value.toLowerCase() !== currentUserEmail.toLowerCase()) {
+                nameInput.value = "";
+                contactInput.value = "";
+                emailInput.value = currentUserEmail;
+                localStorage.removeItem('pgsoReservationData');
+            } else if (!emailInput.value) {
+                emailInput.value = currentUserEmail;
             }
             emailInput.readOnly = true;
             emailInput.classList.add('bg-gray-100', 'cursor-not-allowed', 'text-gray-500');

@@ -180,57 +180,9 @@
                     the descriptions and capacities of our premier facilities.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Gym Card -->
-                <div class="relative h-96 rounded-xl overflow-hidden group shadow-lg border border-gray-200">
-                    <img src="provincial-gym.jpg" alt="Provincial Gymnasium"
-                        class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-                    <div
-                        class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent opacity-90 group-hover:opacity-100 transition-opacity">
-                    </div>
-                    <div class="absolute inset-0 p-8 flex flex-col justify-end">
-                        <h4 class="text-2xl font-bold text-white mb-2 leading-snug">Provincial Gymnasium</h4>
-                        <p class="text-slate-200 text-sm mb-6 leading-relaxed font-light">Open gym facility available
-                            from 6:00 AM to 5:00 PM. Perfect for sports events and large gatherings with a 500-person
-                            capacity.</p>
-                        <button
-                            class="bg-blue-700 text-white hover:bg-blue-600 font-bold py-3.5 px-6 text-[13px] uppercase tracking-widest w-full transition-colors open-client-login shadow-sm">Login
-                            to Reserve</button>
-                    </div>
-                </div>
-
-                <!-- Palispis Card -->
-                <div class="relative h-96 rounded-xl overflow-hidden group shadow-lg border border-gray-200">
-                    <img src="palispis.png" alt="Gov. Ben Palispis Auditorium"
-                        class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-                    <div
-                        class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent opacity-90 group-hover:opacity-100 transition-opacity">
-                    </div>
-                    <div class="absolute inset-0 p-8 flex flex-col justify-end">
-                        <h4 class="text-2xl font-bold text-white mb-2 leading-snug">Gov. Ben Palispis Auditorium</h4>
-                        <p class="text-slate-200 text-sm mb-6 leading-relaxed font-light">Premier auditorium for
-                            conferences, seminars, and grand events. Comfortable seating for up to 250 people.</p>
-                        <button
-                            class="bg-blue-700 text-white hover:bg-blue-600 font-bold py-3.5 px-6 text-[13px] uppercase tracking-widest w-full transition-colors open-client-login shadow-sm">Login
-                            to Reserve</button>
-                    </div>
-                </div>
-
-                <!-- PCL Hall Card -->
-                <div class="relative h-96 rounded-xl overflow-hidden group shadow-lg border border-gray-200">
-                    <img src="pcl-hall.png" alt="PCL Hall"
-                        class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-                    <div
-                        class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent opacity-90 group-hover:opacity-100 transition-opacity">
-                    </div>
-                    <div class="absolute inset-0 p-8 flex flex-col justify-end">
-                        <h4 class="text-2xl font-bold text-white mb-2 leading-snug">PCL Hall</h4>
-                        <p class="text-slate-200 text-sm mb-6 leading-relaxed font-light">Ideal for meetings and
-                            workshops taking place on the 3rd floor. Accommodates up to 100 people.</p>
-                        <button
-                            class="bg-blue-700 text-white hover:bg-blue-600 font-bold py-3.5 px-6 text-[13px] uppercase tracking-widest w-full transition-colors open-client-login shadow-sm">Login
-                            to Reserve</button>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="venues-grid-container">
+                <div class="col-span-full h-32 flex items-center justify-center text-slate-400">
+                    <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading facilities...
                 </div>
             </div>
         </div>
@@ -256,6 +208,36 @@
         </div>
     </footer>
 
+    <script type="module">
+        import { supabase } from "./supabase-config.js";
+        document.addEventListener('DOMContentLoaded', async () => {
+            const container = document.getElementById('venues-grid-container');
+            if(!container) return;
+            const { data } = await supabase.from('venues').select('*').order('name');
+            if(!data || data.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center text-slate-500 py-10">Facilities are currently being updated. Please check back later.</div>';
+                return;
+            }
+            container.innerHTML = '';
+            data.forEach(venue => {
+                const card = document.createElement('div');
+                card.className = "relative h-96 rounded-xl overflow-hidden group shadow-lg border border-gray-200";
+                card.innerHTML = `
+                    <img src="${venue.image_url}" alt="${venue.name}" onerror="this.src='provincial-gym.jpg'" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent opacity-90 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="absolute inset-0 p-8 flex flex-col justify-end">
+                        <h4 class="text-2xl font-bold text-white mb-2 leading-snug">${venue.name}</h4>
+                        <p class="text-slate-200 text-sm mb-6 leading-relaxed font-light line-clamp-3">${venue.description}</p>
+                        <button class="bg-blue-700 text-white hover:bg-blue-600 font-bold py-3.5 px-6 text-[13px] uppercase tracking-widest w-full transition-colors open-client-login shadow-sm" onclick="window.location.href='${venue.reservation_link}'">Login to Reserve</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            // Re-bind login triggers dynamically if client-login.js binds only on load
+            const rebind = new CustomEvent('rebind-login-modals');
+            document.dispatchEvent(rebind);
+        });
+    </script>
     <!-- Client Login Modal Script -->
     <script type="module" src="client-login.js"></script>
 </body>

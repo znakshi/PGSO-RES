@@ -107,113 +107,10 @@
             </div>
 
             <!-- VENUE CARDS -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                
-                <!-- Provincial Gymnasium -->
-                <div class="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group relative">
-                    <div class="h-56 relative overflow-hidden">
-                        <img src="provincial-gym.jpg" alt="Provincial Gymnasium" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80"></div>
-                        <div class="absolute bottom-4 left-4 text-white">
-                            <span class="bg-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-sm inline-block mb-1">Sports & Events</span>
-                            <h3 class="font-bold text-xl drop-shadow-md">Provincial Gymnasium</h3>
-                        </div>
-                    </div>
-                    
-                    <div class="p-8 flex-1 flex flex-col items-center text-center">
-                        <p class="text-sm text-slate-500 mb-6 font-light leading-relaxed">
-                            Open gym facility available from 6:00 AM to 5:00 PM. Perfect for sports events, tournaments, and large gatherings.
-                        </p>
-                        
-                        <div class="flex items-center gap-2 text-sm text-slate-700 font-semibold mb-6 uppercase tracking-wider bg-gray-50 px-4 py-2 rounded-lg border border-gray-100 w-full justify-center">
-                            <i class="fa-solid fa-users text-blue-700"></i> Max Capacity: 500
-                        </div>
-
-                        <div class="mt-auto w-full pt-6 border-t border-gray-100">
-                            <div class="mb-6">
-                                <span class="text-3xl font-bold text-slate-900 tracking-tight">₱1,500</span>
-                                <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider block mt-1">First 4 Hours</span>
-                                <span class="text-[11px] text-slate-400 font-medium block mt-1">+ ₱2,500 for full 8 hours</span>
-                            </div>
-                            
-                            <button onclick="window.location.href='gym-reservation/gym-reservation.html'"
-                                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-6 rounded-sm text-[13px] uppercase tracking-widest transition-colors shadow-md">
-                                Reserve This Venue
-                            </button>
-                        </div>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="venues-grid-container">
+                <div class="col-span-full h-32 flex items-center justify-center text-slate-400">
+                    <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading facilities...
                 </div>
-
-                <!-- Palispis Auditorium -->
-                <div class="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group relative">
-                    <div class="h-56 relative overflow-hidden">
-                        <img src="palispis.png" alt="Gov. Ben Palispis Auditorium" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80"></div>
-                        <div class="absolute bottom-4 left-4 text-white">
-                            <span class="bg-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-sm inline-block mb-1">Seminars & Talks</span>
-                            <h3 class="font-bold text-xl drop-shadow-md">Ben Palispis Auditorium</h3>
-                        </div>
-                    </div>
-                    
-                    <div class="p-8 flex-1 flex flex-col items-center text-center">
-                        <p class="text-sm text-slate-500 mb-6 font-light leading-relaxed">
-                            Premier auditorium for conferences, seminars, and grand events. Seating provisions optimized for professional focus.
-                        </p>
-                        
-                        <div class="flex items-center gap-2 text-sm text-slate-700 font-semibold mb-6 uppercase tracking-wider bg-gray-50 px-4 py-2 rounded-lg border border-gray-100 w-full justify-center">
-                            <i class="fa-solid fa-users text-blue-700"></i> Max Capacity: 250
-                        </div>
-
-                        <div class="mt-auto w-full pt-6 border-t border-gray-100">
-                            <div class="mb-6">
-                                <span class="text-3xl font-bold text-slate-900 tracking-tight">₱1,500</span>
-                                <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider block mt-1">First 4 Hours</span>
-                                <span class="text-[11px] text-slate-400 font-medium block mt-1">+ ₱3,000 for full 8 hours</span>
-                            </div>
-                            
-                            <button onclick="window.location.href='palispis-reservation/palispis-reservation.html'"
-                                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-6 rounded-sm text-[13px] uppercase tracking-widest transition-colors shadow-md">
-                                Reserve This Venue
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- PCL Hall -->
-                <div class="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group relative">
-                    <div class="h-56 relative overflow-hidden">
-                        <img src="pcl-hall.png" alt="PCL Hall" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80"></div>
-                        <div class="absolute bottom-4 left-4 text-white">
-                            <span class="bg-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-sm inline-block mb-1">Meetings & Workshops</span>
-                            <h3 class="font-bold text-xl drop-shadow-md">PCL Hall (3rd Floor)</h3>
-                        </div>
-                    </div>
-                    
-                    <div class="p-8 flex-1 flex flex-col items-center text-center">
-                        <p class="text-sm text-slate-500 mb-6 font-light leading-relaxed">
-                            Ideal for focused meetings and workshops taking place on the 3rd floor. Includes built-in sound system and projector.
-                        </p>
-                        
-                        <div class="flex items-center gap-2 text-sm text-slate-700 font-semibold mb-6 uppercase tracking-wider bg-gray-50 px-4 py-2 rounded-lg border border-gray-100 w-full justify-center">
-                            <i class="fa-solid fa-users text-blue-700"></i> Max Capacity: 100
-                        </div>
-
-                        <div class="mt-auto w-full pt-6 border-t border-gray-100">
-                            <div class="mb-6">
-                                <span class="text-3xl font-bold text-slate-900 tracking-tight">₱4,000</span>
-                                <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider block mt-1">Fixed Daily Rate</span>
-                                <span class="text-[11px] text-slate-400 font-medium block mt-1">A/V Equipment Included</span>
-                            </div>
-                            
-                            <button onclick="window.location.href='pcl-reservation/pcl-reservation.html'"
-                                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-6 rounded-sm text-[13px] uppercase tracking-widest transition-colors shadow-md">
-                                Reserve This Venue
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
     </section>
@@ -428,6 +325,57 @@
                     window.location.reload();
                 });
             }
+        });
+    </script>
+    <script type="module">
+        import { supabase } from "./supabase-config.js";
+        document.addEventListener('DOMContentLoaded', async () => {
+            const container = document.getElementById('venues-grid-container');
+            if(!container) return;
+            const { data } = await supabase.from('venues').select('*').order('name');
+            if(!data || data.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center text-slate-500 py-10">Facilities are currently being updated. Please check back later.</div>';
+                return;
+            }
+            container.innerHTML = '';
+            data.forEach(venue => {
+                const card = document.createElement('div');
+                card.className = "bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group relative";
+                card.innerHTML = `
+                    <div class="h-56 relative overflow-hidden">
+                        <img src="${venue.image_url}" onerror="this.src='provincial-gym.jpg'" alt="${venue.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80"></div>
+                        <div class="absolute bottom-4 left-4 text-white">
+                            <span class="bg-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-sm inline-block mb-1">${venue.tag || 'Facility'}</span>
+                            <h3 class="font-bold text-xl drop-shadow-md">${venue.name}</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="p-8 flex-1 flex flex-col items-center text-center">
+                        <p class="text-sm text-slate-500 mb-6 font-light leading-relaxed line-clamp-3">
+                            ${venue.description}
+                        </p>
+                        
+                        <div class="flex items-center gap-2 text-sm text-slate-700 font-semibold mb-6 uppercase tracking-wider bg-gray-50 px-4 py-2 rounded-lg border border-gray-100 w-full justify-center">
+                            <i class="fa-solid fa-users text-blue-700"></i> Max Capacity: ${venue.capacity}
+                        </div>
+
+                        <div class="mt-auto w-full pt-6 border-t border-gray-100">
+                            <div class="mb-6">
+                                <span class="text-3xl font-bold text-slate-900 tracking-tight">${venue.price_text || 'Free'}</span>
+                                <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider block mt-1">${venue.price_subtext || ''}</span>
+                                ${venue.additional_price_text ? `<span class="text-[11px] text-slate-400 font-medium block mt-1">${venue.additional_price_text}</span>` : ''}
+                            </div>
+                            
+                            <button onclick="window.location.href='${venue.reservation_link}'"
+                                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-6 rounded-sm text-[13px] uppercase tracking-widest transition-colors shadow-md">
+                                Reserve This Venue
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
         });
     </script>
     <script type="module" src="client-login.js"></script>

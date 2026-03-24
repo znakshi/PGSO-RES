@@ -36,6 +36,7 @@ function initClientLogin() {
             document.getElementById('email-verified-login-btn').addEventListener('click', async () => {
                 // Ensure session is wiped before they log in manually
                 await supabase.auth.signOut();
+                localStorage.removeItem('pgsoReservationData');
                 
                 const m = document.getElementById('email-confirmed-modal');
                 m.classList.add('opacity-0');
@@ -219,6 +220,7 @@ function initClientLogin() {
                 document.getElementById('btn-confirm-logout').addEventListener('click', async () => {
                     document.getElementById('btn-confirm-logout').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Logging out...';
                     await supabase.auth.signOut();
+                    localStorage.removeItem('pgsoReservationData');
                     
                     promptModal.querySelector('.p-8').innerHTML = `
                          <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
