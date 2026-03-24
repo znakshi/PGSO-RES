@@ -183,12 +183,53 @@ function initClientLogin() {
 
             // If already logged in
             if (user) {
-                const wantLogout = confirm('You are currently logged in as ' + user.email + '.\n\nWould you like to LOG OUT? (Click OK to Log Out, or Cancel to stay logged in).');
-                if (wantLogout) {
+                const logoutModalHTML = `
+                <div id="logout-prompt-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300">
+                    <div class="bg-white rounded-xl shadow-2xl flex flex-col w-[90%] max-w-sm overflow-visible transform transition-transform duration-300 relative mt-8">
+                        <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm z-10 border border-gray-100">
+                            <div class="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center shadow-inner">
+                                <i class="fa-solid fa-user text-white text-lg"></i>
+                            </div>
+                        </div>
+                        <div class="p-8 pt-12 text-center flex flex-col items-center">
+                            <h2 class="text-xl font-bold text-gray-800 mb-2 tracking-wide">Already Logged In</h2>
+                            <p class="text-gray-500 mb-8 text-[14px] leading-relaxed">
+                                You are currently logged in as <br><strong class="text-slate-700">${user.email}</strong>.<br><br>Would you like to log out?
+                            </p>
+                            <div class="flex flex-col gap-3 w-full">
+                                <button id="btn-confirm-logout" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-full transition shadow-md text-sm">
+                                    Yes, Log Out
+                                </button>
+                                <button id="btn-cancel-logout" class="w-full bg-white text-slate-500 hover:bg-slate-50 border border-slate-200 font-bold py-3 rounded-full transition text-sm">
+                                    Stay Logged In
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', logoutModalHTML);
+                
+                const promptModal = document.getElementById('logout-prompt-modal');
+                
+                document.getElementById('btn-cancel-logout').addEventListener('click', () => {
+                    promptModal.remove();
+                });
+                
+                document.getElementById('btn-confirm-logout').addEventListener('click', async () => {
+                    document.getElementById('btn-confirm-logout').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Logging out...';
                     await supabase.auth.signOut();
-                    alert("You have been successfully logged out!");
-                }
-                // If they click Cancel, they just stay logged in
+                    
+                    promptModal.querySelector('.p-8').innerHTML = `
+                         <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                             <i class="fa-solid fa-info text-2xl text-blue-600"></i>
+                         </div>
+                         <h2 class="text-xl font-bold text-gray-800 mb-2">Logged Out</h2>
+                         <p class="text-gray-500 text-[14px]">You have been successfully logged out.</p>
+                    `;
+                    setTimeout(() => window.location.reload(), 1500);
+                });
+                
                 return;
             }
 
@@ -278,9 +319,28 @@ function initClientLogin() {
             // Note: If Supabase requires email confirmation, login will fail with an error
             // "Email not confirmed". We handle that below.
             
-            alert("Login successful!");
-            closeModal();
-            window.location.href = basePath + 'venues.html';
+            // Show custom success modal
+            const successHTML = `
+            <div id="login-success-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300">
+                <div class="bg-white p-10 rounded-xl shadow-2xl flex flex-col items-center max-w-sm w-[90%] text-center relative border-t-8 border-[#00c853]">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                        <i class="fa-solid fa-check text-3xl text-[#00c853]"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2 tracking-wide">Welcome Back!</h2>
+                    <p class="text-gray-500 mb-8 text-[14px]">You have successfully logged in.</p>
+                    <button id="login-success-btn" class="w-full bg-[#00c853] hover:bg-green-600 text-white font-bold py-3.5 rounded-full transition shadow-md uppercase tracking-wide text-sm">
+                        Continue to Portal
+                    </button>
+                </div>
+            </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', successHTML);
+            
+            document.getElementById('login-success-btn').addEventListener('click', () => {
+                document.getElementById('login-success-modal').remove();
+                closeModal();
+                window.location.href = basePath + 'venues.html';
+            });
             
         } catch (error) {
             console.error(error);

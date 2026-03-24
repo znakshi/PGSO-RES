@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Reservations - PGSO-RES</title>
+    <title>Archive - PGSO-RES</title>
     <link rel="icon" type="image/png" href="pgso.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
@@ -41,8 +41,8 @@
     <main class="max-w-6xl mx-auto px-6 py-12 min-h-[70vh]">
         <div class="flex flex-col md:flex-row justify-between items-end mb-8 border-b border-gray-200 pb-4">
             <div>
-                <h2 class="text-3xl font-bold text-slate-900 tracking-tight">My Reservations</h2>
-                <p class="text-slate-500 mt-2 text-sm">Manage your venue bookings, edit details, or safely cancel pending requests.</p>
+                <h2 class="text-3xl font-bold text-slate-900 tracking-tight">Archive</h2>
+                <p class="text-slate-500 mt-2 text-sm">View your cancelled or rejected reservation requests.</p>
             </div>
             <div class="mt-4 md:mt-0">
                 <a href="venues.html" class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2.5 rounded-lg text-sm font-bold uppercase tracking-widest shadow-md transition flex items-center gap-2">
@@ -61,8 +61,8 @@
             <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 text-4xl mb-4">
                 <i class="fa-solid fa-calendar-xmark"></i>
             </div>
-            <h3 class="text-xl font-bold text-slate-700 mb-2">No Reservations Found</h3>
-            <p class="text-slate-500 max-w-sm mb-6">You haven't made any venue bookings yet. Explore our facilities and start planning your next event!</p>
+            <h3 class="text-xl font-bold text-slate-700 mb-2">No Archived Reservations</h3>
+            <p class="text-slate-500 max-w-sm mb-6">You have no cancelled or rejected reservation requests.</p>
             <a href="venues.html" class="text-blue-700 font-bold hover:underline">Explore Venues &rarr;</a>
         </div>
 
@@ -98,11 +98,11 @@
                         <i class="fa-solid fa-house w-5 text-center text-lg"></i>
                         Home
                     </a>
-                    <a href="client-reservations.html" class="flex items-center gap-4 px-4 py-3 rounded-xl bg-white text-slate-900 font-bold transition shadow-sm text-[13px]">
+                    <a href="client-reservations.html" class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition font-medium text-[13px]">
                         <i class="fa-regular fa-calendar-check w-5 text-center text-lg"></i>
                         My Reservations
                     </a>
-                    <a href="client-archive.html" class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition font-medium text-[13px]">
+                    <a href="client-archive.html" class="flex items-center gap-4 px-4 py-3 rounded-xl bg-white text-slate-900 font-bold transition shadow-sm text-[13px]">
                         <i class="fa-solid fa-box-archive w-5 text-center text-lg"></i>
                         Archive
                     </a>
@@ -235,12 +235,10 @@
 
                     if (error) throw error;
 
-                    // Filter by user email (case-insensitive to prevent mismatch bugs)
-                    const userEmail = session.user.email.toLowerCase();
                     const myReservations = allRes.filter(r => {
                         const isUser = r.contact && r.contact.email && r.contact.email.toLowerCase() === userEmail;
                         const status = r.status ? r.status.toLowerCase() : '';
-                        return isUser && (status === 'pending' || status === 'approved' || status === 'accepted');
+                        return isUser && (status === 'cancelled' || status === 'rejected');
                     });
 
                     document.getElementById('loading-spinner').classList.add('hidden');
@@ -292,16 +290,7 @@
                                     </div>
                                 </div>
                                 <div class="flex md:flex-col gap-3 w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-gray-100 md:pl-6 justify-center">
-                                    ${isPending ? `
-                                        <button class="edit-btn flex-1 md:flex-none justify-center bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition" data-id="${res.id}">
-                                            <i class="fa-solid fa-pen-to-square"></i> Edit
-                                        </button>
-                                        <button class="cancel-btn flex-1 md:flex-none justify-center bg-white text-red-600 hover:bg-red-50 hover:text-red-700 border border-red-200 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition" data-id="${res.id}">
-                                            <i class="fa-solid fa-ban"></i> Cancel
-                                        </button>
-                                    ` : `
-                                        <p class="text-xs text-slate-400 text-center max-w-[120px] font-medium leading-relaxed">Modifications disabled for ${res.status} reservations</p>
-                                    `}
+                                    <p class="text-[11px] text-slate-400 text-center max-w-[120px] font-bold uppercase tracking-widest leading-relaxed">Archived Record</p>
                                 </div>
                             `;
                             container.appendChild(card);
