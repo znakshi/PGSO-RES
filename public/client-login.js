@@ -11,19 +11,21 @@ function initClientLogin() {
     if (hashParams.has('access_token') || hashParams.has('type') || urlParams.has('code')) {
         // Prevent showing it multiple times
         if (!sessionStorage.getItem('email_confirmed_shown')) {
+            // Immediately sign out in the background to prevent auto-login
+            setTimeout(() => supabase.auth.signOut(), 500);
+
             const confirmSuccessHTML = `
             <div id="email-confirmed-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300">
                 <div class="bg-white p-10 rounded-lg shadow-2xl flex flex-col items-center max-w-md w-[90%] text-center relative transform scale-100 transition-transform duration-300">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-4 tracking-wide">Congratulations!</h2>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4 tracking-wide">Verified!</h2>
                     <p class="text-gray-600 mb-8 text-[15px] leading-relaxed">
-                        Your email has been successfully confirmed. You can now proceed to the application.
+                        Your email has been successfully verified. You can now log in to your new account.
                     </p>
                     <div class="w-20 h-20 bg-[#00c853] rounded-full flex items-center justify-center mb-8 shadow-lg shadow-green-500/30">
                         <i class="fa-solid fa-check text-4xl text-white"></i>
                     </div>
-                    <p class="text-xs text-gray-400 mb-6">NOTE: You are now fully verified.</p>
-                    <button id="close-confirmed-btn" class="w-full bg-[#00c853] hover:bg-green-600 text-white font-bold py-3 rounded-sm transition shadow border-none uppercase tracking-wide">
-                        Continue
+                    <button id="email-verified-login-btn" class="w-full bg-[#00c853] hover:bg-green-600 text-white font-bold py-3 rounded-sm transition shadow border-none uppercase tracking-wide">
+                        Login Now
                     </button>
                 </div>
             </div>
@@ -31,13 +33,22 @@ function initClientLogin() {
             document.body.insertAdjacentHTML('beforeend', confirmSuccessHTML);
             sessionStorage.setItem('email_confirmed_shown', 'true');
             
-            document.getElementById('close-confirmed-btn').addEventListener('click', () => {
+            document.getElementById('email-verified-login-btn').addEventListener('click', async () => {
+                // Ensure session is wiped before they log in manually
+                await supabase.auth.signOut();
+                
                 const m = document.getElementById('email-confirmed-modal');
                 m.classList.add('opacity-0');
                 setTimeout(() => {
                     m.remove();
-                    // Optional: remove hash/query params smoothly
+                    // Clean URL
                     window.history.replaceState(null, document.title, window.location.pathname);
+                    
+                    // Automatically open the login modal for them
+                    const loginBtn = document.querySelector('.open-client-login');
+                    if (loginBtn) {
+                        loginBtn.click();
+                    }
                 }, 300);
             });
         }
