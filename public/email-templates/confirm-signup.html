@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f3f4f6;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrapper {
+      width: 100%;
+      background-color: #f3f4f6;
+      padding: 40px 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    .header {
+      background-color: #1f2937; /* Dark slate matching typical dashboards */
+      padding: 30px;
+      text-align: center;
+      color: #ffffff;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+    .content {
+      padding: 40px;
+      color: #374151;
+      line-height: 1.6;
+      font-size: 16px;
+    }
+    .content h2 {
+      color: #111827;
+      font-size: 20px;
+      margin-top: 0;
+      font-weight: 600;
+    }
+    .button-container {
+      text-align: center;
+      margin: 35px 0;
+    }
+    .button {
+      background-color: #2563eb; /* Primary blue */
+      color: #ffffff !important;
+      padding: 14px 32px;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 16px;
+      display: inline-block;
+      box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+    }
+    .button:hover {
+      background-color: #1d4ed8;
+    }
+    .link-fallback {
+      background-color: #f9fafb;
+      padding: 16px;
+      border-radius: 6px;
+      word-break: break-all;
+      font-size: 14px;
+      border: 1px solid #e5e7eb;
+    }
+    .link {
+      color: #2563eb;
+      text-decoration: none;
+    }
+    .link:hover {
+      text-decoration: underline;
+    }
+    .footer {
+      background-color: #f9fafb;
+      padding: 24px 40px;
+      text-align: center;
+      font-size: 13px;
+      color: #6b7280;
+      border-top: 1px solid #e5e7eb;
+    }
+    .footer p {
+      margin: 0;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="container">
+      
+      <!-- HEADER -->
+      <div class="header">
+        <h1>PGSO Reservations</h1>
+      </div>
+
+      <!-- MAIN CONTENT -->
+      <div class="content">
+        <h2>Confirm your signup</h2>
+        <p>Hello,</p>
+        <p>Thank you for signing up for the PGSO Reservation System! We're thrilled to have you. Please confirm your email address to activate your account and start booking your reservations.</p>
+        
+        <div class="button-container">
+          <!-- Supabase will automatically inject the ConfirmationURL here -->
+          <a href="{{ .ConfirmationURL }}" class="button">Confirm Email Address</a>
+        </div>
+        
+        <p style="font-size: 14px; margin-bottom: 8px;">If the button doesn't work, you can copy and paste this link into your browser:</p>
+        <div class="link-fallback">
+          <a href="{{ .ConfirmationURL }}" class="link">{{ .ConfirmationURL }}</a>
+        </div>
+        
+        <p style="margin-top: 30px; margin-bottom: 0;">Best regards,<br>The PGSO Team</p>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="footer">
+        <p>You received this email because you recently created a new PGSO-RES account. If this wasn't you, please ignore this email.</p>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

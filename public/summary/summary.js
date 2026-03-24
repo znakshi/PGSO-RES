@@ -4,7 +4,7 @@ import { supabase } from "../supabase-config.js";
     const formatCurrency = (amount) => '₱' + parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const safeText = (text) => (text && text !== "") ? text : "N/A";
 
-    window.returnHome = function() { window.location.href = '../index.html'; }
+    window.returnHome = function() { window.location.href = '../venues.html'; }
     
     // --- RULES POPUP LOGIC ---
     window.openRules = function() {
@@ -35,7 +35,7 @@ import { supabase } from "../supabase-config.js";
         const data = JSON.parse(localStorage.getItem('pgsoReservationData'));
         if(!data) return window.location.href = '../index.html';
         const venueName = data.event.venue;
-        let backUrl = "../index.html";
+        let backUrl = "../venues.html";
         if (venueName.includes("Palispis")) backUrl = "../palispis-reservation/palispis-reservation.html";
         else if (venueName.includes("PCL")) backUrl = "../pcl-reservation/pcl-reservation.html";
         else if (venueName.includes("Gymnasium")) backUrl = "../gym-reservation/gym-reservation.html";
@@ -77,7 +77,7 @@ import { supabase } from "../supabase-config.js";
         const data = JSON.parse(localStorage.getItem('pgsoReservationData'));
         if (!data) {
             alert("No reservation data found. Redirecting to home.");
-            window.location.href = '../index.html';
+            window.location.href = '../venues.html';
             return;
         }
 
@@ -114,7 +114,7 @@ import { supabase } from "../supabase-config.js";
         document.getElementById('summary-total-amount').textContent = formatCurrency(data.pricing.grandTotal);
         
         const editLink = document.getElementById('edit-reservation-link');
-        let backUrl = "../index.html";
+        let backUrl = "../venues.html";
         if (data.event.venue.includes("Palispis")) backUrl = "../palispis-reservation/palispis-reservation.html";
         else if (data.event.venue.includes("PCL")) backUrl = "../pcl-reservation/pcl-reservation.html";
         else if (data.event.venue.includes("Gymnasium")) backUrl = "../gym-reservation/gym-reservation.html";

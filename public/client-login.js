@@ -2,7 +2,7 @@ import { supabase } from "./supabase-config.js";
 
 let basePath = window.location.pathname.includes('-reservation') ? '../' : '';
 
-document.addEventListener('DOMContentLoaded', () => {
+function initClientLogin() {
     if (document.getElementById('client-login-modal')) return;
 
     const modalHTML = `
@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             alert("Login successful!");
             closeModal();
-            // We should update the UI here (e.g. Change "Client Login" to "My Profile" or similar)
+            window.location.href = basePath + 'venues.html';
             
         } catch (error) {
             console.error(error);
@@ -306,4 +306,10 @@ document.addEventListener('DOMContentLoaded', () => {
             signupSubmitBtn.disabled = false;
         }
     });
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initClientLogin);
+} else {
+    initClientLogin();
+}
