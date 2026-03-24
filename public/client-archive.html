@@ -235,6 +235,7 @@
 
                     if (error) throw error;
 
+                    const userEmail = session.user.email.toLowerCase();
                     const myReservations = allRes.filter(r => {
                         const isUser = r.contact && r.contact.email && r.contact.email.toLowerCase() === userEmail;
                         const status = r.status ? r.status.toLowerCase() : '';
