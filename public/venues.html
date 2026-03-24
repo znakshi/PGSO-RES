@@ -4,196 +4,424 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PGSO Reservation System</title>
+    <title>Facilities & Reservations - PGSO-RES</title>
     <link rel="icon" type="image/png" href="pgso.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link rel="stylesheet" href="index.css">
+
+    <style>
+        .hero-bg {
+            background-image: url('provincial-gym.jpg');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.85);
+        }
+    </style>
 </head>
 
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-gray-50 text-slate-800 font-sans selection:bg-blue-100 selection:text-blue-900">
 
-    <nav class="bg-white border-b border-gray-200 py-4 px-6 flex justify-between items-center sticky top-0 z-50">
-        <div class="flex items-center gap-3">
-            <div class="text-3xl text-slate-600">
-                <img src="pgso.png" alt="PGSO Logo" class="w-12 h-12">
-            </div>
-            <div>
-                <h1 class="text-xl font-semibold tracking-tight text-gray-800">PGSO-RES</h1>
-                <p class="text-xs text-gray-500 font-light">Provincial General Services Offices</p>
+    <!-- Top Utility Bar -->
+    <div
+        class="bg-slate-900 text-slate-300 text-xs py-2 px-6 sm:px-12 flex flex-col sm:flex-row justify-between items-center border-b border-slate-800">
+        <div class="flex gap-4 mb-2 sm:mb-0">
+            <span class="flex items-center gap-2 text-slate-400"><i class="fa-solid fa-phone text-red-500"></i> Contact:
+                <span class="text-white">0912 345 6789</span></span>
+            <span class="flex items-center gap-2 text-slate-400"><i class="fa-regular fa-clock text-red-500"></i> Open
+                Hours: <span class="text-white">Mon - Fri 8:00 AM - 5:00 PM</span></span>
+        </div>
+        <div class="flex gap-4 font-medium uppercase tracking-wider">
+            <a href="index.html" class="hover:text-white transition-colors">Provincial Government</a>
+            <a href="#" class="hover:text-white transition-colors">Report an Issue</a>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav
+        class="bg-white py-4 px-6 sm:px-12 flex flex-col md:flex-row justify-between items-center shadow-sm sticky top-0 z-50">
+        <div class="flex items-center gap-4 mb-4 md:mb-0 cursor-pointer" onclick="window.location.href='index.html'">
+            <img src="pgso.png" alt="PGSO Logo" class="w-12 h-12 sm:w-14 sm:h-14 drop-shadow-sm">
+            <div class="border-l-2 border-slate-200 pl-4 py-1">
+                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">PGSO-RES</h1>
+                <p
+                    class="hidden sm:block text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest mt-0.5">
+                    Provincial General Services Office</p>
             </div>
         </div>
-        <div class="flex gap-2">
-            <button class="open-client-login bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 py-2 px-4 rounded font-medium transition text-sm shadow-sm">Client Login</button>
-            <button onclick="window.location.href='admin-login/admin-login.html'"
-                class="pgso-btn text-white py-2 px-4 rounded font-medium transition text-sm shadow-sm">Admin Login</button>
+
+        <div class="flex flex-wrap justify-center items-center gap-4 sm:gap-8 mt-4 md:mt-0">
+            <div class="flex flex-wrap justify-center gap-4 sm:gap-8 text-[11px] sm:text-[13px] font-bold text-slate-700 uppercase tracking-widest w-full sm:w-auto">
+                <a href="#services"
+                    class="hover:text-blue-700 transition-colors py-1 sm:py-2 border-b-2 border-transparent hover:border-blue-700">Services</a>
+                <a href="venues.html"
+                    class="text-blue-700 transition-colors py-1 sm:py-2 border-b-2 border-blue-700">Facilities</a>
+            </div>
+            <div id="auth-container" class="w-full sm:w-auto">
+                <button
+                    class="open-client-login bg-transparent border-2 border-blue-700 text-blue-700 hover:bg-blue-700 hover:text-white font-bold py-1.5 sm:py-2 px-4 sm:px-6 rounded-sm text-[11px] sm:text-[13px] uppercase tracking-widest transition-colors w-full h-full">
+                    <span id="user-display">Client Login</span>
+                </button>
+            </div>
         </div>
     </nav>
 
-    <main class="container mx-auto px-4 py-8 max-w-6xl">
-
-        <section class="pgso-blue text-white rounded-lg p-8 mb-12 shadow-lg">
-            <h2 class="text-3xl font-light mb-2">Welcome to PGSO Reservation System</h2>
-            <p class="text-slate-200 mb-8 font-light">Reserve our premier facilities for your events, conferences, and
-                gatherings.</p>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-slate-500 pt-6">
-                <div class="flex items-start gap-3">
-                    <i class="fa-solid fa-clipboard-list text-yellow-400 mt-1"></i>
-                    <div>
-                        <h4 class="font-semibold">Easy Booking</h4>
-                        <p class="text-sm text-slate-300">Simple online reservation process</p>
-                    </div>
-                </div>
-                <div class="flex items-start gap-3">
-                    <i class="fa-solid 	fas fa-money-check text-yellow-400 mt-1"></i>
-                    <div>
-                        <h4 class="font-semibold">Transparent Pricing</h4>
-                        <p class="text-sm text-slate-300">Official rates from Tax Ordinance 2023-321</p>
-                    </div>
-                </div>
-                <div class="flex items-start gap-3">
-                    <i class="fa-solid fa-lock text-yellow-400 mt-1"></i>
-                    <div>
-                        <h4 class="font-semibold">₱3,000 Security Deposit</h4>
-                        <p class="text-sm text-slate-300">Refundable after event completion</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <div class="text-center mb-10">
-            <h2 class="text-3xl font-bold text-gray-800 mb-2">Our Venues</h2>
-            <p class="text-gray-500">Choose from our 3 premier facilities</p>
-            <p class="text-xs text-gray-400 mt-1">Gov. Ben Palispis Auditorium • Provincial Gymnasium • PCL Hall</p>
+    <!-- Detailed Hero Section for Venues -->
+    <section class="hero-bg min-h-[40vh] flex items-center justify-center py-16 px-4">
+        <div class="hero-overlay"></div>
+        <div class="max-w-4xl mx-auto text-center relative z-10 text-white">
+            <h2 class="text-xs md:text-sm font-bold uppercase tracking-[0.25em] mb-3 text-red-500 drop-shadow-md">
+                Make a Reservation</h2>
+            <h1 class="text-3xl md:text-5xl font-bold leading-tight mb-4 drop-shadow-xl text-white">
+                Our Facilities & Venues
+            </h1>
+            <p
+                class="text-base md:text-lg text-slate-300 font-light leading-relaxed max-w-2xl mx-auto drop-shadow-md">
+                Review availability, transparent pricing, and comprehensive amenities. Book our premier government spaces for your next significant event.
+            </p>
         </div>
+    </section>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <!-- Amenities highlight removed post-login -->
 
-            <div
-                class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-xl transition duration-300 flex flex-col">
-                <div class="h-48 overflow-hidden bg-gray-100">
-                    <img src="provincial-gym.jpg" alt="Provincial Gymnasium" class="w-full h-full object-cover">
-                </div>
-                <div class="p-6 flex-1 flex flex-col">
-                    <h3 class="font-bold text-lg mb-2">Provincial Gymnasium</h3>
-                    <p class="text-sm text-gray-500 mb-4">Open gym facility available from 6:00 AM to 5:00 PM. Perfect
-                        for sports events and large gatherings.</p>
-
-                    <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
-                        <i class="fa-solid fa-users"></i> Capacity: 500 people
-                    </div>
-
-                    <div class="mb-4">
-                        <p class="text-xs text-gray-400 mb-2">Recommended for:</p>
-                        <div class="flex flex-wrap gap-2">
-                            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded font-semibold">Sports
-                                Event</span>
-                            <span
-                                class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded font-semibold">Exhibition</span>
-                            <span
-                                class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded font-semibold">Tournament</span>
-                        </div>
-                    </div>
-
-                    <div class="mt-auto">
-                        <div class="mb-4">
-                            <p class="text-xl font-bold text-gray-800">₱1,500</p>
-                            <p class="text-xs text-gray-500">4 hours and below</p>
-                            <p class="text-xs text-gray-400 mt-1">₱2,500 for 8 hours</p>
-                        </div>
-                        <button onclick="window.location.href='gym-reservation/gym-reservation.html'"
-                            class="w-full pgso-btn text-white py-2 rounded font-medium transition">Reserve This
-                            Venue</button>
-                    </div>
-                </div>
+    <!-- Main Venues Section -->
+    <section class="py-24 bg-slate-50 relative">
+        <div class="max-w-6xl mx-auto px-6 relative z-10">
+            <div class="text-center mb-16">
+                <h2
+                    class="text-sm font-bold text-red-600 uppercase tracking-widest mb-3 flex items-center justify-center gap-2">
+                    <div class="w-8 h-0.5 bg-red-600 rounded"></div> Booking Open <div
+                        class="w-8 h-0.5 bg-red-600 rounded"></div>
+                </h2>
+                <h3 class="text-3xl md:text-4xl font-bold text-slate-900">Select a Venue Below</h3>
             </div>
 
-            <div
-                class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-xl transition duration-300 flex flex-col">
-                <div class="h-48 overflow-hidden bg-gray-100">
-                    <img src="palispis.png" alt="Gov. Ben Palispis Auditorium" class="w-full h-full object-cover">
-                </div>
-                <div class="p-6 flex-1 flex flex-col">
-                    <h3 class="font-bold text-lg mb-2">Gov. Ben Palispis Auditorium</h3>
-                    <p class="text-sm text-gray-500 mb-4">Premier auditorium for conferences, seminars, and grand
-                        events. Includes 4 tables and 250 chairs (max).</p>
-
-                    <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
-                        <i class="fa-solid fa-users"></i> Capacity: 250 people
-                    </div>
-
-                    <div class="mb-4">
-                        <p class="text-xs text-gray-400 mb-2">Recommended for:</p>
-                        <div class="flex flex-wrap gap-2">
-                            <span
-                                class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded font-semibold">Conference</span>
-                            <span
-                                class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded font-semibold">Seminar</span>
-                            <span
-                                class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded font-semibold">Workshop</span>
+            <!-- VENUE CARDS -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                <!-- Provincial Gymnasium -->
+                <div class="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group relative">
+                    <div class="h-56 relative overflow-hidden">
+                        <img src="provincial-gym.jpg" alt="Provincial Gymnasium" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80"></div>
+                        <div class="absolute bottom-4 left-4 text-white">
+                            <span class="bg-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-sm inline-block mb-1">Sports & Events</span>
+                            <h3 class="font-bold text-xl drop-shadow-md">Provincial Gymnasium</h3>
                         </div>
                     </div>
-
-                    <div class="mt-auto">
-                        <div class="mb-4">
-                            <p class="text-xl font-bold text-gray-800">₱1,500</p>
-                            <p class="text-xs text-gray-500">4 hours and below</p>
-                            <p class="text-xs text-gray-400 mt-1">₱3,000 for 8 hours</p>
+                    
+                    <div class="p-8 flex-1 flex flex-col items-center text-center">
+                        <p class="text-sm text-slate-500 mb-6 font-light leading-relaxed">
+                            Open gym facility available from 6:00 AM to 5:00 PM. Perfect for sports events, tournaments, and large gatherings.
+                        </p>
+                        
+                        <div class="flex items-center gap-2 text-sm text-slate-700 font-semibold mb-6 uppercase tracking-wider bg-gray-50 px-4 py-2 rounded-lg border border-gray-100 w-full justify-center">
+                            <i class="fa-solid fa-users text-blue-700"></i> Max Capacity: 500
                         </div>
-                        <button onclick="window.location.href='palispis-reservation/palispis-reservation.html'"
-                            class="w-full pgso-btn text-white py-2 rounded font-medium transition">Reserve This
-                            Venue</button>
+
+                        <div class="mt-auto w-full pt-6 border-t border-gray-100">
+                            <div class="mb-6">
+                                <span class="text-3xl font-bold text-slate-900 tracking-tight">₱1,500</span>
+                                <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider block mt-1">First 4 Hours</span>
+                                <span class="text-[11px] text-slate-400 font-medium block mt-1">+ ₱2,500 for full 8 hours</span>
+                            </div>
+                            
+                            <button onclick="window.location.href='gym-reservation/gym-reservation.html'"
+                                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-6 rounded-sm text-[13px] uppercase tracking-widest transition-colors shadow-md">
+                                Reserve This Venue
+                            </button>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Palispis Auditorium -->
+                <div class="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group relative">
+                    <div class="h-56 relative overflow-hidden">
+                        <img src="palispis.png" alt="Gov. Ben Palispis Auditorium" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80"></div>
+                        <div class="absolute bottom-4 left-4 text-white">
+                            <span class="bg-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-sm inline-block mb-1">Seminars & Talks</span>
+                            <h3 class="font-bold text-xl drop-shadow-md">Ben Palispis Auditorium</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="p-8 flex-1 flex flex-col items-center text-center">
+                        <p class="text-sm text-slate-500 mb-6 font-light leading-relaxed">
+                            Premier auditorium for conferences, seminars, and grand events. Seating provisions optimized for professional focus.
+                        </p>
+                        
+                        <div class="flex items-center gap-2 text-sm text-slate-700 font-semibold mb-6 uppercase tracking-wider bg-gray-50 px-4 py-2 rounded-lg border border-gray-100 w-full justify-center">
+                            <i class="fa-solid fa-users text-blue-700"></i> Max Capacity: 250
+                        </div>
+
+                        <div class="mt-auto w-full pt-6 border-t border-gray-100">
+                            <div class="mb-6">
+                                <span class="text-3xl font-bold text-slate-900 tracking-tight">₱1,500</span>
+                                <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider block mt-1">First 4 Hours</span>
+                                <span class="text-[11px] text-slate-400 font-medium block mt-1">+ ₱3,000 for full 8 hours</span>
+                            </div>
+                            
+                            <button onclick="window.location.href='palispis-reservation/palispis-reservation.html'"
+                                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-6 rounded-sm text-[13px] uppercase tracking-widest transition-colors shadow-md">
+                                Reserve This Venue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PCL Hall -->
+                <div class="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group relative">
+                    <div class="h-56 relative overflow-hidden">
+                        <img src="pcl-hall.png" alt="PCL Hall" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80"></div>
+                        <div class="absolute bottom-4 left-4 text-white">
+                            <span class="bg-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-sm inline-block mb-1">Meetings & Workshops</span>
+                            <h3 class="font-bold text-xl drop-shadow-md">PCL Hall (3rd Floor)</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="p-8 flex-1 flex flex-col items-center text-center">
+                        <p class="text-sm text-slate-500 mb-6 font-light leading-relaxed">
+                            Ideal for focused meetings and workshops taking place on the 3rd floor. Includes built-in sound system and projector.
+                        </p>
+                        
+                        <div class="flex items-center gap-2 text-sm text-slate-700 font-semibold mb-6 uppercase tracking-wider bg-gray-50 px-4 py-2 rounded-lg border border-gray-100 w-full justify-center">
+                            <i class="fa-solid fa-users text-blue-700"></i> Max Capacity: 100
+                        </div>
+
+                        <div class="mt-auto w-full pt-6 border-t border-gray-100">
+                            <div class="mb-6">
+                                <span class="text-3xl font-bold text-slate-900 tracking-tight">₱4,000</span>
+                                <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider block mt-1">Fixed Daily Rate</span>
+                                <span class="text-[11px] text-slate-400 font-medium block mt-1">A/V Equipment Included</span>
+                            </div>
+                            
+                            <button onclick="window.location.href='pcl-reservation/pcl-reservation.html'"
+                                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-6 rounded-sm text-[13px] uppercase tracking-widest transition-colors shadow-md">
+                                Reserve This Venue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-
-            <div
-                class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-xl transition duration-300 flex flex-col">
-                <div class="h-48 overflow-hidden bg-gray-100">
-                    <img src="pcl-hall.png" alt="PCL Hall" class="w-full h-full object-cover">
-                </div>
-                <div class="p-6 flex-1 flex flex-col">
-                    <h3 class="font-bold text-lg mb-2">PCL Hall (3rd Floor)</h3>
-                    <p class="text-sm text-gray-500 mb-4">Ideal for meetings and workshops. Includes sound system and
-                        projector.</p>
-
-                    <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
-                        <i class="fa-solid fa-users"></i> Capacity: 100 people
-                    </div>
-
-                    <div class="mb-4">
-                        <p class="text-xs text-gray-400 mb-2">Recommended for:</p>
-                        <div class="flex flex-wrap gap-2">
-                            <span
-                                class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded font-semibold">Meeting</span>
-                            <span
-                                class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded font-semibold">Workshop</span>
-                            <span
-                                class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded font-semibold">Training</span>
-                        </div>
-                    </div>
-
-                    <div class="mt-auto">
-                        <div class="mb-4">
-                            <p class="text-xl font-bold text-gray-800">₱4,000</p>
-                            <p class="text-xs text-gray-500">Per day (Sound system and projector)</p>
-                            <p class="text-xs text-transparent mt-1">.</p>
-                        </div>
-                        <button onclick="window.location.href='pcl-reservation/pcl-reservation.html'"
-                            class="w-full pgso-btn text-white py-2 rounded font-medium transition">Reserve This
-                            Venue</button>
-                    </div>
-                </div>
-            </div>
-
         </div>
-    </main>
+    </section>
 
-    <footer class="text-center py-8 text-gray-400 text-sm">
-        &copy; 2025 Provincial General Services Office. All rights reserved.
+    <!-- What We Do / Offers Section -->
+    <section id="services" class="py-24 bg-white border-t border-gray-100 relative">
+        <div class="max-w-6xl mx-auto px-6 relative z-10">
+            <div class="text-center mb-16">
+                <h2
+                    class="text-sm font-bold text-red-600 uppercase tracking-widest mb-3 flex items-center justify-center gap-2">
+                    <div class="w-8 h-0.5 bg-red-600 rounded"></div> Our Services <div
+                        class="w-8 h-0.5 bg-red-600 rounded"></div>
+                </h2>
+                <h3 class="text-3xl md:text-4xl font-bold text-slate-900">What We Offer</h3>
+                <p class="mt-4 text-slate-500 max-w-2xl mx-auto">Providing regulated, high-quality spaces equipped to
+                    handle events of any scale, driven by excellence and transparency in government service.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <!-- Service 1 -->
+                <div
+                    class="bg-gray-50 rounded-xl p-8 hover:bg-white hover:shadow-xl transition-all duration-300 border border-transparent hover:border-gray-200 group">
+                    <div
+                        class="w-14 h-14 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center text-2xl mb-6 shadow-sm group-hover:bg-blue-700 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-building"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-900 mb-3">Facility Reservations</h4>
+                    <p class="text-slate-600 leading-relaxed text-sm">
+                        Access our three top-tier venues: the Provincial Gymnasium, Gov. Ben Palispis Auditorium, and
+                        the PCL Hall. Ideal for everything from sprawling sports events to corporate seminars.
+                    </p>
+                </div>
+
+                <!-- Service 2 -->
+                <div
+                    class="bg-gray-50 rounded-xl p-8 hover:bg-white hover:shadow-xl transition-all duration-300 border border-transparent hover:border-gray-200 group">
+                    <div
+                        class="w-14 h-14 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center text-2xl mb-6 shadow-sm group-hover:bg-blue-700 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-chair"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-900 mb-3">Equipment Rentals</h4>
+                    <p class="text-slate-600 leading-relaxed text-sm">
+                        Need more chairs, tables, or a specialized sound system? We offer comprehensive equipment
+                        rentals directly from the provincial office, added seamlessly to your reservation.
+                    </p>
+                </div>
+
+                <!-- Service 3 -->
+                <div
+                    class="bg-gray-50 rounded-xl p-8 hover:bg-white hover:shadow-xl transition-all duration-300 border border-transparent hover:border-gray-200 group">
+                    <div
+                        class="w-14 h-14 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center text-2xl mb-6 shadow-sm group-hover:bg-blue-700 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-900 mb-3">Transparent & Secure</h4>
+                    <p class="text-slate-600 leading-relaxed text-sm">
+                        Our pricing is completely transparent, backed by official tax ordinances. Your payments and
+                        security deposits are handled efficiently from quotation to refund.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact" class="bg-slate-900 py-16 text-center text-slate-400 border-t border-slate-800">
+        <div class="max-w-6xl mx-auto px-6 flex flex-col items-center">
+            <div class="flex items-center gap-4 mb-6 grayscale opacity-80">
+                <img src="pgso.png" alt="PGSO" class="w-10 h-10">
+                <span class="text-white font-bold tracking-widest uppercase text-xl">PGSO-RES</span>
+            </div>
+            <p class="text-sm font-light max-w-md mx-auto mb-6 text-slate-400">
+                Official Reservation System for the Provincial General Services Office.
+            </p>
+            <div class="flex gap-6 text-xl mb-8">
+                <a href="#" class="hover:text-white transition-colors"><i class="fa-brands fa-facebook"></i></a>
+                <a href="#" class="hover:text-white transition-colors"><i class="fa-solid fa-envelope"></i></a>
+            </div>
+            <p class="text-[13px] font-semibold tracking-wider uppercase text-slate-500">
+                &copy; 2025 Provincial General Services Office. All rights reserved.
+            </p>
+        </div>
     </footer>
 
+    <!-- Profile Sidebar (Hidden by default) -->
+    <div id="sidebar-backdrop" class="fixed inset-0 bg-black/50 z-[100] hidden transition-opacity opacity-0 duration-300"></div>
+    <div id="profile-sidebar" class="fixed top-0 right-0 h-full w-72 bg-[#1C1F2D] text-slate-300 shadow-2xl z-[110] transform translate-x-full transition-transform duration-300 flex flex-col font-sans">
+        <!-- Close Button -->
+        <button id="close-sidebar" class="absolute top-5 right-5 text-slate-400 hover:text-white transition z-10 w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <!-- Brand/Logo Area -->
+        <div class="pt-8 pb-6 px-6 flex items-center gap-3">
+            <div class="w-10 h-10 bg-[#5453E0] rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                <i class="fa-solid fa-building-columns"></i>
+            </div>
+            <h2 class="text-xl font-bold text-white tracking-wide">PGSO-RES</h2>
+        </div>
+
+        <!-- Menu Items -->
+        <div class="flex-1 overflow-y-auto px-4 flex flex-col gap-6 scrollbar-hide pb-6">
+            
+            <!-- Main Menu Section -->
+            <div>
+                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 px-2">Main Menu</p>
+                <div class="flex flex-col gap-1">
+                    <a href="venues.html" class="flex items-center gap-4 px-4 py-3 rounded-xl bg-white text-slate-900 font-bold transition shadow-sm text-[13px]">
+                        <i class="fa-solid fa-house w-5 text-center text-lg"></i>
+                        Home
+                    </a>
+                    <a href="client-reservations.html" class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition font-medium text-[13px]">
+                        <i class="fa-regular fa-calendar-check w-5 text-center text-lg"></i>
+                        My Reservations
+                    </a>
+                </div>
+            </div>
+
+            <!-- Account Section -->
+            <div>
+                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 px-2">Account</p>
+                <div class="flex flex-col gap-1">
+                    <a href="profile.html" class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition font-medium text-[13px]">
+                        <i class="fa-regular fa-circle-user w-5 text-center text-lg"></i>
+                        Profile
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- Logout Action -->
+        <div class="px-4 pb-4">
+            <button id="sidebar-logout" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-[#F15B50] hover:bg-[#F15B50]/10 hover:text-[#F15B50] transition font-bold text-[13px]">
+                <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center text-lg"></i>
+                Log Out
+            </button>
+        </div>
+
+        <!-- User Profile Widget (Bottom) -->
+        <div class="p-6 bg-[#161824] border-t border-white/5">
+            <div class="flex items-center gap-3">
+                <div id="sidebar-avatar" class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-[#1C1F2D]">
+                    <span class="font-bold font-sans">U</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p id="sidebar-name" class="text-[13px] font-bold text-white truncate">Client Name</p>
+                    <p class="text-[11px] text-slate-500 truncate mt-0.5" id="sidebar-email">client@email.com</p> 
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Login Modal Script & Initialization -->
+    <script type="module">
+        import { supabase } from "./supabase-config.js";
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            const authContainer = document.getElementById('auth-container');
+            
+            if (session && session.user) {
+                // Elements
+                const sidebar = document.getElementById('profile-sidebar');
+                const backdrop = document.getElementById('sidebar-backdrop');
+                const closeBtn = document.getElementById('close-sidebar');
+                const logoutBtn = document.getElementById('sidebar-logout');
+                
+                // Determine user name
+                const fullName = session.user.user_metadata?.full_name || "Client";
+                const initial = fullName.charAt(0).toUpperCase();
+
+                // Replace Login Button with Profile Avatar
+                authContainer.innerHTML = `
+                    <button id="open-sidebar-btn" class="w-10 h-10 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold text-lg hover:bg-blue-800 transition shadow-md border-2 border-white cursor-pointer relative group">
+                        ${initial}
+                        <span class="absolute right-0 top-12 w-max bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Profile</span>
+                    </button>
+                `;
+
+                // Update Sidebar text
+                document.getElementById('sidebar-name').innerText = fullName;
+                document.getElementById('sidebar-email').innerText = session.user.email;
+                document.getElementById('sidebar-avatar').innerHTML = `<span class="font-bold font-sans">${initial}</span>`;
+
+                // Attach Events
+                const toggleSidebar = (show) => {
+                    if (show) {
+                        backdrop.classList.remove('hidden');
+                        void backdrop.offsetWidth; // trigger reflow
+                        backdrop.classList.remove('opacity-0');
+                        sidebar.classList.remove('translate-x-full');
+                    } else {
+                        backdrop.classList.add('opacity-0');
+                        sidebar.classList.add('translate-x-full');
+                        setTimeout(() => backdrop.classList.add('hidden'), 300);
+                    }
+                };
+
+                document.getElementById('open-sidebar-btn').addEventListener('click', () => toggleSidebar(true));
+                closeBtn.addEventListener('click', () => toggleSidebar(false));
+                backdrop.addEventListener('click', () => toggleSidebar(false));
+
+                // Logout logic
+                logoutBtn.addEventListener('click', async () => {
+                    logoutBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Logging out...';
+                    await supabase.auth.signOut();
+                    window.location.reload();
+                });
+            }
+        });
+    </script>
     <script type="module" src="client-login.js"></script>
 </body>
 

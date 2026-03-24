@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Settings - PGSO-RES</title>
+    <link rel="icon" type="image/png" href="pgso.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="index.css">
+    <style>
+        /* Custom styles for profile inputs */
+        .profile-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: #334155;
+            outline: none;
+            transition: all 0.2s;
+            background-color: #ffffff;
+        }
+
+        .profile-input:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .profile-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+
+        .required-star {
+            color: #ef4444;
+            margin-left: 0.25rem;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-slate-800 font-sans selection:bg-blue-100 selection:text-blue-900 flex flex-col min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="bg-white py-4 px-6 sm:px-12 flex flex-col md:flex-row justify-between items-center shadow-sm sticky top-0 z-50">
+        <div class="flex items-center gap-4 mb-4 md:mb-0 cursor-pointer" onclick="window.location.href='index.html'">
+            <img src="pgso.png" alt="PGSO Logo" class="w-12 h-12 sm:w-14 sm:h-14 drop-shadow-sm">
+            <div class="border-l-2 border-slate-200 pl-4 py-1">
+                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">PGSO-RES</h1>
+                <p class="hidden sm:block text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest mt-0.5">
+                    Provincial General Services Office</p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap justify-center items-center gap-4 sm:gap-8 mt-4 md:mt-0">
+            <div class="flex flex-wrap justify-center gap-4 sm:gap-8 text-[11px] sm:text-[13px] font-bold text-slate-700 uppercase tracking-widest w-full sm:w-auto">
+                <a href="venues.html#services" class="hover:text-blue-700 transition-colors py-1 sm:py-2 border-b-2 border-transparent hover:border-blue-700">Services</a>
+                <a href="venues.html" class="text-blue-700 transition-colors py-1 sm:py-2 border-b-2 border-blue-700">Facilities</a>
+            </div>
+            <div id="auth-container" class="w-full sm:w-auto">
+                <button class="open-client-login bg-transparent border-2 border-blue-700 text-blue-700 hover:bg-blue-700 hover:text-white font-bold py-1.5 sm:py-2 px-4 sm:px-6 rounded-sm text-[11px] sm:text-[13px] uppercase tracking-widest transition-colors w-full h-full">
+                    <span id="user-display">Client Login</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-6 py-12 flex-1 w-full">
+        <div class="mb-8 border-b border-gray-200 pb-4">
+            <h2 class="text-3xl font-bold text-slate-900 tracking-tight">Profile Settings</h2>
+            <p class="text-slate-500 mt-2 text-sm">Manage your personal information, avatar, and security preferences.</p>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 pb-12">
+            <!-- Avatar Section -->
+            <div class="flex flex-col sm:flex-row items-center gap-6 mb-10 pb-10 border-b border-gray-100">
+                <div class="relative group cursor-pointer">
+                    <div class="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold" id="profile-avatar-display">
+                        <span id="profile-initial">U</span>
+                    </div>
+                    <button class="absolute bottom-0 right-0 w-8 h-8 bg-blue-700 text-white rounded-full flex items-center justify-center border-2 border-white shadow-sm hover:bg-blue-800 transition">
+                        <i class="fa-solid fa-camera text-xs"></i>
+                    </button>
+                </div>
+                <div class="flex flex-wrap gap-3 justify-center">
+                    <button class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-sm transition">Upload New</button>
+                    <button class="bg-gray-100 hover:bg-gray-200 text-slate-700 px-5 py-2.5 rounded-lg text-sm font-semibold transition">Delete avatar</button>
+                </div>
+            </div>
+
+            <!-- Profile Form -->
+            <form id="profile-form">
+                
+                <h3 class="text-lg font-bold text-slate-800 mb-6">Personal Information</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <!-- First Name -->
+                    <div>
+                        <label class="profile-label">First Name <span class="required-star">*</span></label>
+                        <input type="text" id="first-name" class="profile-input" placeholder="First name">
+                    </div>
+
+                    <!-- Last Name -->
+                    <div>
+                        <label class="profile-label">Last Name <span class="required-star">*</span></label>
+                        <input type="text" id="last-name" class="profile-input" placeholder="Last name">
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label class="profile-label">Email Address <span class="required-star">*</span></label>
+                        <input type="email" id="email" class="profile-input bg-gray-50 text-slate-500" placeholder="example@gmail.com" readonly title="Email cannot be changed directly">
+                    </div>
+
+                    <!-- Mobile Number -->
+                    <div>
+                        <label class="profile-label">Mobile Number <span class="required-star">*</span></label>
+                        <div class="flex rounded-lg border border-gray-200 overflow-hidden focus-within:border-blue-700 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                            <div class="bg-gray-50 px-3 flex items-center border-r border-gray-200 text-slate-500">
+                                <span class="text-sm font-medium">+63</span>
+                            </div>
+                            <input type="text" id="mobile" class="w-full px-3 py-3 text-sm text-slate-700 outline-none" placeholder="0912 345 6789">
+                        </div>
+                    </div>
+
+                    <!-- Gender & ID Row -->
+                    <div>
+                        <label class="profile-label">Gender</label>
+                        <div class="flex gap-4">
+                            <label class="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-lg py-3 cursor-pointer hover:bg-gray-50 transition peer-checked:border-blue-700">
+                                <input type="radio" name="gender" value="male" class="w-4 h-4 text-blue-600">
+                                <span class="text-sm font-medium text-slate-700">Male</span>
+                            </label>
+                            <label class="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-lg py-3 cursor-pointer hover:bg-gray-50 transition peer-checked:border-blue-700">
+                                <input type="radio" name="gender" value="female" class="w-4 h-4 text-blue-600">
+                                <span class="text-sm font-medium text-slate-700">Female</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="profile-label">Government ID Number</label>
+                        <input type="text" id="id-number" class="profile-input" placeholder="e.g. 1559 000 7788">
+                    </div>
+
+                    <!-- Tax Info -->
+                    <div>
+                        <label class="profile-label">Tax Identification Number</label>
+                        <input type="text" id="tin" class="profile-input" placeholder="000-000-000-000">
+                    </div>
+
+                    <div>
+                        <label class="profile-label">Tax Identification Country</label>
+                        <select class="profile-input appearance-none bg-white">
+                            <option value="PH">Philippines</option>
+                            <option value="US">United States</option>
+                            <option value="UK">United Kingdom</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Address spans full width -->
+                    <div class="md:col-span-2">
+                        <label class="profile-label">Residential Address</label>
+                        <textarea id="address" class="profile-input resize-y min-h-[100px]" placeholder="Enter your full residential address"></textarea>
+                    </div>
+                </div>
+
+                <hr class="border-gray-100 my-8">
+
+                <h3 class="text-lg font-bold text-slate-800 mb-6">Security & Password</h3>
+                <p class="text-sm text-slate-500 mb-6 font-light">Leave these fields blank if you do not wish to change your password.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                    <div class="md:col-span-2">
+                        <label class="profile-label">Current Password</label>
+                        <input type="password" id="current-password" class="profile-input max-w-md" placeholder="Enter current password">
+                    </div>
+                    <div>
+                        <label class="profile-label">New Password</label>
+                        <input type="password" id="new-password" class="profile-input" placeholder="Enter new password">
+                    </div>
+                    <div>
+                        <label class="profile-label">Confirm New Password</label>
+                        <input type="password" id="confirm-password" class="profile-input" placeholder="Confirm new password">
+                    </div>
+                </div>
+
+                <div>
+                    <button type="submit" id="save-btn" class="bg-blue-700 hover:bg-blue-800 text-white px-8 py-3.5 rounded-lg text-sm font-bold shadow-md transition w-full sm:w-auto flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                    </button>
+                    <p id="save-message" class="text-sm mt-3 hidden"></p>
+                </div>
+            </form>
+        </div>
+
+    </main>
+
+    <!-- Profile Sidebar (Hidden by default) -->
+    <div id="sidebar-backdrop" class="fixed inset-0 bg-black/50 z-[100] hidden transition-opacity opacity-0 duration-300"></div>
+    <div id="profile-sidebar" class="fixed top-0 right-0 h-full w-72 bg-[#1C1F2D] text-slate-300 shadow-2xl z-[110] transform translate-x-full transition-transform duration-300 flex flex-col font-sans">
+        <button id="close-sidebar" class="absolute top-5 right-5 text-slate-400 hover:text-white transition z-10 w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <!-- Brand/Logo Area -->
+        <div class="pt-8 pb-6 px-6 flex items-center gap-3">
+            <div class="w-10 h-10 bg-[#5453E0] rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                <i class="fa-solid fa-building-columns"></i>
+            </div>
+            <h2 class="text-xl font-bold text-white tracking-wide">PGSO-RES</h2>
+        </div>
+
+        <!-- Menu Items -->
+        <div class="flex-1 overflow-y-auto px-4 flex flex-col gap-6 scrollbar-hide pb-6">
+            
+            <!-- Main Menu Section -->
+            <div>
+                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 px-2">Main Menu</p>
+                <div class="flex flex-col gap-1">
+                    <a href="venues.html" class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition font-medium text-[13px]">
+                        <i class="fa-solid fa-house w-5 text-center text-lg"></i>
+                        Home
+                    </a>
+                    <a href="client-reservations.html" class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition font-medium text-[13px]">
+                        <i class="fa-regular fa-calendar-check w-5 text-center text-lg"></i>
+                        My Reservations
+                    </a>
+                </div>
+            </div>
+
+            <!-- Account Section -->
+            <div>
+                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 px-2">Account</p>
+                <div class="flex flex-col gap-1">
+                    <a href="profile.html" class="flex items-center gap-4 px-4 py-3 rounded-xl bg-white text-slate-900 font-bold transition shadow-sm text-[13px]">
+                        <i class="fa-regular fa-circle-user w-5 text-center text-lg"></i>
+                        Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logout Action -->
+        <div class="px-4 pb-4">
+            <button id="sidebar-logout" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-[#F15B50] hover:bg-[#F15B50]/10 hover:text-[#F15B50] transition font-bold text-[13px]">
+                <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center text-lg"></i>
+                Log Out
+            </button>
+        </div>
+
+        <!-- User Profile Widget (Bottom) -->
+        <div class="p-6 bg-[#161824] border-t border-white/5">
+            <div class="flex items-center gap-3">
+                <div id="sidebar-avatar" class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-[#1C1F2D]">
+                    <span class="font-bold font-sans">U</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p id="sidebar-name" class="text-[13px] font-bold text-white truncate">Client Name</p>
+                    <p class="text-[11px] text-slate-500 truncate mt-0.5" id="sidebar-email">client@email.com</p> 
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer id="contact" class="bg-slate-900 py-16 text-center text-slate-400 border-t border-slate-800 mt-auto">
+        <div class="max-w-6xl mx-auto px-6 flex flex-col items-center">
+            <div class="flex items-center gap-4 mb-6 grayscale opacity-80">
+                <img src="pgso.png" alt="PGSO" class="w-10 h-10">
+                <span class="text-white font-bold tracking-widest uppercase text-xl">PGSO-RES</span>
+            </div>
+            <p class="text-sm font-light max-w-md mx-auto mb-6 text-slate-400">
+                Official Reservation System for the Provincial General Services Office.
+            </p>
+            <div class="flex gap-6 text-xl mb-8">
+                <a href="#" class="hover:text-white transition-colors"><i class="fa-brands fa-facebook"></i></a>
+                <a href="#" class="hover:text-white transition-colors"><i class="fa-solid fa-envelope"></i></a>
+            </div>
+            <p class="text-[13px] font-semibold tracking-wider uppercase text-slate-500">
+                &copy; 2025 Provincial General Services Office. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Client Script -->
+    <script type="module">
+        import { supabase } from "./supabase-config.js";
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            const authContainer = document.getElementById('auth-container');
+            
+            if (!session || !session.user) {
+                // If not logged in, they shouldn't be here
+                window.location.href = 'venues.html';
+                return;
+            }
+
+            // === Sidebar & UI Setup ===
+            const sidebar = document.getElementById('profile-sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const closeBtn = document.getElementById('close-sidebar');
+            const logoutBtn = document.getElementById('sidebar-logout');
+            
+            const fullName = session.user.user_metadata?.full_name || "Client";
+            const initial = fullName.charAt(0).toUpperCase();
+
+            authContainer.innerHTML = `
+                <button id="open-sidebar-btn" class="w-10 h-10 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold text-lg hover:bg-blue-800 transition shadow-md border-2 border-white cursor-pointer relative group">
+                    ${initial}
+                    <span class="absolute right-0 top-12 w-max bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Profile</span>
+                </button>
+            `;
+
+            document.getElementById('sidebar-name').innerText = fullName;
+            document.getElementById('sidebar-email').innerText = session.user.email;
+            document.getElementById('sidebar-avatar').innerHTML = `<span class="font-bold font-sans">${initial}</span>`;
+            document.getElementById('profile-initial').innerText = initial;
+            document.getElementById('email').value = session.user.email;
+            
+            // split name simply if available
+            if(fullName) {
+                const parts = fullName.split(' ');
+                document.getElementById('first-name').value = parts[0] || '';
+                if(parts.length > 1) {
+                    document.getElementById('last-name').value = parts.slice(1).join(' ');
+                }
+            }
+
+            const toggleSidebar = (show) => {
+                if (show) {
+                    backdrop.classList.remove('hidden');
+                    void backdrop.offsetWidth; 
+                    backdrop.classList.remove('opacity-0');
+                    sidebar.classList.remove('translate-x-full');
+                } else {
+                    backdrop.classList.add('opacity-0');
+                    sidebar.classList.add('translate-x-full');
+                    setTimeout(() => backdrop.classList.add('hidden'), 300);
+                }
+            };
+
+            document.getElementById('open-sidebar-btn').addEventListener('click', () => toggleSidebar(true));
+            closeBtn.addEventListener('click', () => toggleSidebar(false));
+            backdrop.addEventListener('click', () => toggleSidebar(false));
+
+            logoutBtn.addEventListener('click', async () => {
+                logoutBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Logging out...';
+                await supabase.auth.signOut();
+                window.location.href = 'venues.html';
+            });
+            
+            // Profile Form Handling
+            document.getElementById('profile-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const saveBtn = document.getElementById('save-btn');
+                const msg = document.getElementById('save-message');
+                const originalHtml = saveBtn.innerHTML;
+                
+                saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+                saveBtn.disabled = true;
+                msg.classList.add('hidden');
+                
+                // Collect basic info
+                const fName = document.getElementById('first-name').value;
+                const lName = document.getElementById('last-name').value;
+                const newPass = document.getElementById('new-password').value;
+                const confPass = document.getElementById('confirm-password').value;
+                
+                const updatedName = fName + (lName ? ' ' + lName : '');
+                
+                let updates = {
+                    data: { full_name: updatedName }
+                };
+                
+                if (newPass) {
+                    if (newPass !== confPass) {
+                        msg.innerText = "Passwords do not match.";
+                        msg.className = "text-sm mt-3 text-red-600 block";
+                        saveBtn.innerHTML = originalHtml;
+                        saveBtn.disabled = false;
+                        return;
+                    }
+                    updates.password = newPass;
+                }
+
+                try {
+                    const { data, error } = await supabase.auth.updateUser(updates);
+                    
+                    if (error) throw error;
+                    
+                    msg.innerText = "Profile updated successfully!";
+                    msg.className = "text-sm mt-3 text-green-600 block";
+                    
+                    if(newPass) {
+                        document.getElementById('current-password').value = '';
+                        document.getElementById('new-password').value = '';
+                        document.getElementById('confirm-password').value = '';
+                    }
+
+                    // Update sidebar immediately
+                    const newFullName = data.user.user_metadata?.full_name || updatedName;
+                     document.getElementById('sidebar-name').innerText = newFullName;
+                    const newInitial = newFullName.charAt(0).toUpperCase();
+                     document.getElementById('sidebar-avatar').innerHTML = `<span class="font-bold font-sans">${newInitial}</span>`;
+                     document.getElementById('profile-initial').innerText = newInitial;
+                     // also update nav avatar
+                     document.getElementById('open-sidebar-btn').innerHTML = `
+                        ${newInitial}
+                        <span class="absolute right-0 top-12 w-max bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Profile</span>
+                     `;
+
+                } catch (err) {
+                    msg.innerText = "Error: " + err.message;
+                    msg.className = "text-sm mt-3 text-red-600 block";
+                } finally {
+                    saveBtn.innerHTML = originalHtml;
+                    saveBtn.disabled = false;
+                }
+            });
+        });
+    </script>
+    <script type="module" src="client-login.js"></script>
+</body>
+
+</html>

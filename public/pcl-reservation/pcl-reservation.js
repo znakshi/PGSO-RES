@@ -394,7 +394,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         });
 
+        const existingData = JSON.parse(localStorage.getItem('pgsoReservationData') || '{}');
         const data = {
+            ...(existingData.id ? { id: existingData.id } : {}),
             contact: { fullName: nameInput.value, contactNumber: fullContactVal, email: emailVal },
             event: {
                 venue: VENUE_NAME,

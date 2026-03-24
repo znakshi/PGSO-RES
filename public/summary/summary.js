@@ -52,12 +52,25 @@ import { supabase } from "../supabase-config.js";
         submitBtn.disabled = true;
 
         try {
-            const { error } = await supabase.from('reservations').insert([{
-                ...data,
-                status: "pending",
-                submittedAt: new Date().toISOString(),
-                timestamp: new Date().toISOString()
-            }]);
+            let error;
+            if (data.id) {
+                const updatePayload = {
+                    ...data,
+                    status: "pending",
+                    updatedAt: new Date().toISOString()
+                };
+                const response = await supabase.from('reservations').update(updatePayload).eq('id', data.id);
+                error = response.error;
+            } else {
+                const insertPayload = {
+                    ...data,
+                    status: "pending",
+                    submittedAt: new Date().toISOString(),
+                    timestamp: new Date().toISOString()
+                };
+                const response = await supabase.from('reservations').insert([insertPayload]);
+                error = response.error;
+            }
             
             if (error) throw error;
 
