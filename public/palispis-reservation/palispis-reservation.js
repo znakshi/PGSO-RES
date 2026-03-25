@@ -96,17 +96,22 @@ import { supabase } from "../supabase-config.js";
             try {
                 const { data: snapshot, error } = await supabase.from('inventory').select('*');
                 if (error) throw error;
+                
+                const activeInventory = snapshot.filter(item => 
+                    !item.is_archived && 
+                    (!item.venue || item.venue === 'All Venues' || item.venue === 'Gov. Ben Palispis Auditorium')
+                );
                 globalInventory = [];
                 servicesBody.innerHTML = "";
                 packagesBody.innerHTML = "";
                 equipmentBody.innerHTML = "";
 
-                if (!snapshot || snapshot.length === 0) {
+                if (!activeInventory || activeInventory.length === 0) {
                     equipmentBody.innerHTML = "<tr><td colspan='5' class='text-center p-4'>No items found.</td></tr>";
                     return;
                 }
 
-                snapshot.forEach(item => {
+                activeInventory.forEach(item => {
                     globalInventory.push({ ...item });
 
                     // Create Row

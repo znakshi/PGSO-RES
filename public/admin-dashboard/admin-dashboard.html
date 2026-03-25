@@ -360,7 +360,7 @@
             </div>
 
             <div class="p-8">
-                <form onsubmit="saveInventoryItem(event)">
+                <form id="inventory-form" onsubmit="saveInventoryItem(event)">
                     <input type="hidden" id="inv-id">
                     
                     <div class="mb-5">
@@ -369,6 +369,16 @@
                             <option value="equipment">Equipment (Hardware)</option>
                             <option value="service" class="font-bold text-purple-700">Additional Service</option>
                             <option value="package" class="font-bold text-orange-700">Pre-defined Package</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-5">
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Target Venue</label>
+                        <select id="inv-venue" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                            <option value="All Venues" class="font-bold text-blue-700">All Venues (Global)</option>
+                            <option value="Provincial Gymnasium">Provincial Gymnasium</option>
+                            <option value="Gov. Ben Palispis Auditorium">Gov. Ben Palispis Auditorium</option>
+                            <option value="PCL Hall">PCL Hall</option>
                         </select>
                     </div>
 

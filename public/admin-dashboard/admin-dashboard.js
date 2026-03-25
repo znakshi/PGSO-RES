@@ -786,17 +786,25 @@ function renderInventory() {
 
         const avail = item.qty - used;
         const cat = item.category ? item.category.toUpperCase() : 'EQUIPMENT';
+        const venue = item.venue || 'All Venues';
         
         // Define colors based on category
         let catColor = 'text-gray-500 bg-gray-100';
         if (cat === 'PACKAGE') catColor = 'text-purple-600 bg-purple-50';
         if (cat === 'SERVICE') catColor = 'text-orange-600 bg-orange-50';
 
+        let venueBadge = venue === 'All Venues' ? '' : `<span class="text-[9px] font-bold px-2 py-0.5 rounded-full text-blue-700 bg-blue-50 border border-blue-100 uppercase tracking-widest block mt-1 w-max">${venue}</span>`;
+
         tbody.innerHTML += `
             <tr class="hover:bg-gray-50 border-b border-gray-50">
                 <td class="px-4 py-3 font-medium">
-                    <span class="text-[10px] font-bold px-2 py-1 rounded ${catColor} mr-2 w-16 inline-block text-center">${cat}</span>
-                    ${item.name}
+                    <div class="flex items-center">
+                        <span class="text-[10px] font-bold px-2 py-1 rounded ${catColor} mr-2 w-16 inline-block text-center flex-shrink-0">${cat}</span>
+                        <div>
+                            <span>${item.name}</span>
+                            ${venueBadge}
+                        </div>
+                    </div>
                 </td>
                 <td class="px-4 py-3 text-gray-500">${item.unit}</td>
                 <td class="px-4 py-3">₱${item.price}</td>
@@ -818,7 +826,8 @@ function renderInventory() {
                 const item = inventory.find(i => i.id === id);
                 document.getElementById('inv-modal-title').innerText = "Edit Item";
                 document.getElementById('inv-id').value = item.id;
-                document.getElementById('inv-category').value = item.category || 'equipment'; // Default
+                document.getElementById('inv-category').value = item.category || 'equipment';
+                document.getElementById('inv-venue').value = item.venue || 'All Venues';
                 document.getElementById('inv-name').value = item.name;
                 document.getElementById('inv-unit').value = item.unit;
                 document.getElementById('inv-price').value = item.price;
@@ -826,8 +835,9 @@ function renderInventory() {
             } else {
                 document.getElementById('inv-modal-title').innerText = "Add Item";
                 document.getElementById('inv-id').value = "";
-                document.forms[0].reset();
+                document.getElementById('inventory-form').reset();
                 document.getElementById('inv-category').value = 'equipment';
+                document.getElementById('inv-venue').value = 'All Venues';
             }
         };
 
@@ -840,6 +850,7 @@ function renderInventory() {
 
             const itemData = {
                 category: document.getElementById('inv-category').value,
+                venue: document.getElementById('inv-venue').value,
                 name: document.getElementById('inv-name').value.trim(),
                 unit: document.getElementById('inv-unit').value.trim(),
                 price: parseFloat(document.getElementById('inv-price').value),
