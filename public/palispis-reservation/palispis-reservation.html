@@ -44,7 +44,7 @@
 
     <!-- Premium Navigation -->
     <nav class="bg-white py-4 px-6 sm:px-12 flex flex-col md:flex-row justify-between items-center shadow-sm sticky top-0 z-50">
-        <div class="flex items-center gap-4 mb-4 md:mb-0 cursor-pointer" onclick="window.location.href='../index.html'">
+        <div class="flex items-center gap-4 mb-4 md:mb-0">
             <img src="../pgso.png" alt="PGSO Logo" class="w-12 h-12 sm:w-14 sm:h-14 drop-shadow-sm">
             <div class="border-l-2 border-slate-200 pl-4 py-1">
                 <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">PGSO-RES</h1>
@@ -361,17 +361,30 @@
                 
                 const fullName = session.user.user_metadata?.full_name || "Client";
                 const initial = fullName.charAt(0).toUpperCase();
+                const currentAvatar = session.user.user_metadata?.avatar_url;
+
+                let authBtnContent = currentAvatar 
+                    ? `<div class="w-full h-full rounded-full bg-cover bg-center" style="background-image: url(${currentAvatar})"></div>`
+                    : initial;
 
                 authContainer.innerHTML = `
-                    <button id="open-sidebar-btn" class="w-10 h-10 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold text-lg hover:bg-blue-800 transition shadow-md border-2 border-white cursor-pointer relative group">
-                        ${initial}
+                    <button id="open-sidebar-btn" class="w-10 h-10 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold text-lg hover:bg-blue-800 transition shadow-md border-2 border-white cursor-pointer relative group overflow-hidden">
+                        ${authBtnContent}
                         <span class="absolute right-0 top-12 w-max bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Profile</span>
                     </button>
                 `;
 
                 document.getElementById('sidebar-name').innerText = fullName;
                 document.getElementById('sidebar-email').innerText = session.user.email;
-                document.getElementById('sidebar-avatar').innerHTML = `<span class="font-bold font-sans">${initial}</span>`;
+                
+                if (currentAvatar) {
+                    document.getElementById('sidebar-avatar').innerHTML = '';
+                    document.getElementById('sidebar-avatar').style.backgroundImage = `url(${currentAvatar})`;
+                    document.getElementById('sidebar-avatar').style.backgroundSize = 'cover';
+                    document.getElementById('sidebar-avatar').style.backgroundPosition = 'center';
+                } else {
+                    document.getElementById('sidebar-avatar').innerHTML = `<span class="font-bold font-sans">${initial}</span>`;
+                }
 
                 const toggleSidebar = (show) => {
                     if (show) {

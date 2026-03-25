@@ -46,7 +46,7 @@
     <!-- Navigation -->
     <nav
         class="bg-white py-4 px-6 sm:px-12 flex flex-col md:flex-row justify-between items-center shadow-sm sticky top-0 z-50">
-        <div class="flex items-center gap-4 mb-4 md:mb-0 cursor-pointer" onclick="window.location.href='index.html'">
+        <div class="flex items-center gap-4 mb-4 md:mb-0">
             <img src="pgso.png" alt="PGSO Logo" class="w-12 h-12 sm:w-14 sm:h-14 drop-shadow-sm">
             <div class="border-l-2 border-slate-200 pl-4 py-1">
                 <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">PGSO-RES</h1>
@@ -56,18 +56,12 @@
             </div>
         </div>
 
-        <div class="flex flex-wrap justify-center items-center gap-4 sm:gap-8 mt-4 md:mt-0">
-            <div class="flex flex-wrap justify-center gap-4 sm:gap-8 text-[11px] sm:text-[13px] font-bold text-slate-700 uppercase tracking-widest w-full sm:w-auto">
-                <a href="#services"
-                    class="hover:text-blue-700 transition-colors py-1 sm:py-2 border-b-2 border-transparent hover:border-blue-700">Services</a>
-                <a href="venues.html"
-                    class="text-blue-700 transition-colors py-1 sm:py-2 border-b-2 border-blue-700">Facilities</a>
-            </div>
-            <button onclick="window.location.href='admin-login/admin-login.html'"
-                class="text-slate-600 hover:text-blue-700 text-[11px] sm:text-[13px] font-bold uppercase tracking-widest transition-colors mb-2 sm:mb-0">
-                Admin
-            </button>
-            <div id="auth-container" class="w-full sm:w-auto">
+            <div class="flex flex-wrap justify-center items-center gap-4 sm:gap-8 mt-4 md:mt-0">
+                <div class="flex flex-wrap justify-center gap-4 sm:gap-8 text-[11px] sm:text-[13px] font-bold text-slate-700 uppercase tracking-widest w-full sm:w-auto">
+                    <a href="#services" class="hover:text-blue-700 transition-colors py-1 sm:py-2 border-b-2 border-transparent hover:border-blue-700">Services</a>
+                    <a href="#venues" class="hover:text-blue-700 transition-colors py-1 sm:py-2 border-b-2 border-transparent hover:border-blue-700">Facilities</a>
+                </div>
+                <div id="auth-container" class="w-full sm:w-auto ml-2">
                 <button
                     class="open-client-login bg-transparent border-2 border-blue-700 text-blue-700 hover:bg-blue-700 hover:text-white font-bold py-1.5 sm:py-2 px-4 sm:px-6 rounded-sm text-[11px] sm:text-[13px] uppercase tracking-widest transition-colors w-full h-full">
                     <span id="user-display">Client Login</span>
@@ -372,11 +366,16 @@
                 // Determine user name
                 const fullName = session.user.user_metadata?.full_name || "Client";
                 const initial = fullName.charAt(0).toUpperCase();
+                const currentAvatar = session.user.user_metadata?.avatar_url;
 
                 // Replace Login Button with Profile Avatar
+                let authBtnContent = currentAvatar 
+                    ? `<div class="w-full h-full rounded-full bg-cover bg-center" style="background-image: url(${currentAvatar})"></div>`
+                    : initial;
+
                 authContainer.innerHTML = `
-                    <button id="open-sidebar-btn" class="w-10 h-10 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold text-lg hover:bg-blue-800 transition shadow-md border-2 border-white cursor-pointer relative group">
-                        ${initial}
+                    <button id="open-sidebar-btn" class="w-10 h-10 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold text-lg hover:bg-blue-800 transition shadow-md border-2 border-white cursor-pointer relative group overflow-hidden">
+                        ${authBtnContent}
                         <span class="absolute right-0 top-12 w-max bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Profile</span>
                     </button>
                 `;
@@ -384,7 +383,15 @@
                 // Update Sidebar text
                 document.getElementById('sidebar-name').innerText = fullName;
                 document.getElementById('sidebar-email').innerText = session.user.email;
-                document.getElementById('sidebar-avatar').innerHTML = `<span class="font-bold font-sans">${initial}</span>`;
+                
+                if (currentAvatar) {
+                    document.getElementById('sidebar-avatar').innerHTML = '';
+                    document.getElementById('sidebar-avatar').style.backgroundImage = `url(${currentAvatar})`;
+                    document.getElementById('sidebar-avatar').style.backgroundSize = 'cover';
+                    document.getElementById('sidebar-avatar').style.backgroundPosition = 'center';
+                } else {
+                    document.getElementById('sidebar-avatar').innerHTML = `<span class="font-bold font-sans">${initial}</span>`;
+                }
 
                 // Attach Events
                 const toggleSidebar = (show) => {

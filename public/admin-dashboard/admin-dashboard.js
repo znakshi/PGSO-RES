@@ -854,6 +854,9 @@ function renderInventory() {
                     const { error } = await supabase.from('inventory').insert([itemData]);
                     if (error) throw error;
                 }
+                
+                await fetchInventory(); // Force immediate UI update
+                
                 document.getElementById('inventoryModal').classList.add('hidden');
                 showAwesomeAlert("Inventory updated successfully!");
             } catch(err) {
@@ -869,6 +872,7 @@ function renderInventory() {
                 try {
                     const { error } = await supabase.from('inventory').update({ is_archived: true }).eq('id', id);
                     if (error) throw error;
+                    await fetchInventory(); // Force immediate UI update
                     showAwesomeAlert("Item sent to archive.");
                 } catch(err) {
                     showAwesomeAlert("Error archiving: " + err.message, true);
@@ -948,6 +952,7 @@ function renderInventory() {
                 try {
                     const { error } = await supabase.from(table).update({ is_archived: false }).eq('id', id);
                     if (error) throw error;
+                    if(table === 'inventory') await fetchInventory(); else await fetchReservations();
                     showAwesomeAlert("Record restored successfully!");
                 } catch(err) {
                     showAwesomeAlert("Error restoring: " + err.message, true);
@@ -960,6 +965,7 @@ function renderInventory() {
                 try {
                     const { error } = await supabase.from(table).delete().eq('id', id);
                     if (error) throw error;
+                    if(table === 'inventory') await fetchInventory(); else await fetchReservations();
                     showAwesomeAlert("Record permanently deleted.");
                 } catch(err) {
                     showAwesomeAlert("Error deleting: " + err.message, true);

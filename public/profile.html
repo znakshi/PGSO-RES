@@ -47,7 +47,7 @@
 
     <!-- Navigation -->
     <nav class="bg-white py-4 px-6 sm:px-12 flex flex-col md:flex-row justify-between items-center shadow-sm sticky top-0 z-50">
-        <div class="flex items-center gap-4 mb-4 md:mb-0 cursor-pointer" onclick="window.location.href='index.html'">
+        <div class="flex items-center gap-4 mb-4 md:mb-0">
             <img src="pgso.png" alt="PGSO Logo" class="w-12 h-12 sm:w-14 sm:h-14 drop-shadow-sm">
             <div class="border-l-2 border-slate-200 pl-4 py-1">
                 <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">PGSO-RES</h1>
@@ -79,17 +79,18 @@
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 pb-12">
             <!-- Avatar Section -->
             <div class="flex flex-col sm:flex-row items-center gap-6 mb-10 pb-10 border-b border-gray-100">
-                <div class="relative group cursor-pointer">
-                    <div class="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold" id="profile-avatar-display">
+                <div class="relative group cursor-pointer" onclick="document.getElementById('avatar-upload').click()">
+                    <div class="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold bg-cover bg-center" id="profile-avatar-display">
                         <span id="profile-initial">U</span>
                     </div>
                     <button class="absolute bottom-0 right-0 w-8 h-8 bg-blue-700 text-white rounded-full flex items-center justify-center border-2 border-white shadow-sm hover:bg-blue-800 transition">
                         <i class="fa-solid fa-camera text-xs"></i>
                     </button>
+                    <input type="file" id="avatar-upload" accept="image/*" class="hidden">
                 </div>
                 <div class="flex flex-wrap gap-3 justify-center">
-                    <button class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-sm transition">Upload New</button>
-                    <button class="bg-gray-100 hover:bg-gray-200 text-slate-700 px-5 py-2.5 rounded-lg text-sm font-semibold transition">Delete avatar</button>
+                    <button onclick="document.getElementById('avatar-upload').click()" class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-sm transition">Upload New</button>
+                    <button id="clear-avatar-btn" class="bg-gray-100 hover:bg-gray-200 text-slate-700 px-5 py-2.5 rounded-lg text-sm font-semibold transition">Clear avatar</button>
                 </div>
             </div>
 
@@ -128,47 +129,7 @@
                         </div>
                     </div>
 
-                    <!-- Gender & ID Row -->
-                    <div>
-                        <label class="profile-label">Gender</label>
-                        <div class="flex gap-4">
-                            <label class="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-lg py-3 cursor-pointer hover:bg-gray-50 transition peer-checked:border-blue-700">
-                                <input type="radio" name="gender" value="male" class="w-4 h-4 text-blue-600">
-                                <span class="text-sm font-medium text-slate-700">Male</span>
-                            </label>
-                            <label class="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-lg py-3 cursor-pointer hover:bg-gray-50 transition peer-checked:border-blue-700">
-                                <input type="radio" name="gender" value="female" class="w-4 h-4 text-blue-600">
-                                <span class="text-sm font-medium text-slate-700">Female</span>
-                            </label>
-                        </div>
-                    </div>
 
-                    <div>
-                        <label class="profile-label">Government ID Number</label>
-                        <input type="text" id="id-number" class="profile-input" placeholder="e.g. 1559 000 7788">
-                    </div>
-
-                    <!-- Tax Info -->
-                    <div>
-                        <label class="profile-label">Tax Identification Number</label>
-                        <input type="text" id="tin" class="profile-input" placeholder="000-000-000-000">
-                    </div>
-
-                    <div>
-                        <label class="profile-label">Tax Identification Country</label>
-                        <select class="profile-input appearance-none bg-white">
-                            <option value="PH">Philippines</option>
-                            <option value="US">United States</option>
-                            <option value="UK">United Kingdom</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-
-                    <!-- Address spans full width -->
-                    <div class="md:col-span-2">
-                        <label class="profile-label">Residential Address</label>
-                        <textarea id="address" class="profile-input resize-y min-h-[100px]" placeholder="Enter your full residential address"></textarea>
-                    </div>
                 </div>
 
                 <hr class="border-gray-100 my-8">
@@ -315,19 +276,84 @@
             
             const fullName = session.user.user_metadata?.full_name || "Client";
             const initial = fullName.charAt(0).toUpperCase();
+            const currentAvatar = session.user.user_metadata?.avatar_url;
+
+            let authBtnContent = currentAvatar 
+                ? `<div class="w-full h-full rounded-full bg-cover bg-center" style="background-image: url(${currentAvatar})"></div>`
+                : initial;
 
             authContainer.innerHTML = `
-                <button id="open-sidebar-btn" class="w-10 h-10 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold text-lg hover:bg-blue-800 transition shadow-md border-2 border-white cursor-pointer relative group">
-                    ${initial}
+                <button id="open-sidebar-btn" class="w-10 h-10 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold text-lg hover:bg-blue-800 transition shadow-md border-2 border-white cursor-pointer relative group overflow-hidden">
+                    ${authBtnContent}
                     <span class="absolute right-0 top-12 w-max bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Profile</span>
                 </button>
             `;
 
             document.getElementById('sidebar-name').innerText = fullName;
             document.getElementById('sidebar-email').innerText = session.user.email;
-            document.getElementById('sidebar-avatar').innerHTML = `<span class="font-bold font-sans">${initial}</span>`;
-            document.getElementById('profile-initial').innerText = initial;
+            
+            if (currentAvatar) {
+                document.getElementById('sidebar-avatar').innerHTML = '';
+                document.getElementById('sidebar-avatar').style.backgroundImage = `url(${currentAvatar})`;
+                document.getElementById('sidebar-avatar').style.backgroundSize = 'cover';
+                document.getElementById('sidebar-avatar').style.backgroundPosition = 'center';
+
+                document.getElementById('profile-avatar-display').style.backgroundImage = `url(${currentAvatar})`;
+                document.getElementById('profile-initial').style.display = 'none';
+            } else {
+                document.getElementById('sidebar-avatar').innerHTML = `<span class="font-bold font-sans">${initial}</span>`;
+                document.getElementById('profile-initial').innerText = initial;
+            }
+
             document.getElementById('email').value = session.user.email;
+            
+            // Avatar Handling Logic
+            let pendingAvatarUrl = null;
+
+            document.getElementById('avatar-upload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const maxSize = 150;
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > height) {
+                            if (width > maxSize) {
+                                height *= maxSize / width;
+                                width = maxSize;
+                            }
+                        } else {
+                            if (height > maxSize) {
+                                width *= maxSize / height;
+                                height = maxSize;
+                            }
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                        pendingAvatarUrl = dataUrl;
+                        
+                        document.getElementById('profile-avatar-display').style.backgroundImage = `url(${dataUrl})`;
+                        document.getElementById('profile-initial').style.display = 'none';
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+
+            document.getElementById('clear-avatar-btn').addEventListener('click', function() {
+                pendingAvatarUrl = ''; // Empty string signals deletion
+                document.getElementById('profile-avatar-display').style.backgroundImage = '';
+                document.getElementById('profile-initial').style.display = 'block';
+                document.getElementById('avatar-upload').value = '';
+            });
             
             // split name simply if available
             if(fullName) {
@@ -383,6 +409,10 @@
                 let updates = {
                     data: { full_name: updatedName }
                 };
+
+                if (pendingAvatarUrl !== null) {
+                    updates.data.avatar_url = pendingAvatarUrl === '' ? null : pendingAvatarUrl;
+                }
                 
                 if (newPass) {
                     if (newPass !== confPass) {
@@ -413,13 +443,33 @@
                     const newFullName = data.user.user_metadata?.full_name || updatedName;
                      document.getElementById('sidebar-name').innerText = newFullName;
                     const newInitial = newFullName.charAt(0).toUpperCase();
-                     document.getElementById('sidebar-avatar').innerHTML = `<span class="font-bold font-sans">${newInitial}</span>`;
-                     document.getElementById('profile-initial').innerText = newInitial;
-                     // also update nav avatar
-                     document.getElementById('open-sidebar-btn').innerHTML = `
-                        ${newInitial}
-                        <span class="absolute right-0 top-12 w-max bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Profile</span>
-                     `;
+                    const newAvatarUrl = data.user.user_metadata?.avatar_url;
+
+                    if (newAvatarUrl) {
+                        document.getElementById('sidebar-avatar').innerHTML = '';
+                        document.getElementById('sidebar-avatar').style.backgroundImage = `url(${newAvatarUrl})`;
+                        document.getElementById('sidebar-avatar').style.backgroundSize = 'cover';
+                        document.getElementById('sidebar-avatar').style.backgroundPosition = 'center';
+
+                        document.getElementById('profile-avatar-display').style.backgroundImage = `url(${newAvatarUrl})`;
+                        document.getElementById('profile-initial').style.display = 'none';
+
+                        document.getElementById('open-sidebar-btn').innerHTML = `
+                            <div class="w-full h-full rounded-full bg-cover bg-center" style="background-image: url(${newAvatarUrl})"></div>
+                            <span class="absolute right-0 top-12 w-max bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Profile</span>
+                        `;
+                    } else {
+                        document.getElementById('sidebar-avatar').style.backgroundImage = '';
+                        document.getElementById('sidebar-avatar').innerHTML = `<span class="font-bold font-sans">${newInitial}</span>`;
+                        document.getElementById('profile-initial').style.display = 'block';
+                        document.getElementById('profile-initial').innerText = newInitial;
+                        document.getElementById('open-sidebar-btn').innerHTML = `
+                            ${newInitial}
+                            <span class="absolute right-0 top-12 w-max bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Profile</span>
+                        `;
+                    }
+                    
+                    pendingAvatarUrl = null;
 
                 } catch (err) {
                     msg.innerText = "Error: " + err.message;
