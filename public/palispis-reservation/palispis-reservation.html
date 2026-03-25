@@ -408,6 +408,8 @@
                     await supabase.auth.signOut();
                     window.location.href = '../index.html';
                 });
+            } else {
+                window.location.replace('../index.html');
             }
         });
     </script>

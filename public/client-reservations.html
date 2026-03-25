@@ -423,7 +423,10 @@
             };
 
             // Run fetch
-            fetchReservations();
+            await fetchReservations();
+        } else {
+            window.location.replace('index.html');
+        }
         });
     </script>
     <script type="module" src="client-login.js"></script>
