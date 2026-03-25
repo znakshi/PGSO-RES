@@ -1,4 +1,4 @@
-﻿        import { supabase } from "./supabase-config.js";
+        import { supabase } from "./supabase-config.js";
 
         document.addEventListener('DOMContentLoaded', async () => {
             const { data: { session } } = await supabase.auth.getSession();
@@ -198,3 +198,27 @@
 
                         document.getElementById('open-sidebar-btn').innerHTML = `
                             <div class="w-full h-full rounded-full bg-cover bg-center" style="background-image: url(${newAvatarUrl})"></div>
+                            <span class="absolute right-0 top-12 w-max bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Profile</span>
+                        `;
+                    } else {
+                        document.getElementById('sidebar-avatar').style.backgroundImage = '';
+                        document.getElementById('sidebar-avatar').innerHTML = `<span class="font-bold font-sans">${newInitial}</span>`;
+                        document.getElementById('profile-initial').style.display = 'block';
+                        document.getElementById('profile-initial').innerText = newInitial;
+                        document.getElementById('open-sidebar-btn').innerHTML = `
+                            ${newInitial}
+                            <span class="absolute right-0 top-12 w-max bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Profile</span>
+                        `;
+                    }
+                    
+                    pendingAvatarUrl = null;
+
+                } catch (err) {
+                    msg.innerText = "Error: " + err.message;
+                    msg.className = "text-sm mt-3 text-red-600 block";
+                } finally {
+                    saveBtn.innerHTML = originalHtml;
+                    saveBtn.disabled = false;
+                }
+            });
+        });
