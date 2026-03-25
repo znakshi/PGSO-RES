@@ -238,7 +238,153 @@
     </footer>
 
 
-    <!-- Client Login Modal Script -->
+    <!-- Profile Sidebar (Hidden by default) -->
+    <div id="sidebar-backdrop" class="fixed inset-0 bg-black/50 z-[100] hidden transition-opacity opacity-0 duration-300"></div>
+    <div id="profile-sidebar" class="fixed top-0 right-0 h-full w-72 bg-[#1C1F2D] text-slate-300 shadow-2xl z-[110] transform translate-x-full transition-transform duration-300 flex flex-col font-sans">
+        <!-- Close Button -->
+        <button id="close-sidebar" class="absolute top-5 right-5 text-slate-400 hover:text-white transition z-10 w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <!-- Brand/Logo Area -->
+        <div class="pt-8 pb-6 px-6 flex items-center gap-3">
+            <div class="w-10 h-10 bg-[#5453E0] rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                <i class="fa-solid fa-building-columns"></i>
+            </div>
+            <h2 class="text-xl font-bold text-white tracking-wide">PGSO-RES</h2>
+        </div>
+
+        <!-- Menu Items -->
+        <div class="flex-1 overflow-y-auto px-4 flex flex-col gap-6 scrollbar-hide pb-6">
+            
+            <!-- Main Menu Section -->
+            <div>
+                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 px-2">Main Menu</p>
+                <div class="flex flex-col gap-1">
+                    <a href="venues.html" class="flex items-center gap-4 px-4 py-3 rounded-xl bg-white text-slate-900 font-bold transition shadow-sm text-[13px]">
+                        <i class="fa-solid fa-house w-5 text-center text-lg"></i>
+                        Home
+                    </a>
+                    <a href="client-reservations.html" class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition font-medium text-[13px]">
+                        <i class="fa-regular fa-calendar-check w-5 text-center text-lg"></i>
+                        My Reservations
+                    </a>
+                    <a href="client-archive.html" class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition font-medium text-[13px]">
+                        <i class="fa-solid fa-box-archive w-5 text-center text-lg"></i>
+                        Archive
+                    </a>
+                </div>
+            </div>
+
+            <!-- Account Section -->
+            <div>
+                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 px-2">Account</p>
+                <div class="flex flex-col gap-1">
+                    <a href="profile.html" class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition font-medium text-[13px]">
+                        <i class="fa-regular fa-circle-user w-5 text-center text-lg"></i>
+                        Profile
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- Logout Action -->
+        <div class="px-4 pb-4">
+            <button id="sidebar-logout" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-[#F15B50] hover:bg-[#F15B50]/10 hover:text-[#F15B50] transition font-bold text-[13px]">
+                <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center text-lg"></i>
+                Log Out
+            </button>
+        </div>
+
+        <!-- User Profile Widget (Bottom) -->
+        <div class="p-6 bg-[#161824] border-t border-white/5">
+            <div class="flex items-center gap-3">
+                <div id="sidebar-avatar" class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-[#1C1F2D]">
+                    <span class="font-bold font-sans">U</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p id="sidebar-name" class="text-[13px] font-bold text-white truncate">Client Name</p>
+                    <p class="text-[11px] text-slate-500 truncate mt-0.5" id="sidebar-email">client@email.com</p> 
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Login Modal Script & Initialization -->
+    <script type="module">
+        import { supabase } from "./supabase-config.js";
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            const authContainer = document.getElementById('auth-container');
+            
+            if (session && session.user) {
+                // Elements
+                const sidebar = document.getElementById('profile-sidebar');
+                const backdrop = document.getElementById('sidebar-backdrop');
+                const closeBtn = document.getElementById('close-sidebar');
+                const logoutBtn = document.getElementById('sidebar-logout');
+                
+                // Determine user name
+                const fullName = session.user.user_metadata?.full_name || "Client";
+                const initial = fullName.charAt(0).toUpperCase();
+                const currentAvatar = session.user.user_metadata?.avatar_url;
+
+                // Replace Login Button with Profile Avatar
+                let authBtnContent = currentAvatar 
+                    ? `<div class="w-full h-full rounded-full bg-cover bg-center" style="background-image: url(${currentAvatar})"></div>`
+                    : initial;
+
+                authContainer.innerHTML = `
+                    <button class="open-client-login hidden"></button>
+                    <button id="open-sidebar-btn" class="w-10 h-10 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold text-lg hover:bg-blue-800 transition shadow-md border-2 border-white cursor-pointer relative group overflow-hidden">
+                        ${authBtnContent}
+                        <span class="absolute right-0 top-12 w-max bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Profile</span>
+                    </button>
+                `;
+
+                // Update Sidebar text
+                document.getElementById('sidebar-name').innerText = fullName;
+                document.getElementById('sidebar-email').innerText = session.user.email;
+                
+                if (currentAvatar) {
+                    document.getElementById('sidebar-avatar').innerHTML = '';
+                    document.getElementById('sidebar-avatar').style.backgroundImage = `url(${currentAvatar})`;
+                    document.getElementById('sidebar-avatar').style.backgroundSize = 'cover';
+                    document.getElementById('sidebar-avatar').style.backgroundPosition = 'center';
+                } else {
+                    document.getElementById('sidebar-avatar').innerHTML = `<span class="font-bold font-sans">${initial}</span>`;
+                }
+
+                // Attach Events
+                const toggleSidebar = (show) => {
+                    if (show) {
+                        backdrop.classList.remove('hidden');
+                        void backdrop.offsetWidth; // trigger reflow
+                        backdrop.classList.remove('opacity-0');
+                        sidebar.classList.remove('translate-x-full');
+                    } else {
+                        backdrop.classList.add('opacity-0');
+                        sidebar.classList.add('translate-x-full');
+                        setTimeout(() => backdrop.classList.add('hidden'), 300);
+                    }
+                };
+
+                document.getElementById('open-sidebar-btn').addEventListener('click', () => toggleSidebar(true));
+                closeBtn.addEventListener('click', () => toggleSidebar(false));
+                backdrop.addEventListener('click', () => toggleSidebar(false));
+
+                // Logout logic
+                logoutBtn.addEventListener('click', async () => {
+                    logoutBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Logging out...';
+                    await supabase.auth.signOut();
+                    window.location.reload();
+                });
+            }
+        });
+    </script>
+
     <script type="module" src="client-login.js"></script>
 </body>
 

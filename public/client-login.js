@@ -229,7 +229,7 @@ function initClientLogin() {
                          <h2 class="text-xl font-bold text-gray-800 mb-2">Logged Out</h2>
                          <p class="text-gray-500 text-[14px]">You have been successfully logged out.</p>
                     `;
-                    setTimeout(() => window.location.reload(), 1500);
+                    setTimeout(() => window.location.href = basePath + 'index.html', 1500);
                 });
                 
                 return;
