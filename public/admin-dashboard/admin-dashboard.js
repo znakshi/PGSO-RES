@@ -620,26 +620,32 @@ window.printReservation = function(id, event) {
                 }
                 actionsStr += `</div>`;
 
+                let reasonHtml = '';
+                if(res.status === 'cancelled' && res.notes) {
+                    reasonHtml = `<div class="mt-2 text-[10px] text-red-600 leading-tight bg-red-50 p-1.5 rounded border border-red-100 text-left"><strong class="uppercase text-[8px] tracking-wider text-red-500 mb-0.5 block">Reason</strong>${res.notes}</div>`;
+                }
+
                 tr.innerHTML = `
-                    <td class="px-4 py-3 font-medium text-slate-800">
+                    <td class="px-4 py-3 font-medium text-slate-800 align-top">
                         <div class="font-bold">${res.contact?.fullName || 'Unknown'}</div>
                         <div class="text-xs text-slate-500">${res.contact?.contactNumber || ''}</div>
                     </td>
-                    <td class="px-4 py-3">
+                    <td class="px-4 py-3 align-top">
                         <div class="font-bold text-slate-700 line-clamp-1">${res.event?.venue || 'N/A'}</div>
                         <div class="text-xs text-slate-500 line-clamp-1">${res.event?.eventType || 'Event'}</div>
                     </td>
-                    <td class="px-4 py-3 text-sm">
+                    <td class="px-4 py-3 text-sm align-top">
                         <div class="font-bold text-slate-700 line-clamp-1">${res.event?.dates || 'N/A'}</div>
                         <div class="text-xs text-slate-500">${res.event?.startTime || ''} - ${res.event?.endTime || ''}</div>
                     </td>
-                    <td class="px-4 py-3 text-center">
+                    <td class="px-4 py-3 text-center align-top">
                         <span class="${badge} text-[10px] px-2 py-1 rounded uppercase font-bold tracking-wider inline-block border">${res.status}</span>
+                        ${reasonHtml}
                     </td>
-                    <td class="px-4 py-3 font-bold text-blue-700 text-right whitespace-nowrap">
+                    <td class="px-4 py-3 font-bold text-blue-700 text-right whitespace-nowrap align-top">
                         ${grandTotal}
                     </td>
-                    <td class="px-4 py-3 text-right">
+                    <td class="px-4 py-3 text-right align-top">
                         ${actionsStr}
                     </td>
                 `;
