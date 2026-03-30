@@ -446,6 +446,7 @@ window.printReservation = function(id, event) {
             renderCalendar(); 
             const todayStr = new Date().toISOString().split('T')[0];
             renderReservationList(todayStr);
+            if (typeof window.renderAllReservations === 'function') window.renderAllReservations();
             renderAnalytics();
             if(!document.getElementById('section-inventory').classList.contains('hidden')) renderInventory();
             if(!document.getElementById('section-archive').classList.contains('hidden')) switchArchiveTab();
@@ -546,6 +547,85 @@ window.printReservation = function(id, event) {
                 list.appendChild(card);
             });
         }
+
+        window.renderAllReservations = function() {
+            const tbody = document.getElementById('all-reservations-tbody');
+            if (!tbody) return;
+            const filter = document.getElementById('filter-all-reservations')?.value || 'all';
+            
+            let filtered = reservations.filter(r => r.status === 'pending' || r.status === 'confirmed' || r.status === 'declined');
+            if (filter !== 'all') {
+                filtered = filtered.filter(r => r.status === filter);
+            }
+            
+            filtered.sort((a, b) => {
+                const dateA = new Date(a.created_at || a.timestamp || 0);
+                const dateB = new Date(b.created_at || b.timestamp || 0);
+                return dateB - dateA;
+            });
+
+            tbody.innerHTML = '';
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400">No reservations found.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(res => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 border-b border-gray-50 transition";
+                
+                let badge = res.status === 'pending' ? "bg-yellow-100 text-yellow-800 border-yellow-200" : 
+                            res.status === 'confirmed' ? "bg-green-100 text-green-800 border-green-200" : 
+                            "bg-red-100 text-red-800 border-red-200";
+
+                const grandTotal = res.pricing && res.pricing.grandTotal ? `₱${parseFloat(res.pricing.grandTotal).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '₱0.00';
+                
+                let actionsStr = `<div class="flex justify-end gap-2">`;
+                actionsStr += `<button onclick="viewReservation('${res.id}')" class="px-3 border border-gray-200 rounded text-blue-600 hover:text-blue-800 hover:bg-blue-50 py-1 font-bold text-xs" title="View Details"><i class="fa-solid fa-eye"></i></button>`;
+                
+                if(res.status === 'pending') {
+                    actionsStr += `<button onclick="setStatus('${res.id}', 'confirmed', event)" class="px-3 border border-green-200 rounded text-green-700 bg-green-50 hover:bg-green-100 py-1 font-bold text-xs" title="Approve"><i class="fa-solid fa-check"></i></button>`;
+                    actionsStr += `<button onclick="setStatus('${res.id}', 'declined', event)" class="px-3 border border-red-200 rounded text-red-700 bg-red-50 hover:bg-red-100 py-1 font-bold text-xs" title="Decline"><i class="fa-solid fa-xmark"></i></button>`;
+                } else if(res.status === 'confirmed') {
+                    actionsStr += `<button onclick="printReservation('${res.id}', event)" class="px-3 border border-gray-200 rounded text-slate-600 hover:text-blue-700 hover:bg-blue-50 py-1 font-bold text-xs" title="Print Form"><i class="fa-solid fa-print"></i></button>`;
+                }
+                actionsStr += `</div>`;
+
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-medium text-slate-800">
+                        <div class="font-bold">${res.contact?.fullName || 'Unknown'}</div>
+                        <div class="text-xs text-slate-500">${res.contact?.contactNumber || ''}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="font-bold text-slate-700 line-clamp-1">${res.event?.venue || 'N/A'}</div>
+                        <div class="text-xs text-slate-500 line-clamp-1">${res.event?.eventType || 'Event'}</div>
+                    </td>
+                    <td class="px-4 py-3 text-sm">
+                        <div class="font-bold text-slate-700 line-clamp-1">${res.event?.dates || 'N/A'}</div>
+                        <div class="text-xs text-slate-500">${res.event?.startTime || ''} - ${res.event?.endTime || ''}</div>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="${badge} text-[10px] px-2 py-1 rounded uppercase font-bold tracking-wider inline-block border">${res.status}</span>
+                    </td>
+                    <td class="px-4 py-3 font-bold text-blue-700 text-right whitespace-nowrap">
+                        ${grandTotal}
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        ${actionsStr}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        // Attach event listener for the dropdown filter
+        document.addEventListener('DOMContentLoaded', () => {
+            const filterSelect = document.getElementById('filter-all-reservations');
+            if(filterSelect) {
+                filterSelect.addEventListener('change', window.renderAllReservations);
+            }
+        });
 
         // --- ANALYTICS ---
         function renderAnalytics() {

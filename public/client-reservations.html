@@ -166,7 +166,7 @@
         import { supabase } from "./supabase-config.js";
         
         // Formatter helper
-        const formatCurrency = (amount) => 'â‚±' + parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const formatCurrency = (amount) => '₱' + parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         document.addEventListener('DOMContentLoaded', async () => {
             const { data: { session } } = await supabase.auth.getSession();
@@ -251,7 +251,7 @@
                     const myReservations = allRes.filter(r => {
                         const isUser = r.contact && r.contact.email && r.contact.email.toLowerCase() === userEmail;
                         const status = r.status ? r.status.toLowerCase() : '';
-                        return isUser && (status === 'pending' || status === 'approved' || status === 'accepted');
+                        return isUser && (status === 'pending' || status === 'confirmed' || status === 'approved' || status === 'accepted');
                     });
 
                     document.getElementById('loading-spinner').classList.add('hidden');
@@ -267,7 +267,7 @@
                         
                         myReservations.forEach(res => {
                             const isPending = res.status.toLowerCase() === 'pending';
-                            const isApproved = res.status.toLowerCase() === 'approved' || res.status.toLowerCase() === 'accepted';
+                            const isApproved = res.status.toLowerCase() === 'confirmed' || res.status.toLowerCase() === 'approved' || res.status.toLowerCase() === 'accepted';
                             const isCancelled = res.status.toLowerCase() === 'cancelled' || res.status.toLowerCase() === 'rejected';
                             
                             let statusColor = "bg-yellow-100 text-yellow-800 border-yellow-200";
