@@ -433,6 +433,34 @@ window.printReservation = function(id, event) {
     printWindow.document.close();
 };
 
+        // --- AUTO-CLEAN ARCHIVE ---
+        const autoCleanArchive = async () => {
+            try {
+                const twoYearsAgo = new Date();
+                twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+                const isoDate = twoYearsAgo.toISOString();
+                
+                // Delete reservations older than 2 years that are archived
+                await supabase
+                    .from('reservations')
+                    .delete()
+                    .eq('is_archived', true)
+                    .lt('created_at', isoDate);
+                    
+                // Delete inventory older than 2 years that are archived
+                await supabase
+                    .from('inventory')
+                    .delete()
+                    .eq('is_archived', true)
+                    .lt('created_at', isoDate);
+            } catch (err) {
+                console.error("Auto clean archive failed:", err);
+            }
+        };
+
+        // Run cleanup once on admin dashboard load
+        autoCleanArchive();
+
         // --- SUPABASE LISTENERS ---
         const fetchReservations = async () => {
             const { data } = await supabase.from('reservations').select('*');
@@ -617,6 +645,22 @@ window.printReservation = function(id, event) {
                 `;
                 tbody.appendChild(tr);
             });
+        };
+
+        window.filterFromAnalytics = function(status) {
+            // First switch to calendar tab
+            switchTab('calendar');
+            // Then find the filter select
+            const filterSelect = document.getElementById('filter-all-reservations');
+            if(filterSelect) {
+                filterSelect.value = status;
+                if (typeof window.renderAllReservations === 'function') {
+                    window.renderAllReservations();
+                }
+                setTimeout(() => {
+                    filterSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 50);
+            }
         };
 
         // Attach event listener for the dropdown filter

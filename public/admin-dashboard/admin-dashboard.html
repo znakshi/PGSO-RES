@@ -191,8 +191,8 @@
 
                 <div id="section-analytics" class="hidden space-y-8">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <div
-                            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group">
+                        <div onclick="filterFromAnalytics('all')"
+                            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group cursor-pointer hover:border-blue-500 hover:shadow-md transition-all">
                             <div
                                 class="absolute right-[-10%] top-[-10%] w-24 h-24 bg-blue-50 rounded-full opacity-50 group-hover:scale-110 transition-transform duration-500">
                             </div>
@@ -201,8 +201,8 @@
                                 Total Bookings</p>
                             <p class="text-4xl font-black text-blue-700 relative z-10" id="stat-total-bookings">0</p>
                         </div>
-                        <div
-                            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group">
+                        <div onclick="filterFromAnalytics('pending')"
+                            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group cursor-pointer hover:border-yellow-500 hover:shadow-md transition-all">
                             <div
                                 class="absolute right-[-10%] top-[-10%] w-24 h-24 bg-yellow-50 rounded-full opacity-50 group-hover:scale-110 transition-transform duration-500">
                             </div>
@@ -211,8 +211,8 @@
                                 Pending</p>
                             <p class="text-4xl font-black text-yellow-500 relative z-10" id="stat-pending">0</p>
                         </div>
-                        <div
-                            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group">
+                        <div onclick="filterFromAnalytics('declined')"
+                            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group cursor-pointer hover:border-red-500 hover:shadow-md transition-all">
                             <div
                                 class="absolute right-[-10%] top-[-10%] w-24 h-24 bg-red-50 rounded-full opacity-50 group-hover:scale-110 transition-transform duration-500">
                             </div>
