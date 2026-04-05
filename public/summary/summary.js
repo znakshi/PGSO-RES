@@ -81,6 +81,17 @@ import { supabase } from "../supabase-config.js";
             
             if (error) throw error;
 
+            // Notify Admin
+            try {
+                await supabase.from('notifications').insert([{
+                    user_email: null,
+                    title: data.id ? 'Reservation Updated' : 'New Reservation',
+                    message: `${data.contact.fullName} has submitted a reservation request for ${data.event.venue}.`
+                }]);
+            } catch (e) {
+                console.warn('Failed to dispatch notification', e);
+            }
+
             document.getElementById('rulesModal').classList.add('hidden'); // Close rules
             document.getElementById('successModal').classList.remove('hidden'); // Show success
             localStorage.removeItem('pgsoReservationData'); 

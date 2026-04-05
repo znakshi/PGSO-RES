@@ -473,6 +473,15 @@
                         }).eq('id', id);
                         if (error) throw error;
                         
+                        try {
+                            const fullName = session.user.user_metadata?.full_name || session.user.email;
+                            await supabase.from('notifications').insert([{
+                                user_email: null,
+                                title: 'Reservation Cancelled',
+                                message: `${fullName} has cancelled their reservation. Reason: ${reason}`
+                            }]);
+                        } catch(e) { console.warn('Notification failed', e); }
+                        
                         modal.querySelector('.p-8').innerHTML = `
                             <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <i class="fa-solid fa-check text-2xl text-green-600"></i>

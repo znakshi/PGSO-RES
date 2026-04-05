@@ -6,7 +6,7 @@ function initClientLogin() {
     // Detect email confirmation redirect (Supabase appends #access_token or ?code=...)
     const urlParams = new URLSearchParams(window.location.search);
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    
+
     // Check if user just verified their email
     if (hashParams.has('access_token') || hashParams.has('type') || urlParams.has('code')) {
         // Prevent showing it multiple times
@@ -32,19 +32,19 @@ function initClientLogin() {
             `;
             document.body.insertAdjacentHTML('beforeend', confirmSuccessHTML);
             sessionStorage.setItem('email_confirmed_shown', 'true');
-            
+
             document.getElementById('email-verified-login-btn').addEventListener('click', async () => {
                 // Ensure session is wiped before they log in manually
                 await supabase.auth.signOut();
                 localStorage.removeItem('pgsoReservationData');
-                
+
                 const m = document.getElementById('email-confirmed-modal');
                 m.classList.add('opacity-0');
                 setTimeout(() => {
                     m.remove();
                     // Clean URL
                     window.history.replaceState(null, document.title, window.location.pathname);
-                    
+
                     // Automatically open the login modal for them
                     const loginBtn = document.querySelector('.open-client-login');
                     if (loginBtn) {
@@ -150,13 +150,13 @@ function initClientLogin() {
     const modal = document.getElementById('client-login-modal');
     const container = document.getElementById('client-login-container');
     const closeBtn = document.getElementById('close-login-modal');
-    
+
     // View Toggles
     const loginView = document.getElementById('login-view');
     const signupView = document.getElementById('signup-view');
     const showSignupLink = document.getElementById('show-signup-link');
     const showLoginLink = document.getElementById('show-login-link');
-    
+
     // Password toggles
     const toggleLoginPwd = document.getElementById('toggle-login-password');
     const loginPwdInput = document.getElementById('login-password-input');
@@ -167,7 +167,7 @@ function initClientLogin() {
     const loginForm = document.getElementById('client-login-form');
     const loginErrorMsg = document.getElementById('login-error-msg');
     const loginSubmitBtn = document.getElementById('login-submit-btn');
-    
+
     const signupForm = document.getElementById('client-signup-form');
     const signupErrorMsg = document.getElementById('signup-error-msg');
     const signupSuccessMsg = document.getElementById('signup-success-msg');
@@ -177,7 +177,7 @@ function initClientLogin() {
     openBtns.forEach(btn => {
         btn.addEventListener('click', async (e) => {
             e.preventDefault();
-            
+
             // Check current session
             const { data: { session } } = await supabase.auth.getSession();
             const user = session?.user;
@@ -210,18 +210,18 @@ function initClientLogin() {
                 </div>
                 `;
                 document.body.insertAdjacentHTML('beforeend', logoutModalHTML);
-                
+
                 const promptModal = document.getElementById('logout-prompt-modal');
-                
+
                 document.getElementById('btn-cancel-logout').addEventListener('click', () => {
                     promptModal.remove();
                 });
-                
+
                 document.getElementById('btn-confirm-logout').addEventListener('click', async () => {
                     document.getElementById('btn-confirm-logout').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Logging out...';
                     await supabase.auth.signOut();
                     localStorage.removeItem('pgsoReservationData');
-                    
+
                     promptModal.querySelector('.p-8').innerHTML = `
                          <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                              <i class="fa-solid fa-info text-2xl text-blue-600"></i>
@@ -231,7 +231,7 @@ function initClientLogin() {
                     `;
                     setTimeout(() => window.location.href = basePath + 'index.html', 1500);
                 });
-                
+
                 return;
             }
 
@@ -242,7 +242,7 @@ function initClientLogin() {
             modal.classList.add('opacity-100');
             container.classList.remove('scale-95');
             container.classList.add('scale-100');
-            
+
             // Reset to login view
             signupView.classList.add('hidden');
             loginView.classList.remove('hidden');
@@ -303,24 +303,24 @@ function initClientLogin() {
         e.preventDefault();
         const email = document.getElementById('login-email').value;
         const password = loginPwdInput.value;
-        
+
         loginSubmitBtn.innerText = "Verifying...";
         loginSubmitBtn.disabled = true;
         loginErrorMsg.classList.add('hidden');
-        
+
         try {
             const { data, error } = await supabase.auth.signInWithPassword({
                 email: email,
                 password: password,
             });
-            
+
             if (error) throw error;
-            
+
             const user = data.user;
-            
+
             // Note: If Supabase requires email confirmation, login will fail with an error
             // "Email not confirmed". We handle that below.
-            
+
             // Show custom success modal
             const successHTML = `
             <div id="login-success-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300">
@@ -337,13 +337,13 @@ function initClientLogin() {
             </div>
             `;
             document.body.insertAdjacentHTML('beforeend', successHTML);
-            
+
             document.getElementById('login-success-btn').addEventListener('click', () => {
                 document.getElementById('login-success-modal').remove();
                 closeModal();
                 window.location.href = basePath + 'venues.html';
             });
-            
+
         } catch (error) {
             console.error(error);
             loginErrorMsg.classList.remove('hidden');
@@ -369,19 +369,19 @@ function initClientLogin() {
         const email = document.getElementById('signup-email').value;
         const password = signupPwdInput.value;
         const confirmPassword = document.getElementById('signup-confirm-password').value;
-        
+
         signupErrorMsg.classList.add('hidden');
         signupSuccessMsg.classList.add('hidden');
-        
+
         if (password !== confirmPassword) {
             signupErrorMsg.innerText = "Passwords do not match!";
             signupErrorMsg.classList.remove('hidden');
             return;
         }
-        
+
         signupSubmitBtn.innerText = "Creating Account...";
         signupSubmitBtn.disabled = true;
-        
+
         try {
             const { data, error } = await supabase.auth.signUp({
                 email: email,
@@ -393,18 +393,18 @@ function initClientLogin() {
                     emailRedirectTo: window.location.origin + window.location.pathname
                 }
             });
-            
+
             if (error) throw error;
-            
+
             signupForm.reset();
             signupSuccessMsg.innerText = "Account created successfully! A verification link has been sent to your email. Please verify before logging in.";
             signupSuccessMsg.classList.remove('hidden');
-            
+
             // Optionally, switch to login view after 3 seconds
             setTimeout(() => {
                 showLoginLink.click();
             }, 5000);
-            
+
         } catch (error) {
             console.error(error);
             signupErrorMsg.classList.remove('hidden');
@@ -424,8 +424,8 @@ function initClientLogin() {
     // --- Global Back-Button Interceptor for Logged In Clients ---
     if (session && session.user && !window.location.pathname.endsWith('index.html') && window.location.pathname !== '/') {
         history.pushState(null, null, location.href);
-        
-        window.addEventListener('popstate', function(event) {
+
+        window.addEventListener('popstate', function (event) {
             let backModal = document.getElementById('back-logout-modal');
             if (!backModal) {
                 const backModalHTML = `
@@ -454,12 +454,12 @@ function initClientLogin() {
                 </div>`;
                 document.body.insertAdjacentHTML('beforeend', backModalHTML);
                 backModal = document.getElementById('back-logout-modal');
-                
+
                 document.getElementById('btn-cancel-back-logout').addEventListener('click', () => {
                     backModal.classList.add('hidden');
                     history.pushState(null, null, location.href);
                 });
-                
+
                 document.getElementById('btn-confirm-back-logout').addEventListener('click', async () => {
                     const btn = document.getElementById('btn-confirm-back-logout');
                     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Logging out...';
@@ -471,11 +471,112 @@ function initClientLogin() {
             backModal.classList.remove('hidden');
         });
     }
+}
 
+async function setupClientNotifications() {
+    // --- Client Notifications ---
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    if (currentSession && currentSession.user) {
+        const authContainer = document.getElementById('auth-container');
+        if (authContainer && !document.getElementById('client-notif-wrapper')) {
+            const notifWrapper = document.createElement('div');
+            notifWrapper.id = "client-notif-wrapper";
+            notifWrapper.className = "relative mr-4";
+            notifWrapper.innerHTML = `
+                <button id="client-notif-btn" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition flex items-center justify-center relative shadow-sm border border-slate-200">
+                    <i class="fa-regular fa-bell"></i>
+                    <span id="client-notif-badge" class="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border border-white hidden"></span>
+                </button>
+                <div id="client-notif-dropdown" class="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 hidden flex flex-col overflow-hidden z-[200]">
+                    <div class="px-4 py-3 bg-slate-50 border-b border-gray-100 flex justify-between items-center">
+                        <span class="font-bold text-slate-800 text-sm">Notifications</span>
+                        <button id="client-mark-read" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Mark all as read</button>
+                    </div>
+                    <div id="client-notif-list" class="max-h-80 overflow-y-auto">
+                        <p class="text-sm text-slate-500 text-center py-6">Loading...</p>
+                    </div>
+                </div>
+            `;
+            authContainer.parentNode.insertBefore(notifWrapper, authContainer);
+
+            const notifBtn = document.getElementById('client-notif-btn');
+            const notifDropdown = document.getElementById('client-notif-dropdown');
+            const notifList = document.getElementById('client-notif-list');
+            const notifBadge = document.getElementById('client-notif-badge');
+            
+            notifBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                notifDropdown.classList.toggle('hidden');
+            });
+            document.addEventListener('click', (e) => {
+                if (!notifWrapper.contains(e.target)) notifDropdown.classList.add('hidden');
+            });
+
+            const renderClientNotifs = (notifs) => {
+                notifList.innerHTML = '';
+                const unread = notifs.filter(n => !n.is_read);
+                if (unread.length > 0) {
+                    notifBadge.classList.remove('hidden');
+                } else {
+                    notifBadge.classList.add('hidden');
+                }
+
+                if (notifs.length === 0) {
+                    notifList.innerHTML = '<p class="text-sm text-slate-500 text-center py-6 italic">No notifications yet.</p>';
+                    return;
+                }
+
+                notifs.forEach(n => {
+                    const el = document.createElement('div');
+                    el.className = `px-4 py-3 border-b border-gray-50 flex flex-col gap-1 ${n.is_read ? 'opacity-60 bg-white' : 'bg-blue-50/50'}`;
+                    el.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <span class="font-bold text-sm ${n.is_read ? 'text-slate-600' : 'text-slate-900'}">${n.title}</span>
+                            ${!n.is_read ? '<span class="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></span>' : ''}
+                        </div>
+                        <p class="text-xs text-slate-500 line-clamp-2">${n.message}</p>
+                    `;
+                    notifList.appendChild(el);
+                });
+            };
+
+            const fetchClientNotifs = async () => {
+                try {
+                    const { data } = await supabase.from('notifications')
+                        .select('*')
+                        .eq('user_email', currentSession.user.email.toLowerCase())
+                        .order('created_at', { ascending: false })
+                        .limit(20);
+                    if (data) renderClientNotifs(data);
+                } catch(e) { console.error(e); }
+            };
+
+            document.getElementById('client-mark-read').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const { error } = await supabase.from('notifications')
+                    .update({ is_read: true })
+                    .eq('user_email', currentSession.user.email.toLowerCase())
+                    .eq('is_read', false);
+                if (!error) fetchClientNotifs();
+            });
+
+            supabase.channel('client-notifs')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+                    fetchClientNotifs();
+                }).subscribe();
+
+            fetchClientNotifs();
+        }
+    }
 }
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initClientLogin);
+    document.addEventListener('DOMContentLoaded', () => {
+        initClientLogin();
+        setupClientNotifications();
+    });
 } else {
     initClientLogin();
+    setupClientNotifications();
 }

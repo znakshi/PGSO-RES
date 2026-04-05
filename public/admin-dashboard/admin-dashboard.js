@@ -186,6 +186,18 @@ import { supabase } from "../supabase-config.js";
                 
                 if (error) throw error;
 
+                // Notify Client
+                if (updatedContact.email) {
+                     try {
+                         await supabase.from('notifications').insert([{
+                             user_email: updatedContact.email.toLowerCase(),
+                             title: 'Reservation Updated',
+                             message: `Your reservation details for ${updatedEvent.venue} has been modified by the administrator.`
+                         }]);
+                     } catch(e) { console.warn('Notification failed', e); }
+                }
+
+                fetchReservations(); // Sync immediately
                 showAwesomeAlert("Reservation updated successfully!");
                 closeModal('reservationModal');
             } catch (error) {
@@ -461,6 +473,79 @@ window.printReservation = function(id, event) {
         // Run cleanup once on admin dashboard load
         autoCleanArchive();
 
+        // --- ADMIN NOTIFICATIONS ---
+        const notifBtn = document.getElementById('admin-notif-btn');
+        const notifDropdown = document.getElementById('admin-notif-dropdown');
+        const notifList = document.getElementById('admin-notif-list');
+        const notifBadge = document.getElementById('admin-notif-badge');
+        
+        if (notifBtn) {
+            notifBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                notifDropdown.classList.toggle('hidden');
+            });
+            document.addEventListener('click', (e) => {
+                const wrapper = notifBtn.parentElement;
+                if (!wrapper.contains(e.target)) notifDropdown.classList.add('hidden');
+            });
+
+            const renderAdminNotifs = (notifs) => {
+                notifList.innerHTML = '';
+                const unread = notifs.filter(n => !n.is_read);
+                if (unread.length > 0) {
+                    notifBadge.classList.remove('hidden');
+                } else {
+                    notifBadge.classList.add('hidden');
+                }
+
+                if (notifs.length === 0) {
+                    notifList.innerHTML = '<p class="text-sm text-slate-500 text-center py-6 italic">No notifications yet.</p>';
+                    return;
+                }
+
+                notifs.forEach(n => {
+                    const el = document.createElement('div');
+                    el.className = `px-4 py-3 border-b border-gray-50 flex flex-col gap-1 ${n.is_read ? 'opacity-60 bg-white' : 'bg-blue-50/50'}`;
+                    el.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <span class="font-bold text-sm ${n.is_read ? 'text-slate-600' : 'text-slate-900'}">${n.title}</span>
+                            ${!n.is_read ? '<span class="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></span>' : ''}
+                        </div>
+                        <p class="text-xs text-slate-500 line-clamp-2">${n.message}</p>
+                    `;
+                    notifList.appendChild(el);
+                });
+            };
+
+            const fetchAdminNotifs = async () => {
+                try {
+                    const { data } = await supabase.from('notifications')
+                        .select('*')
+                        .is('user_email', null)
+                        .order('created_at', { ascending: false })
+                        .limit(20);
+                    if (data) renderAdminNotifs(data);
+                } catch(e) { console.error(e); }
+            };
+
+            document.getElementById('admin-mark-read').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const { error } = await supabase.from('notifications')
+                    .update({ is_read: true })
+                    .is('user_email', null)
+                    .eq('is_read', false);
+                if (!error) fetchAdminNotifs();
+            });
+
+            supabase.channel('admin-notifs')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+                    fetchAdminNotifs();
+                }).subscribe();
+
+            fetchAdminNotifs();
+        }
+
         // --- SUPABASE LISTENERS ---
         const fetchReservations = async () => {
             const { data } = await supabase.from('reservations').select('*');
@@ -472,8 +557,8 @@ window.printReservation = function(id, event) {
                 archivedReservations = [];
             }
             renderCalendar(); 
-            const todayStr = new Date().toISOString().split('T')[0];
-            renderReservationList(todayStr);
+            const showDateStr = window.currentSelectedDateStr || new Date().toISOString().split('T')[0];
+            renderReservationList(showDateStr);
             if (typeof window.renderAllReservations === 'function') window.renderAllReservations();
             renderAnalytics();
             if(!document.getElementById('section-inventory').classList.contains('hidden')) renderInventory();
@@ -490,22 +575,80 @@ window.printReservation = function(id, event) {
         // --- STATUS & DELETE ACTIONS ---
         window.setStatus = async function(id, status, event) {
             if(event) event.stopPropagation();
+            
+            // Optimistic update for immediate visual feedback
+            const resIndex = reservations.findIndex(r => r.id === id);
+            if (resIndex > -1) {
+                reservations[resIndex].status = status;
+                const showDateStr = window.currentSelectedDateStr || new Date().toISOString().split('T')[0];
+                renderCalendar();
+                renderReservationList(showDateStr);
+                if (typeof window.renderAllReservations === 'function') window.renderAllReservations();
+                renderAnalytics();
+            }
+
             try { 
                 const { error } = await supabase.from('reservations').update({ status: status }).eq('id', id); 
                 if (error) throw error;
+                if (status === 'confirmed' || status === 'declined') {
+                    showAwesomeAlert(`Reservation ${status} successfully!`);
+                    
+                    // Dispatch notification to the client
+                    if (resIndex > -1 && reservations[resIndex].contact?.email) {
+                        try {
+                            await supabase.from('notifications').insert([{
+                                user_email: reservations[resIndex].contact.email.toLowerCase(),
+                                title: `Reservation ${status.toUpperCase()}`,
+                                message: `Your reservation for ${reservations[resIndex].event?.venue} on ${reservations[resIndex].event?.dates} was ${status}.`
+                            }]);
+                        } catch(e) { console.warn('Notification failed', e); }
+                    }
+                }
             }
-            catch(e) { showAwesomeAlert("Error updating status: " + e.message, true); }
+            catch(e) { 
+                showAwesomeAlert("Error updating status: " + e.message, true); 
+                fetchReservations(); // Revert on failure
+            }
         };
 
         window.deleteRes = async function(id, event) {
             if(event) event.stopPropagation();
             showAwesomeConfirm("Send this reservation to the archive?", async () => {
+                // Optimistic update
+                const resIndex = reservations.findIndex(r => r.id === id);
+                if (resIndex > -1) {
+                    const removed = reservations.splice(resIndex, 1)[0];
+                    removed.is_archived = true;
+                    archivedReservations.push(removed);
+                    const showDateStr = window.currentSelectedDateStr || new Date().toISOString().split('T')[0];
+                    renderCalendar();
+                    renderReservationList(showDateStr);
+                    if (typeof window.renderAllReservations === 'function') window.renderAllReservations();
+                    renderAnalytics();
+                    if(document.getElementById('section-archive') && !document.getElementById('section-archive').classList.contains('hidden')) {
+                        if (typeof switchArchiveTab === 'function') switchArchiveTab();
+                    }
+                }
+
                 try { 
                     const { error } = await supabase.from('reservations').update({ is_archived: true }).eq('id', id);
                     if (error) throw error;
                     showAwesomeAlert("Reservation sent to archive.");
+                    
+                    if (resIndex > -1 && reservations[resIndex].contact?.email) {
+                        try {
+                            await supabase.from('notifications').insert([{
+                                user_email: reservations[resIndex].contact.email.toLowerCase(),
+                                title: 'Reservation Archived Update',
+                                message: `Your reservation for ${reservations[resIndex].event?.venue} was moved to the archive by the administrator.`
+                            }]);
+                        } catch(e) { console.warn('Notification failed', e); }
+                    }
                 }
-                catch(e) { showAwesomeAlert("Error: " + e.message, true); }
+                catch(e) { 
+                    showAwesomeAlert("Error: " + e.message, true); 
+                    fetchReservations(); // Revert on failure
+                }
             });
         };
 
@@ -536,6 +679,7 @@ window.printReservation = function(id, event) {
                 cell.onclick = () => {
                     document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('cal-selected'));
                     cell.classList.add('cal-selected');
+                    window.currentSelectedDateStr = dateStr;
                     renderReservationList(dateStr);
                 };
                 grid.appendChild(cell);

@@ -87,6 +87,21 @@
                         Calendar & Bookings</h1>
                 </div>
                 <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <button id="admin-notif-btn" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 w-10 h-10 rounded-full transition shadow-sm flex items-center justify-center relative">
+                            <i class="fa-regular fa-bell"></i>
+                            <span id="admin-notif-badge" class="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border border-white hidden"></span>
+                        </button>
+                        <div id="admin-notif-dropdown" class="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 hidden flex flex-col overflow-hidden z-[200]">
+                            <div class="px-4 py-3 bg-slate-50 border-b border-gray-100 flex justify-between items-center">
+                                <span class="font-bold text-slate-800 text-sm">Notifications</span>
+                                <button id="admin-mark-read" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Mark as read</button>
+                            </div>
+                            <div id="admin-notif-list" class="max-h-80 overflow-y-auto">
+                                <p class="text-sm text-slate-500 text-center py-6">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
                     <button onclick="window.location.reload()"
                         class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 w-10 h-10 rounded-full transition shadow-sm flex items-center justify-center group"
                         title="Refresh Data">
