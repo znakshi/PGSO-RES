@@ -422,55 +422,57 @@ function initClientLogin() {
     });
 
     // --- Global Back-Button Interceptor for Logged In Clients ---
-    if (session && session.user && !window.location.pathname.endsWith('index.html') && window.location.pathname !== '/') {
-        history.pushState(null, null, location.href);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session && session.user && !window.location.pathname.endsWith('index.html') && window.location.pathname !== '/') {
+            history.pushState(null, null, location.href);
 
-        window.addEventListener('popstate', function (event) {
-            let backModal = document.getElementById('back-logout-modal');
-            if (!backModal) {
-                const backModalHTML = `
-                <div id="back-logout-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300">
-                    <div class="bg-white rounded-xl shadow-2xl flex flex-col w-[90%] max-w-sm overflow-visible transform transition-transform duration-300 relative mt-8">
-                        <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm z-10 border border-gray-100">
-                            <div class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center shadow-inner">
-                                <i class="fa-solid fa-arrow-right-from-bracket text-white text-xl"></i>
+            window.addEventListener('popstate', function (event) {
+                let backModal = document.getElementById('back-logout-modal');
+                if (!backModal) {
+                    const backModalHTML = `
+                    <div id="back-logout-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300">
+                        <div class="bg-white rounded-xl shadow-2xl flex flex-col w-[90%] max-w-sm overflow-visible transform transition-transform duration-300 relative mt-8">
+                            <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm z-10 border border-gray-100">
+                                <div class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center shadow-inner">
+                                    <i class="fa-solid fa-arrow-right-from-bracket text-white text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="p-8 pt-12 text-center flex flex-col items-center">
+                                <h2 class="text-xl font-bold text-gray-800 mb-3 tracking-wide">Log Out?</h2>
+                                <p class="text-gray-500 mb-8 text-[14px] leading-relaxed">
+                                    You went back. Do you want to securely log out of your session?
+                                </p>
+                                <div class="flex flex-col gap-3 w-full">
+                                    <button id="btn-confirm-back-logout" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-full transition shadow-md text-sm">
+                                        Yes, Log Out
+                                    </button>
+                                    <button id="btn-cancel-back-logout" class="w-full bg-white text-slate-600 hover:bg-slate-50 border border-slate-200 font-bold py-3 rounded-full transition text-sm">
+                                        Stay logged in
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <div class="p-8 pt-12 text-center flex flex-col items-center">
-                            <h2 class="text-xl font-bold text-gray-800 mb-3 tracking-wide">Log Out?</h2>
-                            <p class="text-gray-500 mb-8 text-[14px] leading-relaxed">
-                                You went back. Do you want to securely log out of your session?
-                            </p>
-                            <div class="flex flex-col gap-3 w-full">
-                                <button id="btn-confirm-back-logout" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-full transition shadow-md text-sm">
-                                    Yes, Log Out
-                                </button>
-                                <button id="btn-cancel-back-logout" class="w-full bg-white text-slate-600 hover:bg-slate-50 border border-slate-200 font-bold py-3 rounded-full transition text-sm">
-                                    Stay logged in
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-                document.body.insertAdjacentHTML('beforeend', backModalHTML);
-                backModal = document.getElementById('back-logout-modal');
+                    </div>`;
+                    document.body.insertAdjacentHTML('beforeend', backModalHTML);
+                    backModal = document.getElementById('back-logout-modal');
 
-                document.getElementById('btn-cancel-back-logout').addEventListener('click', () => {
-                    backModal.classList.add('hidden');
-                    history.pushState(null, null, location.href);
-                });
+                    document.getElementById('btn-cancel-back-logout').addEventListener('click', () => {
+                        backModal.classList.add('hidden');
+                        history.pushState(null, null, location.href);
+                    });
 
-                document.getElementById('btn-confirm-back-logout').addEventListener('click', async () => {
-                    const btn = document.getElementById('btn-confirm-back-logout');
-                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Logging out...';
-                    btn.disabled = true;
-                    await supabase.auth.signOut();
-                    window.location.href = basePath + 'index.html';
-                });
-            }
-            backModal.classList.remove('hidden');
-        });
-    }
+                    document.getElementById('btn-confirm-back-logout').addEventListener('click', async () => {
+                        const btn = document.getElementById('btn-confirm-back-logout');
+                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Logging out...';
+                        btn.disabled = true;
+                        await supabase.auth.signOut();
+                        window.location.href = basePath + 'index.html';
+                    });
+                }
+                backModal.classList.remove('hidden');
+            });
+        }
+    });
 }
 
 async function setupClientNotifications() {
@@ -493,7 +495,7 @@ async function setupClientNotifications() {
                         <button id="client-mark-read" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Mark all as read</button>
                     </div>
                     <div id="client-notif-list" class="max-h-80 overflow-y-auto">
-                        <p class="text-sm text-slate-500 text-center py-6">Loading...</p>
+                        <p class="text-sm text-slate-500 text-center py-6 italic">No notifications yet.</p>
                     </div>
                 </div>
             `;
