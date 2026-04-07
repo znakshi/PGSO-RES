@@ -3,3 +3,14 @@
         .pgso-blue { background-color: #3c5473; } 
         .pgso-btn { background-color: #3c5473; }
         .pgso-btn:hover { background-color: #131c24; }
+
+/* Hide default arrows for number inputs */
+.hide-arrows::-webkit-inner-spin-button, 
+.hide-arrows::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+.hide-arrows {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

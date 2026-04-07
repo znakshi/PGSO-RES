@@ -1,8 +1,11 @@
 ```sql
+-- 0. Drop existing table if it exists to allow a clean recreation
+DROP TABLE IF EXISTS notifications CASCADE;
+
 -- 1. Create the notifications table
 CREATE TABLE notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID DEFAULT NULL, -- NULL means it's for ADMINS. Set UUID means it's for a specific CLIENT.
+    user_email TEXT DEFAULT NULL, -- NULL means it's for ADMINS. Set string means it's for a specific CLIENT.
     title TEXT NOT NULL,
     message TEXT NOT NULL,
     is_read BOOLEAN DEFAULT false,
@@ -18,23 +21,23 @@ CREATE POLICY "Allow public insert to notifications" ON notifications FOR INSERT
 
 -- Allow authenticated users to view their own notifications
 CREATE POLICY "Allow users to view own notifications" ON notifications FOR SELECT USING (
-  auth.role() = 'authenticated' AND user_id = auth.uid()
+  auth.role() = 'authenticated' AND user_email = auth.jwt()->>'email'
 );
 
--- Note: we also need admins to be able to view their notifications where user_id IS NULL.
--- Since the admin dashboard relies on anon key, we'll allow selection for anon or authenticated where user_id IS NULL:
+-- Note: we also need admins to be able to view their notifications where user_email IS NULL.
+-- Since the admin dashboard relies on anon key, we'll allow selection for anon or authenticated where user_email IS NULL:
 CREATE POLICY "Allow anyone to read admin notifications" ON notifications FOR SELECT USING (
-  user_id IS NULL
+  user_email IS NULL
 );
 
 -- Allow users to update their own notifications (to mark as read)
 CREATE POLICY "Allow users to update own notifications" ON notifications FOR UPDATE USING (
-  auth.role() = 'authenticated' AND user_id = auth.uid()
+  auth.role() = 'authenticated' AND user_email = auth.jwt()->>'email'
 );
 
 -- Allow admins to update their notifications
 CREATE POLICY "Allow anyone to update admin notifications" ON notifications FOR UPDATE USING (
-  user_id IS NULL
+  user_email IS NULL
 );
 
 -- 4. Enable Realtime triggers for the table

@@ -58,9 +58,11 @@ import { supabase } from "../supabase-config.js";
                                 if (pr !== row) {
                                     const pCb = pr.querySelector('.equipment-checkbox');
                                     const pQty = pr.querySelector('.equipment-quantity');
+                                    const pBtns = pr.querySelectorAll('.qty-btn');
                                     if (pCb && pCb.checked) {
                                         pCb.checked = false;
                                         pQty.disabled = true;
+                                        if(pBtns) pBtns.forEach(btn => btn.disabled = true);
                                         pQty.value = 0;
                                     }
                                 }
@@ -68,7 +70,9 @@ import { supabase } from "../supabase-config.js";
                         }
                         
                         const qtyInput = row.querySelector('.equipment-quantity');
+                        const qtyBtns = row.querySelectorAll('.qty-btn');
                         qtyInput.disabled = !isChecked;
+                        if(qtyBtns) qtyBtns.forEach(btn => btn.disabled = !isChecked);
                         qtyInput.value = isChecked ? 1 : 0;
                         calculateTotal();
                     }
@@ -77,13 +81,32 @@ import { supabase } from "../supabase-config.js";
                 table.addEventListener('input', (e) => {
                     if(e.target.classList.contains('equipment-quantity')) {
                         const input = e.target;
-                        const max = parseInt(input.max);
-                        const currentVal = parseInt(input.value);
+                        const max = parseInt(input.max) || Infinity;
+                        const currentVal = parseInt(input.value) || 0;
                         if (currentVal > max) {
                             alert(`Sorry, only ${max} units are available.`);
                             input.value = max;
                         }
                         calculateTotal();
+                    }
+                });
+
+                table.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.qty-btn');
+                    if (btn && !btn.disabled) {
+                        const row = btn.closest('tr');
+                        const input = row.querySelector('.equipment-quantity');
+                        const max = parseInt(input.max) || Infinity;
+                        let currentVal = parseInt(input.value) || 0;
+                        
+                        if (btn.classList.contains('qty-plus') && currentVal < max) {
+                            currentVal++;
+                        } else if (btn.classList.contains('qty-minus') && currentVal > 0) {
+                            currentVal--;
+                        }
+                        
+                        input.value = currentVal;
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
                     }
                 });
             }
@@ -126,7 +149,13 @@ import { supabase } from "../supabase-config.js";
                         <td class="py-3 text-gray-900 equipment-name">${item.name}</td>
                         <td class="py-3">${item.unit}</td>
                         <td class="py-3">₱${item.price}</td>
-                        <td class="py-3"><input type="number" min="0" value="0" class="equipment-quantity form-input w-full rounded p-1 text-center" disabled></td>
+                        <td class="py-3">
+                            <div class="flex items-center justify-center space-x-2">
+                                <button type="button" class="qty-btn qty-minus w-6 h-6 rounded-md bg-gray-200 text-gray-600 hover:bg-gray-300 disabled:opacity-50 flex items-center justify-center font-bold" disabled><i class="fa-solid fa-minus text-xs"></i></button>
+                                <input type="number" min="0" value="0" class="equipment-quantity form-input w-12 rounded p-1 text-center border border-gray-200 hide-arrows" disabled>
+                                <button type="button" class="qty-btn qty-plus w-6 h-6 rounded-md bg-gray-200 text-gray-600 hover:bg-gray-300 disabled:opacity-50 flex items-center justify-center font-bold" disabled><i class="fa-solid fa-plus text-xs"></i></button>
+                            </div>
+                        </td>
                     `;
 
                     // SORT BY CATEGORY FIELD
@@ -162,10 +191,12 @@ import { supabase } from "../supabase-config.js";
                 
                 const checkbox = row.querySelector('.equipment-checkbox');
                 const qtyInput = row.querySelector('.equipment-quantity');
+                const qtyBtns = row.querySelectorAll('.qty-btn');
                 
                 if(!checkbox.checked) {
                    qtyInput.disabled = true;
                    qtyInput.value = 0;
+                   if (qtyBtns) qtyBtns.forEach(btn => btn.disabled = true);
                 }
             });
 
@@ -203,6 +234,7 @@ import { supabase } from "../supabase-config.js";
                 const qtyInput = row.querySelector('.equipment-quantity');
                 const checkbox = row.querySelector('.equipment-checkbox');
                 const nameCell = row.querySelector('.equipment-name');
+                const qtyBtns = row.querySelectorAll('.qty-btn');
 
                 qtyInput.max = available;
 
@@ -211,10 +243,12 @@ import { supabase } from "../supabase-config.js";
                     checkbox.disabled = true;
                     qtyInput.value = 0;
                     qtyInput.disabled = true;
+                    if (qtyBtns) qtyBtns.forEach(btn => btn.disabled = true);
                     nameCell.innerHTML = `${itemName} <span class="text-red-500 text-xs font-bold">(Out of Stock)</span>`;
                     row.classList.add('bg-gray-100', 'opacity-50');
                 } else {
                     if(checkbox.disabled) checkbox.disabled = false;
+                    if (qtyBtns) qtyBtns.forEach(btn => btn.disabled = !checkbox.checked);
                     nameCell.innerHTML = `${itemName} <span class="text-green-600 text-xs">(${available} available)</span>`;
                     if (parseInt(qtyInput.value) > available) qtyInput.value = available;
                 }
@@ -510,9 +544,11 @@ import { supabase } from "../supabase-config.js";
                     if (savedItem) {
                         const checkbox = row.querySelector('.equipment-checkbox');
                         const qtyInput = row.querySelector('.equipment-quantity');
+                        const qtyBtns = row.querySelectorAll('.qty-btn');
                         if (checkbox && qtyInput) {
                             checkbox.checked = true;
                             qtyInput.disabled = false;
+                            if (qtyBtns) qtyBtns.forEach(btn => btn.disabled = false);
                             qtyInput.value = savedItem.qty;
                         }
                     }

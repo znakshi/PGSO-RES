@@ -101,10 +101,13 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <!-- Palispis Auditorium -->
                 <div class="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group relative">
-                    <div class="h-56 relative overflow-hidden">
+                    <div class="h-56 relative overflow-hidden cursor-pointer" onclick="openGallery('palispis')">
                         <img src="palispis.png" onerror="this.src='provincial-gym.jpg'" alt="Gov. Ben Palispis Auditorium" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80"></div>
-                        <div class="absolute bottom-4 left-4 text-white">
+                        <div class="absolute top-4 right-4 bg-black/60 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-md backdrop-blur-sm">
+                            <i class="fa-solid fa-magnifying-glass-plus text-white text-sm"></i>
+                        </div>
+                        <div class="absolute bottom-4 left-4 text-white pointer-events-none">
                             <span class="bg-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-sm inline-block mb-1">Auditorium</span>
                             <h3 class="font-bold text-xl drop-shadow-md">Gov. Ben Palispis Auditorium</h3>
                         </div>
@@ -131,10 +134,13 @@
 
                 <!-- Provincial Gym -->
                 <div class="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group relative">
-                    <div class="h-56 relative overflow-hidden">
+                    <div class="h-56 relative overflow-hidden cursor-pointer" onclick="openGallery('gym')">
                         <img src="provincial-gym.jpg" onerror="this.src='provincial-gym.jpg'" alt="Provincial Gymnasium" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80"></div>
-                        <div class="absolute bottom-4 left-4 text-white">
+                        <div class="absolute top-4 right-4 bg-black/60 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-md backdrop-blur-sm">
+                            <i class="fa-solid fa-magnifying-glass-plus text-white text-sm"></i>
+                        </div>
+                        <div class="absolute bottom-4 left-4 text-white pointer-events-none">
                             <span class="bg-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-sm inline-block mb-1">Sports Complex</span>
                             <h3 class="font-bold text-xl drop-shadow-md">Provincial Gymnasium</h3>
                         </div>
@@ -161,10 +167,13 @@
 
                 <!-- PCL Hall -->
                 <div class="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group relative">
-                    <div class="h-56 relative overflow-hidden">
+                    <div class="h-56 relative overflow-hidden cursor-pointer" onclick="openGallery('pcl')">
                         <img src="pcl-hall.png" onerror="this.src='provincial-gym.jpg'" alt="PCL Hall" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80"></div>
-                        <div class="absolute bottom-4 left-4 text-white">
+                        <div class="absolute top-4 right-4 bg-black/60 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-md backdrop-blur-sm">
+                            <i class="fa-solid fa-magnifying-glass-plus text-white text-sm"></i>
+                        </div>
+                        <div class="absolute bottom-4 left-4 text-white pointer-events-none">
                             <span class="bg-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-sm inline-block mb-1">Conference Hall</span>
                             <h3 class="font-bold text-xl drop-shadow-md">PCL Hall</h3>
                         </div>
@@ -420,6 +429,151 @@
     </script>
 
     <script type="module" src="client-login.js"></script>
+    <!-- Image Gallery Modal -->
+    <div id="gallery-modal" class="fixed inset-0 bg-black/95 z-[150] hidden flex-col items-center justify-center transition-opacity opacity-0 duration-300">
+        <!-- Close Button -->
+        <button id="close-gallery" class="absolute top-6 right-6 text-white/70 hover:text-white transition w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 z-10 text-2xl">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <!-- Gallery Container -->
+        <div class="relative w-full max-w-5xl h-[70vh] flex items-center justify-center px-12 md:px-20">
+            <!-- Navigation Prev -->
+            <button id="gallery-prev" class="absolute left-4 md:left-8 text-white/50 hover:text-white transition text-4xl w-12 h-12 flex items-center justify-center cursor-pointer">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+
+            <!-- Image wrapper -->
+            <div class="relative w-full h-full flex items-center justify-center">
+                <img id="gallery-image" src="" alt="Venue Image" class="max-w-full max-h-full object-contain rounded shadow-2xl transition-opacity duration-500">
+            </div>
+
+            <!-- Navigation Next -->
+            <button id="gallery-next" class="absolute right-4 md:right-8 text-white/50 hover:text-white transition text-4xl w-12 h-12 flex items-center justify-center cursor-pointer">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- Image Indicator / Title -->
+        <div class="mt-6 text-center">
+            <h4 id="gallery-title" class="text-white font-bold text-xl tracking-wider uppercase mb-1"></h4>
+            <div id="gallery-indicators" class="flex gap-2 justify-center mt-3">
+                <!-- Indicators inserted via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Gallery Script -->
+    <script>
+        const venueImages = {
+            'palispis': ['palispis.png', 'palispis-2.png', 'palispis-3.png'],
+            'gym': ['provincial-gym.jpg', 'gym-2.png', 'gym-3.png'],
+            'pcl': ['pcl-hall.png', 'pcl-2.png', 'pcl-3.png']
+        };
+
+        const venueTitles = {
+            'palispis': 'Gov. Ben Palispis Auditorium',
+            'gym': 'Provincial Gymnasium',
+            'pcl': 'PCL Hall'
+        };
+
+        let currentVenueId = null;
+        let currentImageIndex = 0;
+        let slideShowInterval = null;
+
+        const galleryModal = document.getElementById('gallery-modal');
+        const galleryImage = document.getElementById('gallery-image');
+        const galleryTitle = document.getElementById('gallery-title');
+        const galleryIndicators = document.getElementById('gallery-indicators');
+
+        window.openGallery = (venueId) => {
+            currentVenueId = venueId;
+            currentImageIndex = 0;
+            
+            // Build indicators
+            galleryIndicators.innerHTML = venueImages[venueId].map((_, idx) => `
+                <button onclick="setGalleryImage(${idx})" class="w-3 h-3 rounded-full transition-all ${idx === 0 ? 'bg-white scale-110' : 'bg-white/30 hover:bg-white/50'}"></button>
+            `).join('');
+
+            updateGalleryView();
+            
+            galleryModal.classList.remove('hidden');
+            galleryModal.classList.add('flex');
+            // Trigger reflow
+            void galleryModal.offsetWidth;
+            galleryModal.classList.remove('opacity-0');
+            
+            startSlideshow();
+        };
+
+        const startSlideshow = () => {
+            stopSlideshow();
+            slideShowInterval = setInterval(nextImage, 4000);
+        };
+
+        const stopSlideshow = () => {
+            if (slideShowInterval) clearInterval(slideShowInterval);
+        };
+
+        const updateGalleryView = () => {
+            const imgSrc = venueImages[currentVenueId][currentImageIndex];
+            
+            // Fade out current image
+            galleryImage.style.opacity = '0.3';
+            
+            setTimeout(() => {
+                galleryImage.src = imgSrc;
+                galleryTitle.innerText = venueTitles[currentVenueId];
+                
+                // Update indicators
+                Array.from(galleryIndicators.children).forEach((btn, idx) => {
+                    if (idx === currentImageIndex) {
+                        btn.className = 'w-3 h-3 rounded-full transition-all bg-white scale-110';
+                    } else {
+                        btn.className = 'w-3 h-3 rounded-full transition-all bg-white/30 hover:bg-white/50 cursor-pointer';
+                    }
+                });
+
+                // Fade in
+                galleryImage.onload = () => {
+                   galleryImage.style.opacity = '1';
+                };
+            }, 200);
+        };
+
+        const nextImage = () => {
+            currentImageIndex = (currentImageIndex + 1) % venueImages[currentVenueId].length;
+            updateGalleryView();
+        };
+
+        const prevImage = () => {
+            currentImageIndex = (currentImageIndex - 1 + venueImages[currentVenueId].length) % venueImages[currentVenueId].length;
+            updateGalleryView();
+        };
+
+        window.setGalleryImage = (index) => {
+            currentImageIndex = index;
+            updateGalleryView();
+            startSlideshow(); // Reset timer if manually clicked
+        };
+
+        const closeGallery = () => {
+            stopSlideshow();
+            galleryModal.classList.add('opacity-0');
+            setTimeout(() => {
+                galleryModal.classList.add('hidden');
+                galleryModal.classList.remove('flex');
+                galleryImage.src = '';
+            }, 300);
+        };
+
+        document.getElementById('gallery-next').addEventListener('click', (e) => { e.stopPropagation(); nextImage(); startSlideshow(); });
+        document.getElementById('gallery-prev').addEventListener('click', (e) => { e.stopPropagation(); prevImage(); startSlideshow(); });
+        document.getElementById('close-gallery').addEventListener('click', closeGallery);
+        galleryModal.addEventListener('click', (e) => {
+            if (e.target === galleryModal || e.target.closest('.relative.w-full') === null && !e.target.closest('button')) closeGallery();
+        });
+    </script>
 </body>
 
 </html>
