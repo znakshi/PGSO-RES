@@ -9,6 +9,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <link rel="stylesheet" href="admin-dashboard.css">
 </head>
 
@@ -542,17 +544,14 @@
             <!-- Add Reservation Modal -->
             <div id="addReservationModal"
                 class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-4 transition-opacity duration-300">
-                <div
-                    class="bg-white rounded-2xl shadow-xl w-full max-w-2xl relative flex flex-col max-h-[90vh] mt-8 border-t-8 border-green-600">
-                    <div
-                        class="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-md border-4 border-white z-10">
-                        <div class="w-14 h-14 bg-green-600 rounded-full flex items-center justify-center">
-                            <i class="fa-solid fa-calendar-plus text-white text-xl"></i>
+                <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl relative flex flex-col max-h-[90vh] mt-8 border-t-8 border-blue-700">
+                    <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-md border-4 border-white z-10">
+                        <div class="w-14 h-14 bg-blue-700 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-file-signature text-white text-xl"></i>
                         </div>
                     </div>
 
-                    <div
-                        class="p-8 pt-12 border-b border-gray-100 flex justify-between items-center bg-white rounded-t-2xl">
+                    <div class="p-8 pt-12 border-b border-gray-100 flex justify-between items-center bg-white rounded-t-2xl">
                         <div>
                             <h3 class="text-2xl font-bold text-slate-800 tracking-tight">Add Reservation</h3>
                             <p class="text-sm text-slate-500 mt-1">Manually insert a booking block into the calendar</p>
@@ -564,88 +563,86 @@
 
                     <div class="p-8 overflow-y-auto w-full">
                         <form id="addResForm" onsubmit="window.saveNewReservation(event)">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                <div class="bg-slate-50/50 border border-slate-200 p-5 rounded-xl">
-                                    <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-4">
-                                        Client Information</h4>
-                                    <div class="space-y-4">
-                                        <div><label class="block text-xs font-bold text-slate-600 uppercase mb-1">Full
-                                                Name</label><input type="text" id="add-name" required
-                                                class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-medium focus:border-green-500 focus:ring-1 focus:ring-green-500 transition">
-                                        </div>
-                                        <div><label
-                                                class="block text-xs font-bold text-slate-600 uppercase mb-1">Contact
-                                                No.</label><input type="text" id="add-contact" required
-                                                class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-medium focus:border-green-500 focus:ring-1 focus:ring-green-500 transition">
-                                        </div>
-                                        <div><label
-                                                class="block text-xs font-bold text-slate-600 uppercase mb-1">Email</label><input
-                                                type="text" id="add-email" required
-                                                class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-medium focus:border-green-500 focus:ring-1 focus:ring-green-500 transition">
-                                        </div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-6">Contact details</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <div><label class="block text-[0.75rem] font-bold text-[#475569] mb-2 uppercase tracking-wide">Full Name <span class="text-red-500 ml-1">*</span></label>
+                                    <input type="text" id="add-name" required
+                                        class="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none transition-all focus:border-blue-700 focus:ring-2 focus:ring-blue-100 bg-white" placeholder="e.g. Juan Dela Cruz">
+                                </div>
+                                <div><label class="block text-[0.75rem] font-bold text-[#475569] mb-2 uppercase tracking-wide">Contact No. <span class="text-red-500 ml-1">*</span></label>
+                                    <div class="flex rounded-lg border border-slate-200 overflow-hidden focus-within:border-blue-700 focus-within:ring-2 focus-within:ring-blue-100 transition-all bg-white">
+                                        <span class="inline-flex items-center px-4 bg-gray-50 text-slate-500 font-bold text-sm border-r border-slate-200">09</span>
+                                        <input type="text" id="add-contact" required maxlength="9" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                            class="w-full px-3 py-3 text-sm text-slate-700 outline-none bg-transparent" placeholder="123456789">
                                     </div>
                                 </div>
-
-                                <div class="bg-slate-50/50 border border-slate-200 p-5 rounded-xl">
-                                    <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-4">
-                                        Event Details</h4>
-                                    <div class="space-y-4">
-                                        <div><label
-                                                class="block text-xs font-bold text-slate-600 uppercase mb-1">Venue</label>
-                                            <select id="add-venue" required
-                                                class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-medium focus:border-green-500 focus:ring-1 focus:ring-green-500 transition">
-                                                <option value="Provincial Gymnasium">Provincial Gymnasium</option>
-                                                <option value="Gov. Ben Palispis Auditorium">Gov. Ben Palispis Auditorium</option>
-                                                <option value="PCL Hall">PCL Hall</option>
-                                            </select>
-                                        </div>
-                                        <div><label class="block text-xs font-bold text-slate-600 uppercase mb-1">Event
-                                                Type</label><input type="text" id="add-type" required
-                                                class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-medium focus:border-green-500 focus:ring-1 focus:ring-green-500 transition">
-                                        </div>
-                                        <div><label
-                                                class="block text-xs font-bold text-slate-600 uppercase mb-1">Date(s)</label><input
-                                                type="text" id="add-dates" required
-                                                class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-medium focus:border-green-500 focus:ring-1 focus:ring-green-500 transition"
-                                                placeholder="YYYY-MM-DD, YYYY-MM-DD"></div>
-                                    </div>
+                                <div class="md:col-span-2"><label class="block text-[0.75rem] font-bold text-[#475569] mb-2 uppercase tracking-wide">Email Address <span class="text-red-500 ml-1">*</span></label>
+                                    <input type="email" id="add-email" required
+                                        class="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none transition-all focus:border-blue-700 focus:ring-2 focus:ring-blue-100 bg-white" placeholder="e.g. juan@gmail.com">
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                <div class="flex gap-4">
-                                    <div class="w-1/2">
-                                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Start Time</label>
-                                        <input type="time" id="add-start" required
-                                            class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-medium focus:border-green-500 focus:ring-1 focus:ring-green-500 transition">
-                                    </div>
-                                    <div class="w-1/2">
-                                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">End Time</label>
-                                        <input type="time" id="add-end" required
-                                            class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-medium focus:border-green-500 focus:ring-1 focus:ring-green-500 transition">
-                                    </div>
+                            <hr class="border-gray-100 my-8">
+
+                            <h3 class="text-lg font-bold text-slate-800 mb-6">Event Details</h3>
+                            <div class="mb-6">
+                                <label class="block text-[0.75rem] font-bold text-[#475569] mb-2 uppercase tracking-wide">Venue <span class="text-red-500 ml-1">*</span></label>
+                                <select id="add-venue" required
+                                    class="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none transition-all focus:border-blue-700 focus:ring-2 focus:ring-blue-100 bg-white">
+                                    <option value="Provincial Gymnasium">Provincial Gymnasium</option>
+                                    <option value="Gov. Ben Palispis Auditorium">Gov. Ben Palispis Auditorium</option>
+                                    <option value="PCL Hall">PCL Hall</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label class="block text-[0.75rem] font-bold text-[#475569] mb-2 uppercase tracking-wide">Event Type <span class="text-red-500 ml-1">*</span></label>
+                                <input type="text" id="add-type" required
+                                    class="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none transition-all focus:border-blue-700 focus:ring-2 focus:ring-blue-100 bg-white" placeholder="e.g., Sports, Conference, Tournament">
+                            </div>
+
+                            <div class="mb-8">
+                                <label class="block text-[0.75rem] font-bold text-[#475569] mb-2 uppercase tracking-wide">Date(s) <span class="text-red-500 ml-1">*</span></label>
+                                <input type="text" id="add-dates" required
+                                    class="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none transition-all focus:border-blue-700 focus:ring-2 focus:ring-blue-100 bg-white"
+                                    placeholder="YYYY-MM-DD, YYYY-MM-DD">
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <div>
+                                    <label class="block text-[0.75rem] font-bold text-[#475569] mb-2 uppercase tracking-wide">Start Time <span class="text-red-500 ml-1">*</span></label>
+                                    <input type="time" id="add-start" required min="07:00" max="17:00"
+                                        class="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-500 outline-none transition-all focus:border-blue-700 focus:ring-2 focus:ring-blue-100 bg-white">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1 flex items-center gap-2">
-                                        <i class="fa-solid fa-peso-sign"></i> Total Price Override
-                                    </label>
-                                    <input type="number" id="add-price" min="0" required
-                                        class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-bold text-green-700 focus:border-green-500 focus:ring-1 focus:ring-green-500 transition">
+                                    <label class="block text-[0.75rem] font-bold text-[#475569] mb-2 uppercase tracking-wide">End Time <span class="text-red-500 ml-1">*</span></label>
+                                    <input type="time" id="add-end" required min="07:00" max="17:00"
+                                        class="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-500 outline-none transition-all focus:border-blue-700 focus:ring-2 focus:ring-blue-100 bg-white">
                                 </div>
                             </div>
 
-                            <div class="mb-6">
-                                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Internal Notes (Optional)</label>
-                                <textarea id="add-notes"
-                                    class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-medium h-20 resize-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition"
-                                    placeholder="Add notes..."></textarea>
+                            <hr class="border-gray-100 my-8">
+
+                            <h3 class="text-lg font-bold text-slate-800 mb-6">Pricing & Notes</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <div class="bg-blue-50/50 p-6 rounded-xl border border-blue-100">
+                                    <label class="block text-[0.75rem] font-bold text-blue-800 mb-2 uppercase tracking-wide flex items-center gap-2"><i class="fa-solid fa-peso-sign"></i> Total Price Override <span class="text-red-500 ml-1">*</span></label>
+                                    <input type="number" id="add-price" min="0" required
+                                        class="w-full p-3 border border-blue-200 rounded-lg text-lg font-bold text-blue-700 outline-none transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-100 bg-white shadow-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-[0.75rem] font-bold text-[#475569] mb-2 uppercase tracking-wide">Internal Notes <span class="text-xs text-slate-400 font-normal normal-case">(Optional)</span></label>
+                                    <textarea id="add-notes"
+                                        class="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none transition-all focus:border-blue-700 focus:ring-2 focus:ring-blue-100 bg-white resize-none min-h-[100px]"
+                                        placeholder="Any special requests or details about your event..."></textarea>
+                                </div>
                             </div>
 
                             <div class="flex flex-col md:flex-row gap-4 pt-6 border-t border-gray-100">
                                 <button type="button" onclick="closeModal('addReservationModal')"
-                                    class="flex-1 py-3.5 border-2 border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold uppercase tracking-wider text-sm transition">Cancel</button>
+                                    class="flex-1 py-4 border-2 border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold uppercase tracking-wider text-sm transition">Cancel</button>
                                 <button type="submit"
-                                    class="flex-1 py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold uppercase tracking-wider text-sm shadow-md hover:shadow-lg transition">Create Block</button>
+                                    class="flex-1 py-4 bg-blue-700 hover:bg-blue-800 text-white rounded-xl font-bold uppercase tracking-wider text-sm shadow-md hover:shadow-lg transition">Create Block</button>
                             </div>
                         </form>
                     </div>

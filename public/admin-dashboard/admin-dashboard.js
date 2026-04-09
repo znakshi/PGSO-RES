@@ -1268,6 +1268,14 @@ function renderInventory() {
         window.openAddReservationModal = function() {
             document.getElementById('addResForm').reset();
             document.getElementById('addReservationModal').classList.remove('hidden');
+            if (!window.fpDatesInstance) {
+                window.fpDatesInstance = flatpickr("#add-dates", {
+                    mode: "multiple",
+                    dateFormat: "Y-m-d"
+                });
+            } else {
+                window.fpDatesInstance.clear();
+            }
         };
 
         window.saveNewReservation = async function(e) {
