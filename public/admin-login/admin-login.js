@@ -1,4 +1,4 @@
-import { supabase } from "../supabase-config.js";
+import { supabase, ADMIN_EMAIL } from "../supabase-config.js";
 
         // 3. HANDLE LOGIN
         document.getElementById('login-form').addEventListener('submit', async (event) => {
@@ -16,6 +16,15 @@ import { supabase } from "../supabase-config.js";
             errorMsg.classList.add('hidden');
 
             try {
+                if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+                    btn.innerText = "Secure Login";
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                    errorMsg.innerText = "Access denied. Only the administrator can log in here.";
+                    errorMsg.classList.remove('hidden');
+                    return;
+                }
+
                 // Attempt login
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email: email,
@@ -31,7 +40,7 @@ import { supabase } from "../supabase-config.js";
                 console.error("Login Error:", error.message);
                 
                 // Show Error
-                btn.innerText = "Sign In";
+                btn.innerText = "Secure Login";
                 btn.disabled = false;
                 btn.classList.remove('opacity-75', 'cursor-not-allowed');
                 errorMsg.classList.remove('hidden');

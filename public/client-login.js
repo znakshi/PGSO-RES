@@ -1,4 +1,4 @@
-import { supabase } from "./supabase-config.js";
+import { supabase, ADMIN_EMAIL } from "./supabase-config.js";
 
 let basePath = window.location.pathname.includes('-reservation') ? '../' : '';
 
@@ -308,6 +308,14 @@ function initClientLogin() {
         loginSubmitBtn.disabled = true;
         loginErrorMsg.classList.add('hidden');
 
+        if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+            loginSubmitBtn.innerText = "Log In";
+            loginSubmitBtn.disabled = false;
+            loginErrorMsg.innerText = "Admin accounts cannot log in through the client portal.";
+            loginErrorMsg.classList.remove('hidden');
+            return;
+        }
+
         try {
             const { data, error } = await supabase.auth.signInWithPassword({
                 email: email,
@@ -372,6 +380,12 @@ function initClientLogin() {
 
         signupErrorMsg.classList.add('hidden');
         signupSuccessMsg.classList.add('hidden');
+
+        if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+            signupErrorMsg.innerText = "This email is reserved and cannot be used for client accounts.";
+            signupErrorMsg.classList.remove('hidden');
+            return;
+        }
 
         if (password !== confirmPassword) {
             signupErrorMsg.innerText = "Passwords do not match!";
