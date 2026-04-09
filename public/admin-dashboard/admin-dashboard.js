@@ -63,13 +63,20 @@ import { supabase } from "../supabase-config.js";
             document.getElementById('pgsoAlertModal').classList.remove('hidden');
         };
 
-        window.showAwesomeConfirm = function(msg, callback) {
+        window.showAwesomeConfirm = function(msg, callback, cancelCallback = null) {
             document.getElementById('pgsoConfirmMessage').innerText = msg;
             const btn = document.getElementById('pgsoConfirmBtn');
             btn.onclick = () => {
                 document.getElementById('pgsoConfirmModal').classList.add('hidden');
                 callback();
             };
+            const cancelBtn = document.querySelector('#pgsoConfirmModal .flex.gap-4 button:first-child');
+            if (cancelBtn) {
+                cancelBtn.onclick = () => {
+                    document.getElementById('pgsoConfirmModal').classList.add('hidden');
+                    if (cancelCallback) cancelCallback();
+                };
+            }
             document.getElementById('pgsoConfirmModal').classList.remove('hidden');
         };
         window.logoutAdmin = async function() {
@@ -1257,3 +1264,64 @@ function renderInventory() {
                 }
             });
         };
+
+        window.openAddReservationModal = function() {
+            document.getElementById('addResForm').reset();
+            document.getElementById('addReservationModal').classList.remove('hidden');
+        };
+
+        window.saveNewReservation = async function(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Saving...';
+            btn.disabled = true;
+
+            const name = document.getElementById('add-name').value;
+            const contact = document.getElementById('add-contact').value;
+            const email = document.getElementById('add-email').value;
+            const venue = document.getElementById('add-venue').value;
+            const type = document.getElementById('add-type').value;
+            const dates = document.getElementById('add-dates').value;
+            const start = document.getElementById('add-start').value;
+            const end = document.getElementById('add-end').value;
+            const price = parseFloat(document.getElementById('add-price').value) || 0;
+            const notes = document.getElementById('add-notes').value;
+
+            const reservationData = {
+                contact: { fullName: name, contactNumber: contact, email: email },
+                event: { venue: venue, eventType: type, dates: dates, startTime: start, endTime: end },
+                equipment: [],
+                pricing: { grandTotal: price, venueTotal: price, equipmentTotal: 0, securityDeposit: 0 },
+                notes: notes,
+                status: 'confirmed'
+            };
+
+            try {
+                const { error } = await supabase.from('reservations').insert([reservationData]);
+                if (error) throw error;
+                closeModal('addReservationModal');
+                showAwesomeAlert("Block added to calendar successfully!");
+                await fetchReservations();
+            } catch (err) {
+                showAwesomeAlert("Error saving reservation: " + err.message, true);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        };
+
+        // --- ADMIN BACK-BUTTON INTERCEPTOR ---
+        history.pushState({ adminBase: true }, null, location.href);
+        window.addEventListener('popstate', function (event) {
+            if (event.state && event.state.adminBase) return;
+            if (window.location.hash) return; // Ignore internal hash navigation
+
+            showAwesomeConfirm("You went back. Do you want to securely log out?", async () => {
+                await supabase.auth.signOut();
+                window.location.href = "../index.html";
+            }, () => {
+                // If they cancel, restore the state so they can't go back without triggering this again
+                history.pushState({ adminBase: true }, null, location.href);
+            });
+        });

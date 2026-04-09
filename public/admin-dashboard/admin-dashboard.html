@@ -117,14 +117,19 @@
                     <div
                         class="col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-8 h-[650px] flex flex-col">
                         <div class="flex justify-between items-center mb-6 px-2 border-b border-slate-100 pb-4">
-                            <button id="prevMonth"
-                                class="text-slate-600 hover:bg-slate-100 hover:text-blue-700 w-10 h-10 rounded-full transition"><i
-                                    class="fa-solid fa-chevron-left"></i></button>
-                            <h2 id="currentMonthYear"
-                                class="text-xl md:text-2xl font-bold tracking-tight text-slate-800">Month Year</h2>
-                            <button id="nextMonth"
-                                class="text-slate-600 hover:bg-slate-100 hover:text-blue-700 w-10 h-10 rounded-full transition"><i
-                                    class="fa-solid fa-chevron-right"></i></button>
+                            <div class="flex items-center gap-4">
+                                <button id="prevMonth"
+                                    class="text-slate-600 hover:bg-slate-100 hover:text-blue-700 w-10 h-10 rounded-full transition"><i
+                                        class="fa-solid fa-chevron-left"></i></button>
+                                <h2 id="currentMonthYear"
+                                    class="text-xl md:text-2xl font-bold tracking-tight text-slate-800">Month Year</h2>
+                                <button id="nextMonth"
+                                    class="text-slate-600 hover:bg-slate-100 hover:text-blue-700 w-10 h-10 rounded-full transition"><i
+                                        class="fa-solid fa-chevron-right"></i></button>
+                            </div>
+                            <button onclick="openAddReservationModal()"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-sm flex items-center"><i
+                                    class="fa-solid fa-calendar-plus mr-2"></i> Add Booking</button>
                         </div>
                         <div class="cal-grid font-bold text-slate-400 mb-4 text-[11px] tracking-widest uppercase">
                             <div>Su</div>
@@ -528,6 +533,119 @@
                                 <button type="submit"
                                     class="flex-1 py-3.5 bg-blue-700 hover:bg-blue-800 text-white rounded-xl font-bold uppercase tracking-wider text-sm shadow-md hover:shadow-lg transition">Save
                                     Master Record</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Reservation Modal -->
+            <div id="addReservationModal"
+                class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-4 transition-opacity duration-300">
+                <div
+                    class="bg-white rounded-2xl shadow-xl w-full max-w-2xl relative flex flex-col max-h-[90vh] mt-8 border-t-8 border-green-600">
+                    <div
+                        class="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-md border-4 border-white z-10">
+                        <div class="w-14 h-14 bg-green-600 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-calendar-plus text-white text-xl"></i>
+                        </div>
+                    </div>
+
+                    <div
+                        class="p-8 pt-12 border-b border-gray-100 flex justify-between items-center bg-white rounded-t-2xl">
+                        <div>
+                            <h3 class="text-2xl font-bold text-slate-800 tracking-tight">Add Reservation</h3>
+                            <p class="text-sm text-slate-500 mt-1">Manually insert a booking block into the calendar</p>
+                        </div>
+                        <button type="button" onclick="closeModal('addReservationModal')"
+                            class="w-10 h-10 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition flex items-center justify-center"><i
+                                class="fa-solid fa-xmark text-xl"></i></button>
+                    </div>
+
+                    <div class="p-8 overflow-y-auto w-full">
+                        <form id="addResForm" onsubmit="window.saveNewReservation(event)">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div class="bg-slate-50/50 border border-slate-200 p-5 rounded-xl">
+                                    <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-4">
+                                        Client Information</h4>
+                                    <div class="space-y-4">
+                                        <div><label class="block text-xs font-bold text-slate-600 uppercase mb-1">Full
+                                                Name</label><input type="text" id="add-name" required
+                                                class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-medium focus:border-green-500 focus:ring-1 focus:ring-green-500 transition">
+                                        </div>
+                                        <div><label
+                                                class="block text-xs font-bold text-slate-600 uppercase mb-1">Contact
+                                                No.</label><input type="text" id="add-contact" required
+                                                class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-medium focus:border-green-500 focus:ring-1 focus:ring-green-500 transition">
+                                        </div>
+                                        <div><label
+                                                class="block text-xs font-bold text-slate-600 uppercase mb-1">Email</label><input
+                                                type="text" id="add-email" required
+                                                class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-medium focus:border-green-500 focus:ring-1 focus:ring-green-500 transition">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-slate-50/50 border border-slate-200 p-5 rounded-xl">
+                                    <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-4">
+                                        Event Details</h4>
+                                    <div class="space-y-4">
+                                        <div><label
+                                                class="block text-xs font-bold text-slate-600 uppercase mb-1">Venue</label>
+                                            <select id="add-venue" required
+                                                class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-medium focus:border-green-500 focus:ring-1 focus:ring-green-500 transition">
+                                                <option value="Provincial Gymnasium">Provincial Gymnasium</option>
+                                                <option value="Gov. Ben Palispis Auditorium">Gov. Ben Palispis Auditorium</option>
+                                                <option value="PCL Hall">PCL Hall</option>
+                                            </select>
+                                        </div>
+                                        <div><label class="block text-xs font-bold text-slate-600 uppercase mb-1">Event
+                                                Type</label><input type="text" id="add-type" required
+                                                class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-medium focus:border-green-500 focus:ring-1 focus:ring-green-500 transition">
+                                        </div>
+                                        <div><label
+                                                class="block text-xs font-bold text-slate-600 uppercase mb-1">Date(s)</label><input
+                                                type="text" id="add-dates" required
+                                                class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-medium focus:border-green-500 focus:ring-1 focus:ring-green-500 transition"
+                                                placeholder="YYYY-MM-DD, YYYY-MM-DD"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div class="flex gap-4">
+                                    <div class="w-1/2">
+                                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Start Time</label>
+                                        <input type="time" id="add-start" required
+                                            class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-medium focus:border-green-500 focus:ring-1 focus:ring-green-500 transition">
+                                    </div>
+                                    <div class="w-1/2">
+                                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">End Time</label>
+                                        <input type="time" id="add-end" required
+                                            class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-medium focus:border-green-500 focus:ring-1 focus:ring-green-500 transition">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1 flex items-center gap-2">
+                                        <i class="fa-solid fa-peso-sign"></i> Total Price Override
+                                    </label>
+                                    <input type="number" id="add-price" min="0" required
+                                        class="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-bold text-green-700 focus:border-green-500 focus:ring-1 focus:ring-green-500 transition">
+                                </div>
+                            </div>
+
+                            <div class="mb-6">
+                                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Internal Notes (Optional)</label>
+                                <textarea id="add-notes"
+                                    class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-medium h-20 resize-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition"
+                                    placeholder="Add notes..."></textarea>
+                            </div>
+
+                            <div class="flex flex-col md:flex-row gap-4 pt-6 border-t border-gray-100">
+                                <button type="button" onclick="closeModal('addReservationModal')"
+                                    class="flex-1 py-3.5 border-2 border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold uppercase tracking-wider text-sm transition">Cancel</button>
+                                <button type="submit"
+                                    class="flex-1 py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold uppercase tracking-wider text-sm shadow-md hover:shadow-lg transition">Create Block</button>
                             </div>
                         </form>
                     </div>

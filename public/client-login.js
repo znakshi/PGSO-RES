@@ -437,10 +437,16 @@ function initClientLogin() {
 
     // --- Global Back-Button Interceptor for Logged In Clients ---
     supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session && session.user && !window.location.pathname.endsWith('index.html') && window.location.pathname !== '/') {
-            history.pushState(null, null, location.href);
+        const p = window.location.pathname;
+        const isHome = p.endsWith('index.html') || p === '/' || p.endsWith('pgso-res/');
+
+        if (session && session.user && isHome) {
+            history.pushState({ pgsoBase: true }, null, location.href);
 
             window.addEventListener('popstate', function (event) {
+                if (event.state && event.state.pgsoBase) return;
+                if (window.location.hash) return;
+                
                 let backModal = document.getElementById('back-logout-modal');
                 if (!backModal) {
                     const backModalHTML = `
@@ -472,7 +478,7 @@ function initClientLogin() {
 
                     document.getElementById('btn-cancel-back-logout').addEventListener('click', () => {
                         backModal.classList.add('hidden');
-                        history.pushState(null, null, location.href);
+                        history.pushState({ pgsoBase: true }, null, location.href);
                     });
 
                     document.getElementById('btn-confirm-back-logout').addEventListener('click', async () => {
