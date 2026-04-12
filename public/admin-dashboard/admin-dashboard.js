@@ -720,7 +720,7 @@ window.printReservation = function(id, event) {
                     <div class="flex gap-2 relative z-10">
                         ${res.status === 'pending' ? `<button onclick="setStatus('${res.id}', 'confirmed', event)" class="flex-1 bg-green-600 text-white py-1.5 rounded text-xs font-bold hover:bg-green-700">Accept</button><button onclick="setStatus('${res.id}', 'declined', event)" class="flex-1 bg-red-500 text-white py-1.5 rounded text-xs font-bold hover:bg-red-600">Decline</button>` : ''}
                         ${res.status === 'confirmed' ? `<button onclick="printReservation('${res.id}', event)" class="px-3 border border-gray-200 rounded text-blue-600 hover:text-blue-800 hover:bg-blue-50" title="Print Permit"><i class="fa-solid fa-print"></i></button>` : ''}
-                        <button onclick="deleteRes('${res.id}', event)" class="px-3 border border-gray-200 rounded text-red-400 hover:text-red-600 hover:bg-red-50"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="deleteRes('${res.id}', event)" title="Archive Reservation" class="px-3 border border-gray-200 rounded text-amber-500 hover:text-amber-700 hover:bg-amber-50"><i class="fa-solid fa-box-archive"></i></button>
                     </div>
                 `;
                 list.appendChild(card);
@@ -839,116 +839,124 @@ window.printReservation = function(id, event) {
 
             if(charts.venue) charts.venue.destroy();
             if(charts.line) charts.line.destroy();
+            if(charts.forecast) charts.forecast.destroy();
+            if(charts.runRate) charts.runRate.destroy();
 
-            const venues = {};
-            reservations.forEach(r => { venues[r.event.venue] = (venues[r.event.venue] || 0) + 1; });
+            const venues_list = {};
+            reservations.forEach(r => { venues_list[r.event.venue] = (venues_list[r.event.venue] || 0) + 1; });
             let topV = "N/A", max=0;
-            for(let v in venues) { if(venues[v]>max){ max=venues[v]; topV=v; } }
+            for(let v in venues_list) { if(venues_list[v]>max){ max=venues_list[v]; topV=v; } }
             document.getElementById('stat-venue').innerText = topV;
 
-            const ctxV = document.getElementById('venueChart').getContext('2d');
-            charts.venue = new Chart(ctxV, {
-                type: 'bar',
-                data: { labels: Object.keys(venues), datasets: [{ label: 'Bookings', data: Object.values(venues), backgroundColor: '#3c5473' }] },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
+            const ctxV = document.getElementById('venueChart');
+            if(ctxV) {
+                charts.venue = new Chart(ctxV.getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: Object.keys(venues_list), datasets: [{ label: 'Bookings', data: Object.values(venues_list), backgroundColor: '#3c5473' }] },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
 
             const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
             const monthlyData = new Array(12).fill(0);
+            
+            const currentYear = new Date().getFullYear();
+            const lastYear = currentYear - 1;
+
+            const currentYearData = new Array(12).fill(0);
+            const lastYearData = new Array(12).fill(0);
+
             reservations.forEach(r => {
+                let d = null;
                 if(r.timestamp) {
-                    const d = r.timestamp.toDate ? r.timestamp.toDate() : new Date(r.timestamp); 
+                    d = r.timestamp.toDate ? r.timestamp.toDate() : new Date(r.timestamp); 
+                } else if (r.event && r.event.dates) {
+                    let firstDate = r.event.dates.split(',')[0].trim();
+                    if(firstDate) d = new Date(firstDate);
+                }
+                
+                if(d) {
                     monthlyData[d.getMonth()]++;
+                    if(d.getFullYear() === currentYear) currentYearData[d.getMonth()]++;
+                    else if(d.getFullYear() === lastYear) lastYearData[d.getMonth()]++;
                 }
             });
-            const ctxL = document.getElementById('lineChart').getContext('2d');
-            charts.line = new Chart(ctxL, {
-                type: 'line',
-                data: { labels: months, datasets: [{ label: 'Reservations', data: monthlyData, borderColor: '#8b5cf6', tension: 0.3, fill: true, backgroundColor: 'rgba(139, 92, 246, 0.1)' }] },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
 
-            // --- PREDICTIVE FORECAST ALGORITHM ---
+            const ctxL = document.getElementById('lineChart');
+            if(ctxL) {
+                charts.line = new Chart(ctxL.getContext('2d'), {
+                    type: 'line',
+                    data: { labels: months, datasets: [{ label: 'Reservations', data: monthlyData, borderColor: '#8b5cf6', tension: 0.3, fill: true, backgroundColor: 'rgba(139, 92, 246, 0.1)' }] },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            // --- FORECAST CHART ---
             const currentMonthIdx = new Date().getMonth();
             let n = 0, sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
             
-            // Look back 4 months to plot the trendline
             for(let i = 0; i < 4; i++) {
                 let mIdx = (currentMonthIdx - i + 12) % 12;
-                let x = 4 - i; // Time axis: 1, 2, 3, 4
-                let y = monthlyData[mIdx];
-                if (y > 0 || i === 0) { // include months with data, and current month always
-                    n++;
-                    sumX += x;
-                    sumY += y;
-                    sumXY += x * y;
-                    sumXX += x * x;
+                let x = 4 - i; 
+                let y = currentYearData[mIdx];
+                if (y > 0 || i === 0) {
+                    n++; sumX += x; sumY += y; sumXY += x * y; sumXX += x * x;
                 }
             }
             
-            // Simple Linear Regression formula for Slope (m) and Intercept (b)
-            let m = 0;
+            let m_slope = 0;
             let b = sumY / (n || 1); 
             if (n > 1) {
                 const denominator = (n * sumXX - sumX * sumX);
                 if(denominator !== 0) {
-                    m = (n * sumXY - sumX * sumY) / denominator;
-                    b = (sumY - m * sumX) / n;
+                    m_slope = (n * sumXY - sumX * sumY) / denominator;
+                    b = (sumY - m_slope * sumX) / n;
                 }
             }
 
-            // Predict and Render next 3 months (x = 5, 6, 7)
-            const pBody = document.getElementById('prediction-tbody');
-            if(pBody) pBody.innerHTML = "";
-            let baseValue = monthlyData[currentMonthIdx] || 1; // avoid division by zero
+            const forecastData = new Array(12).fill(null);
+            forecastData[currentMonthIdx] = currentYearData[currentMonthIdx];
             
-            for(let i = 1; i <= 3; i++) {
-                let nextMIdx = (currentMonthIdx + i) % 12;
-                let nextX = 4 + i;
-                let predicted = Math.max(0, Math.round(m * nextX + b)); 
-                
-                // If system is new and lacks data, assume minimal growth for UI population
-                if (n <= 1 && predicted === 0) predicted = Math.max(2, Math.round(baseValue * 1.1)); 
-
-                let growthPct = Math.round(((predicted - baseValue) / baseValue) * 100);
-                if (baseValue === 0 && predicted > 0) growthPct = 100;
-                
-                let trendHtml = "";
-                if (growthPct > 0) {
-                    trendHtml = `<span class="text-green-600 font-bold bg-green-50 px-2 py-1 rounded shadow-sm border border-green-100"><i class="fa-solid fa-arrow-trend-up mr-1"></i> +${growthPct}%</span>`;
-                } else if (growthPct < 0) {
-                    trendHtml = `<span class="text-red-500 font-bold bg-red-50 px-2 py-1 rounded shadow-sm border border-red-100"><i class="fa-solid fa-arrow-trend-down mr-1"></i> ${growthPct}%</span>`;
-                } else {
-                    trendHtml = `<span class="text-slate-500 font-bold bg-slate-100 px-2 py-1 rounded shadow-sm border border-slate-200"><i class="fa-solid fa-minus mr-1"></i> 0%</span>`;
+            for(let i = 1; i <= 6; i++) {
+                if (currentMonthIdx + i < 12) {
+                    let nextMIdx = currentMonthIdx + i;
+                    let nextX = 4 + i;
+                    let predicted = Math.max(0, Math.round(m_slope * nextX + b)); 
+                    if (n <= 1 && predicted === 0) predicted = Math.max(2, Math.round((currentYearData[currentMonthIdx]||1) * 1.1)); 
+                    forecastData[nextMIdx] = predicted;
                 }
-
-                if(pBody) {
-                    pBody.innerHTML += `
-                        <tr class="hover:bg-slate-50 transition cursor-default">
-                            <td class="py-4 px-5 font-bold text-slate-800">${months[nextMIdx]} ${new Date().getFullYear() + (nextMIdx < currentMonthIdx ? 1 : 0)}</td>
-                            <td class="py-4 px-5 text-center"><span class="text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-200 font-black text-lg">${predicted}</span></td>
-                            <td class="py-4 px-5 text-right">${trendHtml}</td>
-                        </tr>
-                    `;
-                }
-                baseValue = predicted; // update base value to compound the percentage visually for the next row
             }
 
-            // --- ANNUAL YTD RUN-RATE FORECAST ---
-            const yearStart = new Date(new Date().getFullYear(), 0, 1);
-            const now = new Date();
-            const daysElapsed = Math.max(1, (now - yearStart) / (1000 * 60 * 60 * 24));
-            const daysInYear = (now.getFullYear() % 4 === 0) ? 366 : 365;
-            const projectionMultiplier = daysInYear / daysElapsed;
+            // Cap future months as null in currentYearData so graph matches visual style
+            for(let i = currentMonthIdx + 1; i < 12; i++) currentYearData[i] = null;
 
-            let currentYear = now.getFullYear();
-            let ytdBookings = 0;
-            let ytdRevenue = 0;
-            let ytdPalispis = 0;
+            const ctxF = document.getElementById('forecastChart');
+            if(ctxF) {
+                charts.forecast = new Chart(ctxF.getContext('2d'), {
+                    type: 'line',
+                    data: { 
+                        labels: months, 
+                        datasets: [
+                            { label: `${lastYear}`, data: lastYearData, borderColor: '#3b82f6', tension: 0.3, fill: false },
+                            { label: `${currentYear}`, data: currentYearData, borderColor: '#ea580c', tension: 0.3, fill: false },
+                            { label: 'Forecast', data: forecastData, borderColor: '#9ca3af', tension: 0.3, fill: false, borderDash: [5, 5] }
+                        ] 
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+
+            // --- RUN RATE CHART ---
+            const monthlyRevenue = new Array(12).fill(0);
+            let lastYearTotalRev = 0;
 
             reservations.forEach(r => {
-                if (r.status === 'declined' || r.status === 'cancelled' || r.status === 'rejected') return; // Only count successful/pending business
-
+                if (r.status === 'declined' || r.status === 'cancelled' || r.status === 'rejected') return;
+                
                 let d = null;
                 if(r.timestamp) {
                     d = r.timestamp.toDate ? r.timestamp.toDate() : new Date(r.timestamp);
@@ -957,41 +965,65 @@ window.printReservation = function(id, event) {
                     if(firstDate) d = new Date(firstDate);
                 }
                 
-                if(d && d.getFullYear() === currentYear) {
-                    ytdBookings++;
-                    ytdRevenue += r.pricing ? (r.pricing.grandTotal || 0) : 0;
-                    if(r.event && r.event.venue.includes("Palispis")) ytdPalispis++;
+                if(d) {
+                    let rev = r.pricing ? (r.pricing.grandTotal || 0) : 0;
+                    if(d.getFullYear() === currentYear) monthlyRevenue[d.getMonth()] += rev;
+                    else if(d.getFullYear() === lastYear) lastYearTotalRev += rev;
                 }
             });
 
-            let projBookings = Math.round(ytdBookings * projectionMultiplier);
-            let projRevenue = Math.round(ytdRevenue * projectionMultiplier);
-            let projPalispis = Math.round(ytdPalispis * projectionMultiplier);
+            let cumActuals = [];
+            let currentCum = 0;
+            for(let i=0; i<=currentMonthIdx; i++) {
+                currentCum += monthlyRevenue[i];
+                cumActuals.push(currentCum);
+            }
+            for(let i=currentMonthIdx+1; i<12; i++) cumActuals.push(null);
 
-            // Fallbacks if data is zero/brand new (UI aesthetics for presentation)
-            if (ytdBookings === 0) projBookings = 45; 
-            if (ytdRevenue === 0) projRevenue = 135000;
-            if (ytdPalispis === 0) projPalispis = 18;
+            const yearStart = new Date(currentYear, 0, 1);
+            const now = new Date();
+            const daysElapsed = Math.max(1, (now - yearStart) / (1000 * 60 * 60 * 24));
+            const dailyRunRate = currentCum / daysElapsed;
+            
+            let cumProjected = new Array(12).fill(null);
+            cumProjected[currentMonthIdx] = currentCum;
+            let tempCum = currentCum;
+            for(let i=currentMonthIdx+1; i<12; i++) {
+                let daysInMonth = new Date(currentYear, i + 1, 0).getDate();
+                tempCum += dailyRunRate * daysInMonth;
+                cumProjected[i] = Math.round(tempCum);
+            }
 
-            const yrBody = document.getElementById('yearly-tbody');
-            if (yrBody) {
-                yrBody.innerHTML = `
-                    <tr class="hover:bg-slate-50 transition cursor-default">
-                        <td class="py-4 px-4 font-bold text-slate-800">Total Bookings</td>
-                        <td class="py-4 px-4 text-center font-bold text-slate-500">${ytdBookings}</td>
-                        <td class="py-4 px-4 text-right"><span class="text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-200 font-black">${projBookings} exp</span></td>
-                    </tr>
-                    <tr class="hover:bg-slate-50 transition cursor-default">
-                        <td class="py-4 px-4 font-bold text-slate-800">Est. Revenue</td>
-                        <td class="py-4 px-4 text-center font-bold text-slate-500">₱${ytdRevenue.toLocaleString()}</td>
-                        <td class="py-4 px-4 text-right"><span class="text-green-700 bg-green-50 px-3 py-1 rounded-full border border-green-200 font-black">₱${projRevenue.toLocaleString()}</span></td>
-                    </tr>
-                    <tr class="hover:bg-slate-50 transition cursor-default">
-                        <td class="py-4 px-4 font-bold text-slate-800">Palispis Demands</td>
-                        <td class="py-4 px-4 text-center font-bold text-slate-500">${ytdPalispis}</td>
-                        <td class="py-4 px-4 text-right"><span class="text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-200 font-black">${projPalispis} exp</span></td>
-                    </tr>
-                `;
+            if(lastYearTotalRev === 0) lastYearTotalRev = 50000;
+            const targetTotal = lastYearTotalRev * 1.5; // Stretch goal plan
+            let cumPlan = new Array(12).fill(0);
+            for(let i=0; i<12; i++) {
+                cumPlan[i] = Math.round((targetTotal / 12) * (i + 1));
+            }
+
+            const ctxR = document.getElementById('runRateChart');
+            if(ctxR) {
+                charts.runRate = new Chart(ctxR.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [
+                            { label: 'Plan', data: cumPlan, borderColor: '#93c5fd', tension: 0.3, fill: false, borderDash: [5, 5] },
+                            { label: 'What-if (Projected)', data: cumProjected, borderColor: '#ea580c', tension: 0.3, fill: false, borderDash: [5, 5] },
+                            { label: 'Actuals', data: cumActuals, borderColor: '#3b82f6', tension: 0.3, fill: true, backgroundColor: 'rgba(59, 130, 246, 0.1)' }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } },
+                        scales: {
+                            y: {
+                                ticks: { callback: function(value) { return '₱' + value.toLocaleString(); } }
+                            }
+                        }
+                    }
+                });
             }
         }
 
@@ -1094,7 +1126,7 @@ function renderInventory() {
                 <td class="px-4 py-3 text-center font-bold ${avail<=0?'text-red-600':'text-green-600'}">${avail}</td>
                 <td class="px-4 py-3 text-right">
                     <button onclick="openInventoryModal('${item.id}')" class="text-blue-600 hover:underline text-xs mr-3 font-medium">Edit</button>
-                    <button onclick="deleteInventoryItem('${item.id}')" class="text-red-500 hover:underline text-xs font-medium">Delete</button>
+                    <button onclick="deleteInventoryItem('${item.id}')" class="text-amber-600 hover:underline text-xs font-medium"><i class="fa-solid fa-box-archive"></i> Archive</button>
                 </td>
             </tr>
         `;

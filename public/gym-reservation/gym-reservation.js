@@ -344,9 +344,29 @@ document.addEventListener('DOMContentLoaded', async function () {
         return { totalVenueCost, totalEquipmentCost, grandTotal, hoursDuration, durationLabel, totalDays };
     }
 
+    // --- AUTO SUGGEST END TIME ---
+    function autoUpdateEndTime() {
+        if (startTimeInput.value) {
+            const selectedRadio = document.querySelector('input[name="duration"]:checked');
+            if (selectedRadio) {
+                const baseDuration = parseInt(selectedRadio.dataset.durationValue);
+                if (baseDuration && !isNaN(baseDuration)) {
+                    const [hours, minutes] = startTimeInput.value.split(':').map(Number);
+                    const startDate = new Date();
+                    startDate.setHours(hours, minutes, 0, 0);
+                    startDate.setHours(startDate.getHours() + baseDuration);
+                    const endHours = String(startDate.getHours()).padStart(2, '0');
+                    const endMinutes = String(startDate.getMinutes()).padStart(2, '0');
+                    endTimeInput.value = `${endHours}:${endMinutes}`;
+                }
+            }
+        }
+        calculateTotal();
+    }
+
     // --- LISTENERS ---
-    durationRadios.forEach(r => r.addEventListener('change', calculateTotal));
-    startTimeInput.addEventListener('change', calculateTotal);
+    durationRadios.forEach(r => r.addEventListener('change', autoUpdateEndTime));
+    startTimeInput.addEventListener('change', autoUpdateEndTime);
     endTimeInput.addEventListener('change', calculateTotal);
 
     // Clear validation highlights
@@ -406,8 +426,26 @@ document.addEventListener('DOMContentLoaded', async function () {
         checkField(eventTypeInput, eventTypeInput.value.trim() !== '');
         checkField(contactInput, isContactValid);
         checkField(calendarGrid.parentElement, selectedDates.length > 0);
-        checkField(startTimeInput, startTimeInput.value !== '');
-        checkField(endTimeInput, endTimeInput.value !== '');
+        const isTimeValid = (t) => t && t >= "06:00" && t <= "17:00";
+        const startOk = isTimeValid(startTimeInput.value);
+        const endOk = isTimeValid(endTimeInput.value);
+
+        if (startTimeInput.value && !startOk) {
+            startTimeInput.setCustomValidity("Start Time must be between 06:00 AM and 05:00 PM.");
+            startTimeInput.reportValidity();
+        } else {
+            startTimeInput.setCustomValidity("");
+        }
+
+        if (endTimeInput.value && !endOk) {
+            endTimeInput.setCustomValidity("End Time must be between 06:00 AM and 05:00 PM.");
+            endTimeInput.reportValidity();
+        } else {
+            endTimeInput.setCustomValidity("");
+        }
+
+        checkField(startTimeInput, startOk);
+        checkField(endTimeInput, endOk);
 
         if (!isValid) {
             if (firstInvalidEl) firstInvalidEl.scrollIntoView({ behavior: 'smooth', block: 'center' });

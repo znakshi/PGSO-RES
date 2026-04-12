@@ -3,5 +3,9 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL = "https://vclckkfpydwjqxxqdznd.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_xF1R87snCXRQHc5TBRFPzw_DAlaxoT2";
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+        storage: window.sessionStorage
+    }
+});
 export const ADMIN_EMAIL = 'admin@pgso.com';
