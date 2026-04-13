@@ -455,18 +455,18 @@ window.printReservation = function(id, event) {
         // --- AUTO-CLEAN ARCHIVE ---
         const autoCleanArchive = async () => {
             try {
-                const twoYearsAgo = new Date();
-                twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
-                const isoDate = twoYearsAgo.toISOString();
+                const oneYearAgo = new Date();
+                oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+                const isoDate = oneYearAgo.toISOString();
                 
-                // Delete reservations older than 2 years that are archived
+                // Delete reservations older than 1 year that are archived
                 await supabase
                     .from('reservations')
                     .delete()
                     .eq('is_archived', true)
                     .lt('created_at', isoDate);
                     
-                // Delete inventory older than 2 years that are archived
+                // Delete inventory older than 1 year that are archived
                 await supabase
                     .from('inventory')
                     .delete()

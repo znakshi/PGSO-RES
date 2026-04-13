@@ -592,13 +592,30 @@ async function setupClientNotifications() {
         }
     }
 }
+function autoCleanArchive() {
+    try {
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+        const isoDate = oneYearAgo.toISOString();
+        
+        // Delete reservations older than 1 year that are archived
+        supabase.from('reservations').delete().eq('is_archived', true).lt('created_at', isoDate).then();
+            
+        // Delete inventory older than 1 year that are archived
+        supabase.from('inventory').delete().eq('is_archived', true).lt('created_at', isoDate).then();
+    } catch (err) {
+        console.error("Auto clean archive failed:", err);
+    }
+}
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         initClientLogin();
         setupClientNotifications();
+        autoCleanArchive();
     });
 } else {
     initClientLogin();
     setupClientNotifications();
+    autoCleanArchive();
 }

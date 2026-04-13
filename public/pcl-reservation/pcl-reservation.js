@@ -288,11 +288,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (radio) {
             baseDuration = parseInt(radio.dataset.durationValue);
             durationLabel = radio.nextElementSibling.innerText.trim();
-            basePrice = baseDuration === 4 ? 1500 : 2500;
+            basePrice = 4000;
         }
 
-        let hours = baseDuration;
-        let overtime = 0;
+        let hours = 0;
 
         if (startTimeInput.value && endTimeInput.value) {
             const s = new Date(`1970-01-01T${startTimeInput.value}Z`);
@@ -300,10 +299,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             let diff = (e - s) / (1000 * 60 * 60);
             if (diff < 0) diff += 24;
             if (diff > 0) hours = diff;
-            if (hours > baseDuration && baseDuration > 0) overtime = Math.ceil(hours - baseDuration) * OVERTIME_RATE;
         }
 
-        const venueTotal = (basePrice + overtime) * (totalDays || 1);
+        const venueTotal = basePrice * (totalDays || 1);
         let equipTotal = 0;
 
         const equipmentRows = document.querySelectorAll('#equipment-table-body tr');
@@ -325,11 +323,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         const total = subTotal + SECURITY_DEPOSIT;
 
         document.getElementById('days-reserved-display').textContent = `${totalDays} day(s)`;
-        if (overtime > 0) {
-            document.getElementById('base-price-display').innerHTML = `₱${(basePrice * (totalDays || 1)).toLocaleString()} <span class="text-xs text-red-500">(+₱${(overtime * (totalDays || 1)).toLocaleString()} OT)</span>`;
-        } else {
-            document.getElementById('base-price-display').textContent = `₱${displayVenue.toLocaleString()}`;
-        }
+        document.getElementById('base-price-display').textContent = `₱${displayVenue.toLocaleString()}`;
         document.getElementById('equipment-cost-display').textContent = `₱${equipTotal.toLocaleString()}`;
         document.getElementById('subtotal-display').textContent = `₱${subTotal.toLocaleString()}`;
         document.getElementById('estimated-total-display').textContent = `₱${total.toLocaleString()}`;
@@ -343,7 +337,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             const selectedRadio = document.querySelector('input[name="duration"]:checked');
             if (selectedRadio) {
                 const baseDuration = parseInt(selectedRadio.dataset.durationValue);
-                if (baseDuration && !isNaN(baseDuration)) {
+                if (baseDuration && !isNaN(baseDuration) && baseDuration !== 24) {
                     const [hours, minutes] = startTimeInput.value.split(':').map(Number);
                     const startDate = new Date();
                     startDate.setHours(hours, minutes, 0, 0);
@@ -512,8 +506,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             startTimeInput.value = data.event.startTime || "";
             endTimeInput.value = data.event.endTime || "";
             if (data.event.durationLabel) {
-                if (data.event.durationLabel.includes('4')) document.getElementById('duration-4').checked = true;
-                else document.getElementById('duration-8').checked = true;
+                const radio = document.getElementById('duration-day');
+                if (radio) radio.checked = true;
             }
             if (data.event.registrationFee) {
                 const regRadio = document.querySelector(`input[name="regFee"][value="${data.event.registrationFee}"]`);

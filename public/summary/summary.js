@@ -59,6 +59,43 @@ import { supabase } from "../supabase-config.js";
                 data.contact.email = authData.session.user.email.toLowerCase();
             }
 
+            // --- CONCURRENCY CHECK ---
+            if (data.event && data.event.dates) {
+                const { data: existingReservations, error: fetchError } = await supabase
+                    .from('reservations')
+                    .select('id, event, status')
+                    .eq('event->>venue', data.event.venue)
+                    .neq('status', 'declined');
+
+                if (fetchError) throw fetchError;
+
+                const proposedDates = data.event.dates.split(', ');
+                let hasConflict = false;
+
+                if (existingReservations && existingReservations.length > 0) {
+                    for (const res of existingReservations) {
+                        if (data.id && res.id === data.id) continue;
+
+                        if (res.event && res.event.dates) {
+                            const existingDates = res.event.dates.split(', ');
+                            const overlap = proposedDates.some(date => existingDates.includes(date));
+                            if (overlap) {
+                                hasConflict = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (hasConflict) {
+                    alert("Sorry, one or more of your selected dates have just been reserved by someone else. Please go back and select different dates.");
+                    submitBtn.innerText = originalText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+            }
+            // --- END CONCURRENCY CHECK ---
+
             let error;
             if (data.id) {
                 const updatePayload = {
