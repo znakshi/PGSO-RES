@@ -61,7 +61,7 @@ function initClientLogin() {
     <div id="client-login-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity opacity-0 duration-300">
         <div id="client-login-container" class="bg-white flex flex-col md:flex-row w-[90%] max-w-3xl min-h-[450px] rounded-sm overflow-hidden shadow-2xl relative transform scale-95 transition-transform duration-300">
             <!-- Left Side -->
-            <div class="hidden md:block w-1/2 relative bg-cover bg-center" style="background-image: url('${basePath}provincial-gym.jpg');">
+            <div class="hidden md:block w-1/2 relative bg-cover bg-center" style="background-image: url('${basePath}pcl-hall.png');">
                 <div class="absolute inset-0 bg-black/50 overflow-hidden"></div>
                 <div class="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-8">
                     <h2 class="text-3xl font-bold mb-4 drop-shadow-md">Welcome</h2>
@@ -446,7 +446,7 @@ function initClientLogin() {
             window.addEventListener('popstate', function (event) {
                 if (event.state && event.state.pgsoBase) return;
                 if (window.location.hash) return;
-                
+
                 let backModal = document.getElementById('back-logout-modal');
                 if (!backModal) {
                     const backModalHTML = `
@@ -525,7 +525,7 @@ async function setupClientNotifications() {
             const notifDropdown = document.getElementById('client-notif-dropdown');
             const notifList = document.getElementById('client-notif-list');
             const notifBadge = document.getElementById('client-notif-badge');
-            
+
             notifBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -571,7 +571,7 @@ async function setupClientNotifications() {
                         .order('created_at', { ascending: false })
                         .limit(20);
                     if (data) renderClientNotifs(data);
-                } catch(e) { console.error(e); }
+                } catch (e) { console.error(e); }
             };
 
             document.getElementById('client-mark-read').addEventListener('click', async (e) => {
@@ -597,10 +597,10 @@ function autoCleanArchive() {
         const oneYearAgo = new Date();
         oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
         const isoDate = oneYearAgo.toISOString();
-        
+
         // Delete reservations older than 1 year that are archived
         supabase.from('reservations').delete().eq('is_archived', true).lt('created_at', isoDate).then();
-            
+
         // Delete inventory older than 1 year that are archived
         supabase.from('inventory').delete().eq('is_archived', true).lt('created_at', isoDate).then();
     } catch (err) {
