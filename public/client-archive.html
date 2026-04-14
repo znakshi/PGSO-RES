@@ -152,8 +152,8 @@
                 Official Reservation System for the Provincial General Services Office.
             </p>
             <div class="flex gap-6 text-xl mb-8">
-                <a href="#" class="hover:text-white transition-colors"><i class="fa-brands fa-facebook"></i></a>
-                <a href="#" class="hover:text-white transition-colors"><i class="fa-solid fa-envelope"></i></a>
+                <a href="https://benguet.gov.ph" target="_blank" class="hover:text-white transition-colors" title="Official Website"><i class="fa-solid fa-globe"></i></a>
+                <a href="mailto:admin@benguet.gov.ph" class="hover:text-white transition-colors" title="Email Us"><i class="fa-solid fa-envelope"></i></a>
             </div>
             <p class="text-[13px] font-semibold tracking-wider uppercase text-slate-500">
                 &copy; 2025 Provincial General Services Office. All rights reserved.
@@ -167,6 +167,55 @@
         
         // Formatter helper
         const formatCurrency = (amount) => '₱' + parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        const formatReservationDates = (dateStr) => {
+            if (!dateStr) return 'N/A';
+            const datesArray = dateStr.split(',').map(d => d.trim()).filter(d => d);
+            if (datesArray.length === 0) return 'N/A';
+            datesArray.sort();
+            const objDates = datesArray.map(d => new Date(d + "T12:00:00"));
+            
+            const isConsecutive = (d1, d2) => {
+                const diff = d2.getTime() - d1.getTime();
+                let daysDiff = Math.round(diff / 86400000);
+                return daysDiff === 1;
+            };
+            
+            let groups = [];
+            let currentGroup = [objDates[0]];
+            
+            for(let i=1; i<objDates.length; i++) {
+                if(isConsecutive(objDates[i-1], objDates[i])) {
+                    currentGroup.push(objDates[i]);
+                } else {
+                    groups.push(currentGroup);
+                    currentGroup = [objDates[i]];
+                }
+            }
+            groups.push(currentGroup);
+            
+            const formatGrp = (grp) => {
+                const first = grp[0];
+                const last = grp[grp.length-1];
+                const m = first.toLocaleDateString('en-US', { month: 'short' });
+                const y = first.toLocaleDateString('en-US', { year: 'numeric' });
+                
+                if (grp.length === 1) {
+                    return `${m}. ${first.getDate()}, ${y}`;
+                } else {
+                    const lastM = last.toLocaleDateString('en-US', { month: 'short' });
+                    const lastY = last.toLocaleDateString('en-US', { year: 'numeric' });
+                    if (y !== lastY) {
+                        return `${m}. ${first.getDate()}, ${y} - ${lastM}. ${last.getDate()}, ${lastY}`;
+                    } else if (m !== lastM) {
+                        return `${m}. ${first.getDate()} - ${lastM}. ${last.getDate()}, ${y}`;
+                    } else {
+                        return `${m}. ${first.getDate()}-${last.getDate()}, ${y}`;
+                    }
+                }
+            };
+            return groups.map(formatGrp).join(', ');
+        };
 
         document.addEventListener('DOMContentLoaded', async () => {
             const { data: { session } } = await supabase.auth.getSession();
@@ -295,7 +344,7 @@
                                         </span>
                                     </div>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-sm text-slate-600 mt-4">
-                                        <p><i class="fa-regular fa-calendar w-5 text-gray-400"></i> <strong class="text-slate-700">Date:</strong> ${res.event?.dates || 'N/A'}</p>
+                                        <p><i class="fa-regular fa-calendar w-5 text-gray-400"></i> <strong class="text-slate-700">Date:</strong> ${formatReservationDates(res.event?.dates) || 'N/A'}</p>
                                         <p><i class="fa-regular fa-clock w-5 text-gray-400"></i> <strong class="text-slate-700">Time:</strong> ${res.event?.startTime || ''} - ${res.event?.endTime || ''}</p>
                                         <p><i class="fa-solid fa-layer-group w-5 text-gray-400"></i> <strong class="text-slate-700">Event Type:</strong> ${res.event?.eventType || 'N/A'}</p>
                                         <p><i class="fa-solid fa-peso-sign w-5 text-gray-400"></i> <strong class="text-slate-700">Total:</strong> ${grandTotal}</p>

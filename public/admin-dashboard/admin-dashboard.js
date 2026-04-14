@@ -126,6 +126,55 @@ import { supabase } from "../supabase-config.js";
 
         window.closeModal = function(id) { document.getElementById(id).classList.add('hidden'); };
 
+        window.formatReservationDates = function(dateStr) {
+            if (!dateStr) return 'N/A';
+            const datesArray = dateStr.split(',').map(d => d.trim()).filter(d => d);
+            if (datesArray.length === 0) return 'N/A';
+            datesArray.sort();
+            const objDates = datesArray.map(d => new Date(d + "T12:00:00"));
+            
+            const isConsecutive = (d1, d2) => {
+                const diff = d2.getTime() - d1.getTime();
+                let daysDiff = Math.round(diff / 86400000);
+                return daysDiff === 1;
+            };
+            
+            let groups = [];
+            let currentGroup = [objDates[0]];
+            
+            for(let i=1; i<objDates.length; i++) {
+                if(isConsecutive(objDates[i-1], objDates[i])) {
+                    currentGroup.push(objDates[i]);
+                } else {
+                    groups.push(currentGroup);
+                    currentGroup = [objDates[i]];
+                }
+            }
+            groups.push(currentGroup);
+            
+            const formatGrp = (grp) => {
+                const first = grp[0];
+                const last = grp[grp.length-1];
+                const m = first.toLocaleDateString('en-US', { month: 'short' });
+                const y = first.toLocaleDateString('en-US', { year: 'numeric' });
+                
+                if (grp.length === 1) {
+                    return `${m}. ${first.getDate()}, ${y}`;
+                } else {
+                    const lastM = last.toLocaleDateString('en-US', { month: 'short' });
+                    const lastY = last.toLocaleDateString('en-US', { year: 'numeric' });
+                    if (y !== lastY) {
+                        return `${m}. ${first.getDate()}, ${y} - ${lastM}. ${last.getDate()}, ${lastY}`;
+                    } else if (m !== lastM) {
+                        return `${m}. ${first.getDate()} - ${lastM}. ${last.getDate()}, ${y}`;
+                    } else {
+                        return `${m}. ${first.getDate()}-${last.getDate()}, ${y}`;
+                    }
+                }
+            };
+            return groups.map(formatGrp).join(', ');
+        };
+
         // --- 1. VIEW & EDIT RESERVATION LOGIC ---
         window.viewReservation = function(id) {
             const res = reservations.find(r => r.id === id);
@@ -380,7 +429,7 @@ window.printReservation = function(id, event) {
             <div class="details-section">
                 <div class="detail-row">
                     <span class="detail-label">Inclusive date/s of use :</span>
-                    <span class="detail-line">${res.event.dates}</span>
+                    <span class="detail-line">${window.formatReservationDates(res.event.dates)}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Inclusive time of use :</span>
@@ -793,7 +842,7 @@ window.printReservation = function(id, event) {
                         <div class="text-xs text-slate-500 line-clamp-1">${res.event?.eventType || 'Event'}</div>
                     </td>
                     <td class="px-4 py-3 text-sm align-top">
-                        <div class="font-bold text-slate-700 line-clamp-1">${res.event?.dates || 'N/A'}</div>
+                        <div class="font-bold text-slate-700 line-clamp-1">${window.formatReservationDates(res.event?.dates)}</div>
                         <div class="text-xs text-slate-500">${res.event?.startTime || ''} - ${res.event?.endTime || ''}</div>
                     </td>
                     <td class="px-4 py-3 text-center align-top">
@@ -1333,7 +1382,6 @@ function renderInventory() {
                         <td class="py-4 px-5"><span class="${badge} text-[10px] px-2 py-1 rounded-md uppercase font-bold tracking-widest">${r.status}</span></td>
                         <td class="py-4 px-5 text-right flex justify-end gap-3">
                             <button onclick="restoreRecord('reservations', '${r.id}')" class="text-green-600 hover:text-green-800 text-xs font-bold uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-rotate-left"></i> Restore</button>
-                            <button onclick="hardDeleteRecord('reservations', '${r.id}')" class="text-red-500 hover:text-red-700 text-xs font-bold uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-trash"></i> Delete</button>
                         </td>
                     </tr>
                 `;
@@ -1355,7 +1403,6 @@ function renderInventory() {
                         <td class="py-4 px-5 text-slate-500">${i.unit}</td>
                         <td class="py-4 px-5 text-right flex justify-end gap-3">
                             <button onclick="restoreRecord('inventory', '${i.id}')" class="text-green-600 hover:text-green-800 text-xs font-bold uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-rotate-left"></i> Restore</button>
-                            <button onclick="hardDeleteRecord('inventory', '${i.id}')" class="text-red-500 hover:text-red-700 text-xs font-bold uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-trash"></i> Delete</button>
                         </td>
                     </tr>
                 `;
@@ -1375,18 +1422,7 @@ function renderInventory() {
             });
         };
 
-        window.hardDeleteRecord = async function(table, id) {
-            showAwesomeConfirm("PERMANENTLY DELETE this record? This absolutely cannot be undone.", async () => {
-                try {
-                    const { error } = await supabase.from(table).delete().eq('id', id);
-                    if (error) throw error;
-                    if(table === 'inventory') await fetchInventory(); else await fetchReservations();
-                    showAwesomeAlert("Record permanently deleted.");
-                } catch(err) {
-                    showAwesomeAlert("Error deleting: " + err.message, true);
-                }
-            });
-        };
+
 
         window.openAddReservationModal = function() {
             document.getElementById('addResForm').reset();

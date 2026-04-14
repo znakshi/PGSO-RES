@@ -4,6 +4,56 @@ import { supabase } from "../supabase-config.js";
 const formatCurrency = (amount) => '₱' + parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const safeText = (text) => (text && text !== "") ? text : "N/A";
 
+const formatReservationDates = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    const datesArray = dateStr.split(',').map(d => d.trim()).filter(d => d);
+    if (datesArray.length === 0) return 'N/A';
+    datesArray.sort();
+    const objDates = datesArray.map(d => new Date(d + "T12:00:00"));
+    
+    const isConsecutive = (d1, d2) => {
+        const diff = d2.getTime() - d1.getTime();
+        let daysDiff = Math.round(diff / 86400000);
+        return daysDiff === 1;
+    };
+    
+    let groups = [];
+    let currentGroup = [objDates[0]];
+    
+    for(let i=1; i<objDates.length; i++) {
+        if(isConsecutive(objDates[i-1], objDates[i])) {
+            currentGroup.push(objDates[i]);
+        } else {
+            groups.push(currentGroup);
+            currentGroup = [objDates[i]];
+        }
+    }
+    groups.push(currentGroup);
+    
+    const formatGrp = (grp) => {
+        const first = grp[0];
+        const last = grp[grp.length-1];
+        const m = first.toLocaleDateString('en-US', { month: 'short' });
+        const y = first.toLocaleDateString('en-US', { year: 'numeric' });
+        
+        if (grp.length === 1) {
+            return `${m}. ${first.getDate()}, ${y}`;
+        } else {
+            const lastM = last.toLocaleDateString('en-US', { month: 'short' });
+            const lastY = last.toLocaleDateString('en-US', { year: 'numeric' });
+            if (y !== lastY) {
+                return `${m}. ${first.getDate()}, ${y} - ${lastM}. ${last.getDate()}, ${lastY}`;
+            } else if (m !== lastM) {
+                return `${m}. ${first.getDate()} - ${lastM}. ${last.getDate()}, ${y}`;
+            } else {
+                return `${m}. ${first.getDate()}-${last.getDate()}, ${y}`;
+            }
+        }
+    };
+    return groups.map(formatGrp).join(', ');
+};
+
+
 window.returnHome = function () { window.location.href = '../venues.html'; }
 
 // --- RULES POPUP LOGIC ---
@@ -154,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('summary-email').textContent = safeText(data.contact.email);
     document.getElementById('summary-venue').textContent = safeText(data.event.venue);
     document.getElementById('summary-event-type').textContent = safeText(data.event.eventType);
-    document.getElementById('summary-date').textContent = safeText(data.event.dates);
+    document.getElementById('summary-date').textContent = formatReservationDates(data.event.dates);
     document.getElementById('summary-time').textContent = `${data.event.startTime} - ${data.event.endTime}`;
     document.getElementById('summary-duration').textContent = safeText(data.event.durationLabel);
     document.getElementById('summary-notes').textContent = safeText(data.notes);
