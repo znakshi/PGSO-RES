@@ -299,9 +299,9 @@
     <!-- Gallery Script -->
     <script>
         const venueImages = {
-            'palispis': ['palispis.png', 'palispis-2.png', 'palispis-3.png', 'palispis-4.jpg'],
-            'gym': ['gym-1.png', 'gym-2.png', 'gym-3.png', 'gym-4.jpg'],
-            'pcl': ['pcl-hall.png', 'pcl-2.png', 'pcl-3.png', 'pcl-4.jpg']
+            'palispis': ['palispis.png', 'palispis-2.png', 'palispis-4.jpg'],
+            'gym': ['gym-1.png', 'gym-3.png', 'gym-4.jpg'],
+            'pcl': ['pcl-hall.png', 'pcl-2.png', 'pcl-4.jpg']
         };
 
         const venueTitles = {
@@ -335,8 +335,6 @@
             // Trigger reflow
             void galleryModal.offsetWidth;
             galleryModal.classList.remove('opacity-0');
-            
-            startSlideshow();
         };
 
         const startSlideshow = () => {
@@ -348,14 +346,20 @@
             if (slideShowInterval) clearInterval(slideShowInterval);
         };
 
+        let expectedImageSrc = null;
+
         const updateGalleryView = () => {
             const imgSrc = venueImages[currentVenueId][currentImageIndex];
+            expectedImageSrc = imgSrc;
             
             // Fade out current image
             galleryImage.style.opacity = '0.3';
+            stopSlideshow(); // Stop the timer while we are loading
             
             setTimeout(() => {
-                galleryImage.src = imgSrc;
+                // If user skipped image within the 200ms fade transition
+                if (expectedImageSrc !== imgSrc) return;
+                
                 galleryTitle.innerText = venueTitles[currentVenueId];
                 
                 // Update indicators
@@ -367,10 +371,24 @@
                     }
                 });
 
-                // Fade in
-                galleryImage.onload = () => {
-                   galleryImage.style.opacity = '1';
+                // Preload image fully in memory before switching src
+                // This prevents large files from rendering progressively in half-loaded states
+                const tempImg = new Image();
+                tempImg.onload = () => {
+                    if (expectedImageSrc === imgSrc) {
+                        galleryImage.src = imgSrc;
+                        galleryImage.style.opacity = '1';
+                        // Start the slideshow only after the image is displayed
+                        startSlideshow();
+                    }
                 };
+                tempImg.onerror = () => {
+                    if (expectedImageSrc === imgSrc) {
+                         // On error (e.g. missing image), skip to next immediately
+                         nextImage();
+                    }
+                };
+                tempImg.src = imgSrc;
             }, 200);
         };
 
@@ -387,7 +405,6 @@
         window.setGalleryImage = (index) => {
             currentImageIndex = index;
             updateGalleryView();
-            startSlideshow(); // Reset timer if manually clicked
         };
 
         const closeGallery = () => {
@@ -400,8 +417,8 @@
             }, 300);
         };
 
-        document.getElementById('gallery-next').addEventListener('click', (e) => { e.stopPropagation(); nextImage(); startSlideshow(); });
-        document.getElementById('gallery-prev').addEventListener('click', (e) => { e.stopPropagation(); prevImage(); startSlideshow(); });
+        document.getElementById('gallery-next').addEventListener('click', (e) => { e.stopPropagation(); nextImage(); });
+        document.getElementById('gallery-prev').addEventListener('click', (e) => { e.stopPropagation(); prevImage(); });
         document.getElementById('close-gallery').addEventListener('click', closeGallery);
         galleryModal.addEventListener('click', (e) => {
             if (e.target === galleryModal || e.target.closest('.relative.w-full') === null && !e.target.closest('button')) closeGallery();

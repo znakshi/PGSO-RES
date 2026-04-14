@@ -42,8 +42,14 @@
                 <h2 class="text-3xl font-bold text-slate-900 tracking-tight">My Reservations</h2>
                 <p class="text-slate-500 mt-2 text-sm">Manage your venue bookings, edit details, or safely cancel pending requests.</p>
             </div>
-            <div class="mt-4 md:mt-0">
-                <a href="venues.html" class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2.5 rounded-lg text-sm font-bold uppercase tracking-widest shadow-md transition flex items-center gap-2">
+            <div class="mt-4 md:mt-0 flex items-center gap-4">
+                <select id="filter-my-reservations" class="bg-white border border-slate-200 rounded-lg py-2.5 px-4 text-sm font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition shadow-sm text-slate-600">
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <a href="venues.html" class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2.5 rounded-lg text-sm font-bold uppercase tracking-widest shadow-md transition flex items-center gap-2 whitespace-nowrap">
                     <i class="fa-solid fa-plus"></i> New Booking
                 </a>
             </div>
@@ -248,24 +254,51 @@
 
                     // Filter by user email (case-insensitive to prevent mismatch bugs)
                     const userEmail = session.user.email.toLowerCase();
-                    const myReservations = allRes.filter(r => {
+                    window.myReservationsAll = allRes.filter(r => {
                         const isUser = r.contact && r.contact.email && r.contact.email.toLowerCase() === userEmail;
-                        const status = r.status ? r.status.toLowerCase() : '';
-                        return isUser && (status === 'pending' || status === 'confirmed' || status === 'approved' || status === 'accepted');
+                        return isUser && !r.is_archived;
                     });
 
                     document.getElementById('loading-spinner').classList.add('hidden');
+                    
+                    renderClientReservations();
 
-                    if (myReservations.length === 0) {
-                        document.getElementById('no-reservations').classList.remove('hidden');
+                } catch (err) {
+                    console.error("Error fetching reservations:", err);
+                    document.getElementById('loading-spinner').innerHTML = `<p class="text-red-500"><i class="fa-solid fa-triangle-exclamation mr-2"></i> Error loading reservations. Please refresh.</p>`;
+                }
+            };
+            
+            const renderClientReservations = () => {
+                const container = document.getElementById('reservations-container');
+                const noRes = document.getElementById('no-reservations');
+                
+                const filterVal = document.getElementById('filter-my-reservations').value;
+                let filtered = window.myReservationsAll || [];
+                
+                if (filterVal !== 'all') {
+                    filtered = filtered.filter(r => {
+                        const s = r.status ? r.status.toLowerCase() : '';
+                        if (filterVal === 'confirmed') return (s === 'confirmed' || s === 'approved' || s === 'accepted');
+                        if (filterVal === 'cancelled') return (s === 'cancelled' || s === 'rejected');
+                        return s === filterVal;
+                    });
+                }
+
+                if (filtered.length === 0) {
+                    container.classList.add('hidden');
+                    noRes.classList.remove('hidden');
+                    if(window.myReservationsAll.length === 0) {
+                        noRes.querySelector('p').innerText = "You haven't made any venue bookings yet. Explore our facilities and start planning your next event!";
                     } else {
-                        const container = document.getElementById('reservations-container');
-                        container.classList.remove('hidden');
-                        
-                        // Clear container just in case
-                        container.innerHTML = '';
-                        
-                        myReservations.forEach(res => {
+                        noRes.querySelector('p').innerText = "No reservations match the selected filter.";
+                    }
+                } else {
+                    noRes.classList.add('hidden');
+                    container.classList.remove('hidden');
+                    container.innerHTML = '';
+                    
+                    filtered.forEach(res => {
                             const isPending = res.status.toLowerCase() === 'pending';
                             const isApproved = res.status.toLowerCase() === 'confirmed' || res.status.toLowerCase() === 'approved' || res.status.toLowerCase() === 'accepted';
                             const isCancelled = res.status.toLowerCase() === 'cancelled' || res.status.toLowerCase() === 'rejected';
@@ -349,11 +382,10 @@
                             if(cancelBtn) cancelBtn.addEventListener('click', () => handleCancel(res.id));
                         });
                     }
-                } catch (err) {
-                    console.error("Error fetching reservations:", err);
-                    document.getElementById('loading-spinner').innerHTML = `<p class="text-red-500"><i class="fa-solid fa-triangle-exclamation mr-2"></i> Error loading reservations. Please refresh.</p>`;
-                }
             };
+
+            // Bind filter change event
+            document.getElementById('filter-my-reservations').addEventListener('change', renderClientReservations);
 
             const handleView = (res) => {
                 const existing = document.getElementById('view-modal');

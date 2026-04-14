@@ -331,7 +331,7 @@ window.printReservation = function(id, event) {
             <div class="form-title">RENTAL FORM<br><span style="font-size:10pt; font-weight:normal;">(FACILITY)</span></div>
 
             <div class="meta">
-                <div>No.: 2025-F-________</div>
+                <div>No.: ${res.reference_number || '______________'}</div>
                 <div>Date: <u>${dateGen}</u></div>
             </div>
 
@@ -746,7 +746,7 @@ window.printReservation = function(id, event) {
             tbody.innerHTML = '';
             
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400">No reservations found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">No reservations found.</td></tr>`;
                 return;
             }
 
@@ -777,6 +777,9 @@ window.printReservation = function(id, event) {
                 }
 
                 tr.innerHTML = `
+                    <td class="px-4 py-3 align-top font-mono text-xs font-bold text-slate-600 tracking-wider">
+                        ${res.reference_number || 'N/A'}
+                    </td>
                     <td class="px-4 py-3 font-medium text-slate-800 align-top">
                         <div class="font-bold">${res.contact?.fullName || 'Unknown'}</div>
                         <div class="text-xs text-slate-500">${res.contact?.contactNumber || ''}</div>
@@ -827,6 +830,87 @@ window.printReservation = function(id, event) {
                 filterSelect.addEventListener('change', window.renderAllReservations);
             }
         });
+
+        window.showMonthlyBreakdownModal = function(status) {
+            const currentYear = new Date().getFullYear();
+            const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            const monthlyData = new Array(12).fill(0);
+            
+            reservations.forEach(r => {
+                let include = false;
+                if (status === 'all') {
+                    if (r.status !== 'archived' && r.status !== 'rejected') include = true;
+                } else if (status === 'pending') {
+                    if (r.status === 'pending') include = true;
+                } else if (status === 'declined') {
+                    if (r.status === 'declined' || r.status === 'cancelled') include = true;
+                }
+
+                if (!include) return;
+
+                let d = null;
+                if(r.timestamp) {
+                    d = r.timestamp.toDate ? r.timestamp.toDate() : new Date(r.timestamp); 
+                } else if (r.event && r.event.dates) {
+                    let firstDate = r.event.dates.split(',')[0].trim();
+                    if(firstDate) d = new Date(firstDate);
+                }
+                
+                if (d && d.getFullYear() === currentYear) {
+                    monthlyData[d.getMonth()]++;
+                }
+            });
+
+            const listDiv = document.getElementById('mb-list');
+            listDiv.innerHTML = "";
+            let total = 0;
+            months.forEach((m, i) => {
+                const count = monthlyData[i];
+                const textColor = count > 0 ? "text-slate-800" : "text-slate-400";
+                listDiv.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-50 border border-slate-100 p-3 rounded-lg">
+                        <span class="font-bold text-slate-600 text-sm">${m}</span>
+                        <span class="font-black ${textColor} text-base">${count}</span>
+                    </div>
+                `;
+                total += count;
+            });
+            
+            // Add Total at the bottom
+            listDiv.innerHTML += `
+                <div class="flex justify-between items-center bg-blue-50 border border-blue-200 p-3 rounded-lg mt-4 sticky bottom-0">
+                    <span class="font-bold text-blue-800 text-sm uppercase tracking-wider">Total</span>
+                    <span class="font-black text-blue-800 text-lg">${total}</span>
+                </div>
+            `;
+
+            const titleEl = document.getElementById('mb-title');
+            const subtitleEl = document.getElementById('mb-subtitle');
+            subtitleEl.innerText = `Monthly Breakdown (${currentYear})`;
+            
+            const iconWrap = document.getElementById('mb-icon-wrap');
+            const icon = document.getElementById('mb-icon');
+            const topBorder = document.querySelector('#monthlyBreakdownModal > div.bg-white');
+
+            if (status === 'all') {
+                titleEl.innerText = "Total Bookings";
+                iconWrap.className = "w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center";
+                icon.className = "fa-solid fa-calendar-check text-white text-xl";
+                topBorder.className = "bg-white rounded-2xl shadow-xl w-full max-w-sm relative flex flex-col mt-8 border-t-8 border-blue-600";
+            } else if (status === 'pending') {
+                titleEl.innerText = "Pending Bookings";
+                iconWrap.className = "w-14 h-14 bg-yellow-500 rounded-full flex items-center justify-center";
+                icon.className = "fa-solid fa-clock text-white text-xl";
+                topBorder.className = "bg-white rounded-2xl shadow-xl w-full max-w-sm relative flex flex-col mt-8 border-t-8 border-yellow-500";
+            } else if (status === 'declined') {
+                titleEl.innerText = "Cancelled Bookings";
+                iconWrap.className = "w-14 h-14 bg-red-500 rounded-full flex items-center justify-center";
+                icon.className = "fa-solid fa-ban text-white text-xl";
+                topBorder.className = "bg-white rounded-2xl shadow-xl w-full max-w-sm relative flex flex-col mt-8 border-t-8 border-red-500";
+            }
+
+            document.getElementById('monthlyBreakdownModal').classList.remove('hidden');
+        };
 
         // --- ANALYTICS ---
         function renderAnalytics() {
@@ -1224,13 +1308,16 @@ function renderInventory() {
             const tbody = document.getElementById('archive-res-tbody-list');
             tbody.innerHTML = "";
             if(archivedReservations.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-slate-400 font-medium">No archived reservations.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-400 font-medium">No archived reservations.</td></tr>`;
                 return;
             }
             archivedReservations.forEach(r => {
                 let badge = r.status === 'pending' ? "bg-yellow-100 text-yellow-800" : r.status === 'confirmed' ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50 transition">
+                        <td class="py-4 px-5 align-top font-mono text-xs font-bold text-slate-600 tracking-wider">
+                            ${r.reference_number || 'N/A'}
+                        </td>
                         <td class="py-4 px-5">
                             <p class="font-bold text-slate-800">${r.contact.fullName}</p>
                             <p class="text-xs text-slate-500">${r.contact.email}</p>
@@ -1310,6 +1397,33 @@ function renderInventory() {
             }
         };
 
+        async function generateReferenceNumber() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const yearPrefix = `${year}-F-`;
+
+            const { data, error } = await supabase
+                .from('reservations')
+                .select('reference_number')
+                .like('reference_number', `${yearPrefix}%`)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            let nextNum = 1;
+            if (data && data.length > 0 && data[0].reference_number) {
+                const lastRef = data[0].reference_number;
+                const parts = lastRef.split('-'); 
+                if(parts.length >= 4) {
+                     const lastNum = parseInt(parts[3], 10);
+                     if (!isNaN(lastNum)) {
+                         nextNum = lastNum + 1;
+                     }
+                }
+            }
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            return `${yearPrefix}${month}-${String(nextNum).padStart(3, '0')}`;
+        }
+
         window.saveNewReservation = async function(e) {
             e.preventDefault();
             const btn = e.target.querySelector('button[type="submit"]');
@@ -1328,7 +1442,10 @@ function renderInventory() {
             const price = parseFloat(document.getElementById('add-price').value) || 0;
             const notes = document.getElementById('add-notes').value;
 
+            const refNum = await generateReferenceNumber();
+
             const reservationData = {
+                reference_number: refNum,
                 contact: { fullName: name, contactNumber: contact, email: email },
                 event: { venue: venue, eventType: type, dates: dates, startTime: start, endTime: end },
                 equipment: [],
