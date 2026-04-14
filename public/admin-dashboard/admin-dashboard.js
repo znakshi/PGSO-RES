@@ -731,10 +731,14 @@ window.printReservation = function(id, event) {
             const tbody = document.getElementById('all-reservations-tbody');
             if (!tbody) return;
             const filter = document.getElementById('filter-all-reservations')?.value || 'all';
+            const searchQuery = document.getElementById('search-all-reservations')?.value.toLowerCase().trim() || '';
             
             let filtered = reservations.filter(r => r.status === 'pending' || r.status === 'confirmed' || r.status === 'declined');
             if (filter !== 'all') {
                 filtered = filtered.filter(r => r.status === filter);
+            }
+            if (searchQuery) {
+                filtered = filtered.filter(r => r.contact?.fullName?.toLowerCase().includes(searchQuery));
             }
             
             filtered.sort((a, b) => {

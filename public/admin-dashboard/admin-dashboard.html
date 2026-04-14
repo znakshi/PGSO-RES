@@ -29,10 +29,7 @@
             class="w-72 bg-[#1C1F2D] flex-shrink-0 border-r border-slate-800 flex flex-col z-40 shadow-2xl h-full fixed md:relative transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
             <!-- Brand -->
             <div class="h-20 flex items-center px-6 border-b border-white/5">
-                <div
-                    class="w-10 h-10 bg-gradient-to-tr from-blue-700 to-blue-800 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-white/10">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
+                <img src="../pgso.png" alt="PGSO Logo" class="w-10 h-10 object-contain drop-shadow-md">
                 <div class="ml-3">
                     <h2 class="text-lg font-bold text-white tracking-wide leading-none mt-1">PGSO-RES</h2>
                     <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase mt-1">Admin Portal</p>
@@ -190,6 +187,7 @@
                             <h2 class="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-3"><i
                                     class="fa-solid fa-list-ul text-blue-600"></i> All Reservations</h2>
                             <div class="flex gap-2">
+                                <input type="text" id="search-all-reservations" oninput="renderAllReservations()" placeholder="Search client name..." class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition w-full sm:w-64">
                                 <select id="filter-all-reservations"
                                     class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
                                     <option value="all">All Statuses</option>
@@ -204,6 +202,7 @@
                                 <thead
                                     class="text-[11px] text-slate-400 uppercase tracking-widest bg-slate-50 border-y border-slate-200 whitespace-nowrap">
                                     <tr>
+                                        <th class="py-4 px-5 font-bold">Reference Number</th>
                                         <th class="py-4 px-5 font-bold">Client Name</th>
                                         <th class="py-4 px-5 font-bold">Venue & Event</th>
                                         <th class="py-4 px-5 font-bold">Schedule</th>
@@ -215,7 +214,7 @@
                                 <tbody class="divide-y divide-slate-100 font-medium" id="all-reservations-tbody">
                                     <!-- Injected via JS -->
                                     <tr>
-                                        <td colspan="6" class="text-center py-8 text-slate-400 max-w-sm mx-auto"><i
+                                        <td colspan="7" class="text-center py-8 text-slate-400 max-w-sm mx-auto"><i
                                                 class="fa-solid fa-spinner fa-spin text-2xl mb-2 text-blue-500 block"></i>
                                             Loading records...</td>
                                     </tr>
@@ -370,6 +369,7 @@
                                 <thead
                                     class="text-[11px] text-slate-400 uppercase tracking-widest bg-slate-50 border-y border-slate-200">
                                     <tr>
+                                        <th class="py-4 px-5 font-bold">Reference Number</th>
                                         <th class="py-4 px-5 font-bold w-1/4">Client Name</th>
                                         <th class="py-4 px-5 font-bold w-1/4">Event & Date</th>
                                         <th class="py-4 px-5 font-bold w-1/4">Former Status</th>
