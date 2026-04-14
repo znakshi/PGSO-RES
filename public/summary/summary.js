@@ -156,8 +156,35 @@ window.submitReservation = async function () {
             const response = await supabase.from('reservations').update(updatePayload).eq('id', data.id);
             error = response.error;
         } else {
+            // Generate a reference number for new reservations
+            const now = new Date();
+            const year = now.getFullYear();
+            const yearPrefix = `${year}-F-`;
+
+            const { data: refData } = await supabase
+                .from('reservations')
+                .select('reference_number')
+                .like('reference_number', `${yearPrefix}%`)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            let nextNum = 1;
+            if (refData && refData.length > 0 && refData[0].reference_number) {
+                const lastRef = refData[0].reference_number;
+                const parts = lastRef.split('-'); 
+                if(parts.length >= 4) {
+                     const lastNum = parseInt(parts[3], 10);
+                     if (!isNaN(lastNum)) {
+                         nextNum = lastNum + 1;
+                     }
+                }
+            }
+            const monthStr = String(now.getMonth() + 1).padStart(2, '0');
+            const newRefNum = `${yearPrefix}${monthStr}-${String(nextNum).padStart(3, '0')}`;
+
             const insertPayload = {
                 ...data,
+                reference_number: newRefNum,
                 status: "pending",
                 submittedAt: new Date().toISOString(),
                 timestamp: new Date().toISOString()
