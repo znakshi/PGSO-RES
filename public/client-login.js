@@ -61,7 +61,7 @@ function initClientLogin() {
     <div id="client-login-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity opacity-0 duration-300">
         <div id="client-login-container" class="bg-white flex flex-col md:flex-row w-[90%] max-w-3xl min-h-[450px] rounded-sm overflow-hidden shadow-2xl relative transform scale-95 transition-transform duration-300">
             <!-- Left Side -->
-            <div class="hidden md:block w-1/2 relative bg-cover bg-center" style="background-image: url('${basePath}pcl-hall.png');">
+            <div class="hidden md:block w-1/2 relative bg-cover bg-center" style="background-image: url('${basePath}pgso-building.jpg');">
                 <div class="absolute inset-0 bg-black/50 overflow-hidden"></div>
                 <div class="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-8">
                     <h2 class="text-3xl font-bold mb-4 drop-shadow-md">Welcome</h2>
