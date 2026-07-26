@@ -438,7 +438,7 @@ function initClientLogin() {
     // --- Global Back-Button Interceptor for Logged In Clients ---
     supabase.auth.getSession().then(({ data: { session } }) => {
         const p = window.location.pathname;
-        const isHome = p.endsWith('index.html') || p === '/' || p.endsWith('pgso-res/');
+        const isHome = p.endsWith('index.html') || p === '/' || p.endsWith('pgso-res/') || p.endsWith('venues.html');
 
         if (session && session.user && isHome) {
             history.pushState({ pgsoBase: true }, null, location.href);

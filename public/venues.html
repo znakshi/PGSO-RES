@@ -102,142 +102,10 @@
             </div>
 
             <!-- VENUE CARDS -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Palispis Auditorium -->
-                <div
-                    class="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group relative">
-                    <div class="h-56 relative overflow-hidden cursor-pointer" onclick="openGallery('palispis')">
-                        <img src="palispis.png" onerror="this.src='palispis.png'" alt="Gov. Ben Palispis Auditorium"
-                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80">
-                        </div>
-                        <div
-                            class="absolute top-4 right-4 bg-black/60 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-md backdrop-blur-sm">
-                            <i class="fa-solid fa-magnifying-glass-plus text-white text-sm"></i>
-                        </div>
-                        <div class="absolute bottom-4 left-4 text-white pointer-events-none">
-                            <span
-                                class="bg-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-sm inline-block mb-1">Auditorium</span>
-                            <h3 class="font-bold text-xl drop-shadow-md">Gov. Ben Palispis Auditorium</h3>
-                        </div>
-                    </div>
-                    <div class="p-8 flex-1 flex flex-col items-center text-center">
-                        <p class="text-sm text-slate-500 mb-6 font-light leading-relaxed">
-                            A premier auditorium ideal for large seminars, theatrical performances, and corporate
-                            gatherings. Features advanced acoustics and a spacious stage.
-                        </p>
-                        <div
-                            class="flex items-center gap-2 text-sm text-slate-700 font-semibold mb-6 uppercase tracking-wider bg-gray-50 px-4 py-2 rounded-lg border border-gray-100 w-full justify-center">
-                            <i class="fa-solid fa-users text-blue-700"></i> Max Capacity: 800
-                        </div>
-                        <div class="mt-auto w-full pt-6 border-t border-gray-100">
-                            <div class="mb-6">
-                                <span class="text-3xl font-bold text-slate-900 tracking-tight">₱1,500</span>
-                                <span
-                                    class="text-xs text-slate-500 font-semibold uppercase tracking-wider block mt-1">First
-                                    4 Hours</span>
-                                <span class="text-[11px] text-slate-400 font-medium block mt-1">₱575 per succeeding
-                                    hour</span>
-                            </div>
-                            <button onclick="window.location.href='palispis-reservation/palispis-reservation.html'"
-                                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-6 rounded-sm text-[13px] uppercase tracking-widest transition-colors shadow-md">
-                                Reserve This Venue
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Provincial Gym -->
-                <div
-                    class="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group relative">
-                    <div class="h-56 relative overflow-hidden cursor-pointer" onclick="openGallery('gym')">
-                        <img src="gym-1.png" onerror="this.src='gym-1.png'" alt="Provincial Gymnasium"
-                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80">
-                        </div>
-                        <div
-                            class="absolute top-4 right-4 bg-black/60 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-md backdrop-blur-sm">
-                            <i class="fa-solid fa-magnifying-glass-plus text-white text-sm"></i>
-                        </div>
-                        <div class="absolute bottom-4 left-4 text-white pointer-events-none">
-                            <span
-                                class="bg-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-sm inline-block mb-1">Sports
-                                Complex</span>
-                            <h3 class="font-bold text-xl drop-shadow-md">Provincial Gymnasium</h3>
-                        </div>
-                    </div>
-                    <div class="p-8 flex-1 flex flex-col items-center text-center">
-                        <p class="text-sm text-slate-500 mb-6 font-light leading-relaxed">
-                            A massive sports complex perfect for athletic tournaments, large assemblies, and community
-                            events. Features hardwood flooring and ample bleacher seating.
-                        </p>
-                        <div
-                            class="flex items-center gap-2 text-sm text-slate-700 font-semibold mb-6 uppercase tracking-wider bg-gray-50 px-4 py-2 rounded-lg border border-gray-100 w-full justify-center">
-                            <i class="fa-solid fa-users text-blue-700"></i> Max Capacity: 2500
-                        </div>
-                        <div class="mt-auto w-full pt-6 border-t border-gray-100">
-                            <div class="mb-6">
-                                <span class="text-3xl font-bold text-slate-900 tracking-tight">₱1,500</span>
-                                <span
-                                    class="text-xs text-slate-500 font-semibold uppercase tracking-wider block mt-1">First
-                                    4 Hours</span>
-                                <span class="text-[11px] text-slate-400 font-medium block mt-1">₱400 per succeeding
-                                    hour</span>
-                            </div>
-                            <button onclick="window.location.href='gym-reservation/gym-reservation.html'"
-                                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-6 rounded-sm text-[13px] uppercase tracking-widest transition-colors shadow-md">
-                                Reserve This Venue
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- PCL Hall -->
-                <div
-                    class="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group relative">
-                    <div class="h-56 relative overflow-hidden cursor-pointer" onclick="openGallery('pcl')">
-                        <img src="pcl-hall.png" onerror="this.src='provincial-gym.jpg'" alt="PCL Hall"
-                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80">
-                        </div>
-                        <div
-                            class="absolute top-4 right-4 bg-black/60 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-md backdrop-blur-sm">
-                            <i class="fa-solid fa-magnifying-glass-plus text-white text-sm"></i>
-                        </div>
-                        <div class="absolute bottom-4 left-4 text-white pointer-events-none">
-                            <span
-                                class="bg-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-sm inline-block mb-1">Conference
-                                Hall</span>
-                            <h3 class="font-bold text-xl drop-shadow-md">PCL Hall</h3>
-                        </div>
-                    </div>
-                    <div class="p-8 flex-1 flex flex-col items-center text-center">
-                        <p class="text-sm text-slate-500 mb-6 font-light leading-relaxed">
-                            An executive conference hall suited for high-level meetings, intimate workshops, and focused
-                            seminars. Features a professional environment and multimedia ready.
-                        </p>
-                        <div
-                            class="flex items-center gap-2 text-sm text-slate-700 font-semibold mb-6 uppercase tracking-wider bg-gray-50 px-4 py-2 rounded-lg border border-gray-100 w-full justify-center">
-                            <i class="fa-solid fa-users text-blue-700"></i> Max Capacity: 150
-                        </div>
-                        <div class="mt-auto w-full pt-6 border-t border-gray-100">
-                            <div class="mb-6">
-                                <span class="text-3xl font-bold text-slate-900 tracking-tight">₱4,000</span>
-                                <span
-                                    class="text-xs text-slate-500 font-semibold uppercase tracking-wider block mt-1">Per
-                                    day</span>
-                                <span class="text-[11px] text-slate-400 font-medium block mt-1">Inclusive of sound
-                                    system and projector</span>
-                            </div>
-                            <button onclick="window.location.href='pcl-reservation/pcl-reservation.html'"
-                                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-6 rounded-sm text-[13px] uppercase tracking-widest transition-colors shadow-md">
-                                Reserve This Venue
-                            </button>
-                        </div>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="venues-list-grid">
+                <div class="col-span-1 md:col-span-3 text-center py-12 text-slate-500">
+                    <i class="fa-solid fa-spinner fa-spin text-3xl mb-4 text-blue-500"></i>
+                    <p>Loading facilities...</p>
                 </div>
             </div>
         </div>
@@ -468,6 +336,78 @@
                     await supabase.auth.signOut();
                     window.location.href = "index.html";
                 });
+
+                // Fetch and render venues dynamically from Supabase
+                try {
+                    const { data, error } = await supabase.from('venues').select('*').order('name', { ascending: true });
+                    if (error) throw error;
+                    
+                    const grid = document.getElementById('venues-list-grid');
+                    grid.innerHTML = "";
+
+                    if (data && data.length > 0) {
+                        window.venueImages = {};
+                        window.venueTitles = {};
+                        
+                        data.forEach(v => {
+                            const galleryId = v.id;
+                            window.venueImages[galleryId] = v.images && v.images.length > 0 ? v.images : ['pgso-building.jpg'];
+                            window.venueTitles[galleryId] = v.name;
+                            
+                            const coverImg = v.images && v.images.length > 0 ? v.images[0] : 'pgso-building.jpg';
+                            const coverSrc = coverImg.startsWith('http') || coverImg.includes('/') ? coverImg : coverImg;
+                            
+                            let reserveLink = "";
+                            if (v.name === "Gov. Ben Palispis Auditorium") {
+                                reserveLink = "palispis-reservation/palispis-reservation.html";
+                            } else if (v.name === "Provincial Gymnasium") {
+                                reserveLink = "gym-reservation/gym-reservation.html";
+                            } else if (v.name === "PCL Hall") {
+                                reserveLink = "pcl-reservation/pcl-reservation.html";
+                            } else {
+                                reserveLink = `generic-reservation/generic-reservation.html?venue=${encodeURIComponent(v.name)}`;
+                            }
+                            
+                            grid.innerHTML += `
+                                <div class="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group relative">
+                                    <div class="h-56 relative overflow-hidden cursor-pointer" onclick="openGallery('${galleryId}')">
+                                        <img src="${coverSrc}" onerror="this.src='pgso-building.jpg'" alt="${v.name}"
+                                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80"></div>
+                                        <div class="absolute top-4 right-4 bg-black/60 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-md backdrop-blur-sm">
+                                            <i class="fa-solid fa-magnifying-glass-plus text-white text-sm"></i>
+                                        </div>
+                                        <div class="absolute bottom-4 left-4 text-white pointer-events-none">
+                                            <span class="bg-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-sm inline-block mb-1">${v.category}</span>
+                                            <h3 class="font-bold text-xl drop-shadow-md">${v.name}</h3>
+                                        </div>
+                                    </div>
+                                    <div class="p-8 flex-1 flex flex-col items-center text-center">
+                                        <p class="text-sm text-slate-500 mb-6 font-light leading-relaxed">${v.description || 'Discover this premier facility.'}</p>
+                                        <div class="flex items-center gap-2 text-sm text-slate-700 font-semibold mb-6 uppercase tracking-wider bg-gray-50 px-4 py-2 rounded-lg border border-gray-100 w-full justify-center">
+                                            <i class="fa-solid fa-users text-blue-700"></i> Max Capacity: ${v.capacity}
+                                        </div>
+                                        <div class="mt-auto w-full pt-6 border-t border-gray-100">
+                                            <div class="mb-6">
+                                                <span class="text-3xl font-bold text-slate-900 tracking-tight">${v.price_daily !== null && v.price_daily !== undefined ? '₱' + parseFloat(v.price_daily).toLocaleString() : '₱' + parseFloat(v.price_first_4_hours || 0).toLocaleString()}</span>
+                                                <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider block mt-1">${v.price_daily !== null && v.price_daily !== undefined ? 'Per Day' : 'First 4 Hours'}</span>
+                                                ${v.price_succeeding_hour !== null && v.price_succeeding_hour !== undefined ? `<span class="text-[11px] text-slate-400 font-medium block mt-1">₱${parseFloat(v.price_succeeding_hour).toLocaleString()} per succeeding hour</span>` : `<span class="text-[11px] text-slate-400 font-medium block mt-1">${v.pricing_details || ''}</span>`}
+                                            </div>
+                                            <button onclick="window.location.href='${reserveLink}'"
+                                                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-6 rounded-sm text-[13px] uppercase tracking-widest transition-colors shadow-md">
+                                                Reserve This Venue
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        grid.innerHTML = `<div class="col-span-1 md:col-span-3 text-center py-12 text-slate-500"><p>No facilities available at the moment.</p></div>`;
+                    }
+                } catch(err) {
+                    console.error("Error loading venues dynamically:", err);
+                }
             } else {
                 window.location.replace('index.html');
             }
@@ -516,13 +456,13 @@
 
     <!-- Gallery Script -->
     <script>
-        const venueImages = {
+        window.venueImages = {
             'palispis': ['palispis.png', 'palispis-2.png', 'palispis-4.jpg'],
             'gym': ['gym-1.png', 'gym-3.png', 'gym-4.jpg'],
             'pcl': ['pcl-hall.png', 'pcl-2.png', 'pcl-4.jpg']
         };
 
-        const venueTitles = {
+        window.venueTitles = {
             'palispis': 'Gov. Ben Palispis Auditorium',
             'gym': 'Provincial Gymnasium',
             'pcl': 'PCL Hall'
@@ -542,7 +482,7 @@
             currentImageIndex = 0;
 
             // Build indicators
-            galleryIndicators.innerHTML = venueImages[venueId].map((_, idx) => `
+            galleryIndicators.innerHTML = window.venueImages[venueId].map((_, idx) => `
                 <button onclick="setGalleryImage(${idx})" class="w-3 h-3 rounded-full transition-all ${idx === 0 ? 'bg-white scale-110' : 'bg-white/30 hover:bg-white/50'}"></button>
             `).join('');
 
@@ -567,7 +507,7 @@
         let expectedImageSrc = null;
 
         const updateGalleryView = () => {
-            const imgSrc = venueImages[currentVenueId][currentImageIndex];
+            const imgSrc = window.venueImages[currentVenueId][currentImageIndex];
             expectedImageSrc = imgSrc;
 
             // Fade out current image
@@ -578,7 +518,7 @@
                 // If user skipped image within the 200ms fade transition
                 if (expectedImageSrc !== imgSrc) return;
 
-                galleryTitle.innerText = venueTitles[currentVenueId];
+                galleryTitle.innerText = window.venueTitles[currentVenueId];
 
                 // Update indicators
                 Array.from(galleryIndicators.children).forEach((btn, idx) => {
@@ -611,12 +551,12 @@
         };
 
         const nextImage = () => {
-            currentImageIndex = (currentImageIndex + 1) % venueImages[currentVenueId].length;
+            currentImageIndex = (currentImageIndex + 1) % window.venueImages[currentVenueId].length;
             updateGalleryView();
         };
 
         const prevImage = () => {
-            currentImageIndex = (currentImageIndex - 1 + venueImages[currentVenueId].length) % venueImages[currentVenueId].length;
+            currentImageIndex = (currentImageIndex - 1 + window.venueImages[currentVenueId].length) % window.venueImages[currentVenueId].length;
             updateGalleryView();
         };
 

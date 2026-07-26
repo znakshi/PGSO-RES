@@ -85,7 +85,7 @@ import { supabase } from "../supabase-config.js";
         };
 
         window.switchTab = function(t) {
-            ['calendar','analytics','inventory','archive'].forEach(id => {
+            ['calendar','analytics','inventory','venues','archive'].forEach(id => {
                 const sec = document.getElementById('section-'+id);
                 if(sec) sec.classList.add('hidden');
                 const tab = document.getElementById('tab-'+id);
@@ -97,12 +97,14 @@ import { supabase } from "../supabase-config.js";
             let title = "Calendar & Bookings";
             if(t==='analytics') title = "Analytics Dashboard";
             if(t==='inventory') title = "Equipment Management";
+            if(t==='venues') title = "Venues & Facilities";
             if(t==='archive') title = "Archive Center";
             document.getElementById('dash-title').innerText = title;
 
             // Render content
             if(t === 'analytics') renderAnalytics();
             if(t === 'inventory') renderInventory();
+            if(t === 'venues') window.renderVenues();
             if(t === 'archive') switchArchiveTab();
             
             // Auto-hide sidebar on mobile if a tab is clicked
@@ -1522,3 +1524,339 @@ function renderInventory() {
                 history.pushState({ adminBase: true }, null, location.href);
             });
         });
+
+        // --- VENUES SYSTEM ---
+        let venuesList = [];
+        let venueSelectedImages = [];
+
+        function getFallbackVenues() {
+            return [
+                {
+                    name: "Gov. Ben Palispis Auditorium",
+                    category: "Auditorium",
+                    description: "A premier auditorium ideal for large seminars, theatrical performances, and corporate gatherings. Features advanced acoustics and a spacious stage.",
+                    capacity: 800,
+                    price_first_4_hours: 1500,
+                    price_succeeding_hour: 575,
+                    price_daily: null,
+                    security_deposit: 3000,
+                    pricing_details: "₱1,500 first 4 hours, ₱575 per succeeding hour",
+                    images: ["palispis.png", "palispis-2.png", "palispis-4.jpg"]
+                },
+                {
+                    name: "Provincial Gymnasium",
+                    category: "Sports Complex",
+                    description: "A massive sports complex perfect for athletic tournaments, large assemblies, and community events. Features hardwood flooring and ample bleacher seating.",
+                    capacity: 2500,
+                    price_first_4_hours: 1500,
+                    price_succeeding_hour: 400,
+                    price_daily: null,
+                    security_deposit: 3000,
+                    pricing_details: "₱1,500 first 4 hours, ₱400 per succeeding hour",
+                    images: ["gym-1.png", "gym-3.png", "gym-4.jpg"]
+                },
+                {
+                    name: "PCL Hall",
+                    category: "Conference Hall",
+                    description: "An executive conference hall suited for high-level meetings, intimate workshops, and focused seminars. Features a professional environment and multimedia ready.",
+                    capacity: 150,
+                    price_first_4_hours: null,
+                    price_succeeding_hour: null,
+                    price_daily: 4000,
+                    security_deposit: 3000,
+                    pricing_details: "₱4,000 per day - Inclusive of sound system and projector",
+                    images: ["pcl-hall.png", "pcl-2.png", "pcl-4.jpg"]
+                }
+            ];
+        }
+
+        const populateVenueSelects = () => {
+            const addSelect = document.getElementById('add-venue');
+            const invSelect = document.getElementById('inv-venue');
+            
+            if (addSelect) {
+                addSelect.innerHTML = venuesList.map(v => `<option value="${v.name}">${v.name}</option>`).join('');
+            }
+            
+            if (invSelect) {
+                invSelect.innerHTML = `<option value="All Venues" class="font-bold text-blue-700">All Venues</option>` +
+                    venuesList.map(v => `<option value="${v.name}">${v.name}</option>`).join('');
+            }
+        };
+
+        window.fetchVenues = async function() {
+            try {
+                let { data, error } = await supabase.from('venues').select('*').order('name', { ascending: true });
+                if (error) {
+                    console.warn("Venues table error. Fallback loaded.", error);
+                    venuesList = getFallbackVenues();
+                    populateVenueSelects();
+                    window.renderVenues();
+                    return;
+                }
+                
+                if (!data || data.length === 0) {
+                    console.log("No venues found in DB. Seeding default 3...");
+                    const fallback = getFallbackVenues();
+                    const { error: seedError } = await supabase.from('venues').insert(fallback);
+                    if (seedError) {
+                        console.error("Seeding failed:", seedError);
+                    } else {
+                        let { data: seededData } = await supabase.from('venues').select('*').order('name', { ascending: true });
+                        if (seededData) data = seededData;
+                    }
+                }
+                
+                venuesList = data || [];
+                populateVenueSelects();
+                window.renderVenues();
+            } catch (err) {
+                console.error("Venues fetch failed:", err);
+                venuesList = getFallbackVenues();
+                populateVenueSelects();
+                window.renderVenues();
+            }
+        };
+
+        window.openVenueModal = function() {
+            document.getElementById('venueForm').reset();
+            document.getElementById('venue-id').value = "";
+            document.getElementById('venueModalTitle').innerText = "Register New Venue";
+            venueSelectedImages = [];
+            renderVenueImagesPreview();
+            document.getElementById('venueModal').classList.remove('hidden');
+        };
+
+        window.openEditVenueModal = function(id) {
+            const venue = venuesList.find(v => v.id === id);
+            if (!venue) return;
+
+            document.getElementById('venue-id').value = venue.id;
+            document.getElementById('venue-name').value = venue.name;
+            document.getElementById('venue-category').value = venue.category;
+            document.getElementById('venue-capacity').value = venue.capacity;
+            document.getElementById('venue-description').value = venue.description || "";
+            document.getElementById('venue-price-4h').value = venue.price_first_4_hours || "";
+            document.getElementById('venue-price-ot').value = venue.price_succeeding_hour || "";
+            document.getElementById('venue-price-daily').value = venue.price_daily || "";
+            document.getElementById('venue-deposit').value = venue.security_deposit || 3000;
+            document.getElementById('venue-pricing-details').value = venue.pricing_details || "";
+
+            document.getElementById('venueModalTitle').innerText = "Edit Venue Details";
+            venueSelectedImages = [...(venue.images || [])];
+            renderVenueImagesPreview();
+            document.getElementById('venueModal').classList.remove('hidden');
+        };
+
+        window.addVenueImageUrl = function() {
+            const input = document.getElementById('venue-image-url');
+            const url = input.value.trim();
+            if (!url) return;
+            venueSelectedImages.push(url);
+            input.value = "";
+            renderVenueImagesPreview();
+        };
+
+        window.removeVenueImage = function(index) {
+            venueSelectedImages.splice(index, 1);
+            renderVenueImagesPreview();
+        };
+
+        function renderVenueImagesPreview() {
+            const preview = document.getElementById('venue-images-preview');
+            if (!preview) return;
+            preview.innerHTML = venueSelectedImages.map((img, idx) => {
+                const src = img.startsWith('http') || img.includes('/') ? img : `../${img}`;
+                return `
+                    <div class="relative w-20 h-20 border border-slate-200 rounded-lg overflow-hidden group shadow-sm bg-slate-50 flex items-center justify-center">
+                        <img src="${src}" class="w-full h-full object-cover" onerror="this.src='../pgso.png'">
+                        <button type="button" onclick="window.removeVenueImage(${idx})" class="absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md transition text-xs font-bold"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.uploadVenueImage = async function() {
+            const fileInput = document.getElementById('venue-image-file');
+            const file = fileInput.files[0];
+            if (!file) {
+                showAwesomeAlert("Please select an image file to upload.", true);
+                return;
+            }
+
+            const uploadBtn = document.querySelector('button[onclick="window.uploadVenueImage()"]');
+            const originalText = uploadBtn.innerText;
+            uploadBtn.innerText = "Uploading...";
+            uploadBtn.disabled = true;
+
+            try {
+                const ext = file.name.split('.').pop();
+                const pathName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${ext}`;
+
+                const { data, error } = await supabase.storage
+                    .from('venue-images')
+                    .upload(pathName, file);
+
+                if (error) throw error;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('venue-images')
+                    .getPublicUrl(pathName);
+
+                venueSelectedImages.push(publicUrl);
+                renderVenueImagesPreview();
+                fileInput.value = "";
+                showAwesomeAlert("Image uploaded successfully!");
+            } catch (err) {
+                console.error("Storage upload failed:", err);
+                showAwesomeAlert("Upload failed. Make sure you have a public 'venue-images' bucket in Supabase storage, or paste a direct image URL instead.", true);
+            } finally {
+                uploadBtn.innerText = originalText;
+                uploadBtn.disabled = false;
+            }
+        };
+
+        window.saveVenue = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('venue-id').value;
+            const submitBtn = document.getElementById('venue-submit-btn');
+            const originalText = submitBtn.innerText;
+            submitBtn.innerText = "Saving...";
+            submitBtn.disabled = true;
+
+            const name = document.getElementById('venue-name').value.trim();
+            const category = document.getElementById('venue-category').value.trim();
+            const capacity = parseInt(document.getElementById('venue-capacity').value);
+            const description = document.getElementById('venue-description').value.trim();
+            
+            const price_4h_val = document.getElementById('venue-price-4h').value;
+            const price_ot_val = document.getElementById('venue-price-ot').value;
+            const price_daily_val = document.getElementById('venue-price-daily').value;
+            
+            const price_first_4_hours = price_4h_val ? parseFloat(price_4h_val) : null;
+            const price_succeeding_hour = price_ot_val ? parseFloat(price_ot_val) : null;
+            const price_daily = price_daily_val ? parseFloat(price_daily_val) : null;
+            const security_deposit = parseFloat(document.getElementById('venue-deposit').value) || 3000;
+            
+            let pricing_details = document.getElementById('venue-pricing-details').value.trim();
+            if (!pricing_details) {
+                if (price_daily !== null) {
+                    pricing_details = `₱${price_daily.toLocaleString()} per day`;
+                } else if (price_first_4_hours !== null) {
+                    pricing_details = `₱${price_first_4_hours.toLocaleString()} first 4 hours, ₱${(price_succeeding_hour || 0).toLocaleString()} per succeeding hour`;
+                } else {
+                    pricing_details = "Contact office for pricing";
+                }
+            }
+
+            const venueData = {
+                name,
+                category,
+                capacity,
+                description,
+                price_first_4_hours,
+                price_succeeding_hour,
+                price_daily,
+                security_deposit,
+                pricing_details,
+                images: venueSelectedImages
+            };
+
+            try {
+                let error;
+                if (id) {
+                    const response = await supabase.from('venues').update(venueData).eq('id', id);
+                    error = response.error;
+                } else {
+                    const response = await supabase.from('venues').insert([venueData]);
+                    error = response.error;
+                }
+
+                if (error) throw error;
+
+                closeModal('venueModal');
+                showAwesomeAlert("Venue details saved successfully!");
+                await window.fetchVenues();
+            } catch (err) {
+                console.error("Error saving venue:", err);
+                showAwesomeAlert("Error saving venue: " + err.message, true);
+            } finally {
+                submitBtn.innerText = originalText;
+                submitBtn.disabled = false;
+            }
+        };
+
+        window.deleteVenue = function(id) {
+            const venue = venuesList.find(v => v.id === id);
+            if (!venue) return;
+
+            showAwesomeConfirm(`Are you sure you want to delete "${venue.name}"? This action cannot be undone.`, async () => {
+                try {
+                    const { error } = await supabase.from('venues').delete().eq('id', id);
+                    if (error) throw error;
+                    showAwesomeAlert("Venue deleted successfully!");
+                    await window.fetchVenues();
+                } catch (err) {
+                    console.error("Error deleting venue:", err);
+                    showAwesomeAlert("Error deleting venue: " + err.message, true);
+                }
+            });
+        };
+
+        window.renderVenues = function() {
+            const container = document.getElementById('venues-list-container');
+            if (!container) return;
+
+            if (venuesList.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-slate-400">
+                        <i class="fa-solid fa-hotel text-4xl mb-3 block"></i>
+                        No venues registered yet. Click "Add Venue" to add one.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = venuesList.map(venue => {
+                const img = venue.images && venue.images.length > 0 ? venue.images[0] : 'pgso-building.jpg';
+                const src = img.startsWith('http') || img.includes('/') ? img : `../${img}`;
+                
+                return `
+                    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-lg transition flex flex-col group relative">
+                        <div class="h-44 relative overflow-hidden">
+                            <img src="${src}" onerror="this.src='../pgso-building.jpg'" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
+                            <div class="absolute bottom-3 left-4 text-white">
+                                <span class="bg-blue-600 text-[10px] font-bold uppercase px-2 py-0.5 rounded shadow-sm inline-block mb-1">${venue.category}</span>
+                                <h3 class="font-bold text-lg leading-tight">${venue.name}</h3>
+                            </div>
+                        </div>
+                        <div class="p-6 flex-1 flex flex-col justify-between">
+                            <div class="space-y-4">
+                                <p class="text-xs text-slate-500 line-clamp-3 leading-relaxed font-light">${venue.description || 'No description provided.'}</p>
+                                <div class="grid grid-cols-2 gap-4 text-xs font-semibold text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                    <div class="flex items-center gap-1.5"><i class="fa-solid fa-users text-blue-600"></i> Max: ${venue.capacity}</div>
+                                    <div class="flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-blue-600"></i> Dep: ₱${(venue.security_deposit || 0).toLocaleString()}</div>
+                                </div>
+                                <div class="border-t border-slate-100 pt-3">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Pricing Details</span>
+                                    <span class="text-sm font-bold text-slate-800">${venue.pricing_details || 'N/A'}</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-3 pt-6 border-t border-slate-100 mt-6">
+                                <button onclick="window.openEditVenueModal('${venue.id}')" class="flex-1 py-2 px-3 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-bold uppercase tracking-wider transition flex items-center justify-center gap-1.5"><i class="fa-solid fa-pencil"></i> Edit</button>
+                                <button onclick="window.deleteVenue('${venue.id}')" class="flex-1 py-2 px-3 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-xs font-bold uppercase tracking-wider transition flex items-center justify-center gap-1.5"><i class="fa-solid fa-trash-can"></i> Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        // Venues Channel Setup & Initial Load
+        supabase.channel('venues-channel')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'venues' }, () => {
+                window.fetchVenues();
+            }).subscribe();
+
+        window.fetchVenues();

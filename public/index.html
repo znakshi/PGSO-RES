@@ -173,7 +173,7 @@
                     the descriptions and capacities of our premier facilities.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="venues-homepage-grid">
                 <!-- Palispis -->
                 <div class="relative h-96 rounded-xl overflow-hidden group shadow-lg border border-gray-200">
                     <div class="cursor-pointer absolute inset-0 z-0" onclick="openGallery('palispis')">
@@ -252,10 +252,65 @@
         
         document.addEventListener('DOMContentLoaded', async () => {
             const { data: { session } } = await supabase.auth.getSession();
-            const authContainer = document.getElementById('auth-container');
             
             if (session && session.user) {
                 window.location.replace('venues.html');
+                return;
+            }
+
+            // Load venues dynamically from Supabase
+            try {
+                const { data, error } = await supabase.from('venues').select('*').order('name', { ascending: true });
+                if (error) throw error;
+                
+                if (data && data.length > 0) {
+                    const grid = document.getElementById('venues-homepage-grid');
+                    grid.innerHTML = "";
+                    
+                    window.venueImages = {};
+                    window.venueTitles = {};
+                    
+                    data.forEach(v => {
+                        const galleryId = v.id;
+                        window.venueImages[galleryId] = v.images && v.images.length > 0 ? v.images : ['pgso-building.jpg'];
+                        window.venueTitles[galleryId] = v.name;
+                        
+                        const coverImg = v.images && v.images.length > 0 ? v.images[0] : 'pgso-building.jpg';
+                        const coverSrc = coverImg.startsWith('http') || coverImg.includes('/') ? coverImg : coverImg;
+                        
+                        grid.innerHTML += `
+                            <div class="relative h-96 rounded-xl overflow-hidden group shadow-lg border border-gray-200">
+                                <div class="cursor-pointer absolute inset-0 z-0" onclick="openGallery('${galleryId}')">
+                                    <img src="${coverSrc}" alt="${v.name}" onerror="this.src='pgso-building.jpg'" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent opacity-90 group-hover:opacity-100 transition-opacity z-10"></div>
+                                    <div class="absolute top-4 right-4 bg-black/60 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-md backdrop-blur-sm">
+                                        <i class="fa-solid fa-magnifying-glass-plus text-white text-sm"></i>
+                                    </div>
+                                </div>
+                                <div class="absolute inset-0 p-8 flex flex-col justify-end z-10 pointer-events-none">
+                                    <h4 class="text-2xl font-bold text-white mb-2 leading-snug">${v.name}</h4>
+                                    <p class="text-slate-200 text-sm mb-6 leading-relaxed font-light line-clamp-3">${v.description || 'Discover this premier facility.'}</p>
+                                    <button class="bg-blue-700 text-white hover:bg-blue-600 font-bold py-3.5 px-6 text-[13px] uppercase tracking-widest w-full transition-colors open-client-login shadow-sm pointer-events-auto">Login to Reserve</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    // Re-bind click events for login modal triggers
+                    const loginBtns = document.querySelectorAll('.open-client-login');
+                    loginBtns.forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const modal = document.getElementById('login-modal');
+                            if (modal) {
+                                modal.classList.remove('hidden');
+                                modal.classList.add('flex');
+                                setTimeout(() => modal.classList.remove('opacity-0'), 10);
+                            }
+                        });
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to load venues dynamically, using static fallback:", err);
             }
         });
     </script>
@@ -297,13 +352,13 @@
 
     <!-- Gallery Script -->
     <script>
-        const venueImages = {
+        window.venueImages = {
             'palispis': ['palispis.png', 'palispis-2.png', 'palispis-4.jpg'],
             'gym': ['gym-1.png', 'gym-3.png', 'gym-4.jpg'],
             'pcl': ['pcl-hall.png', 'pcl-2.png', 'pcl-4.jpg']
         };
 
-        const venueTitles = {
+        window.venueTitles = {
             'palispis': 'Gov. Ben Palispis Auditorium',
             'gym': 'Provincial Gymnasium',
             'pcl': 'PCL Hall'
@@ -323,7 +378,7 @@
             currentImageIndex = 0;
             
             // Build indicators
-            galleryIndicators.innerHTML = venueImages[venueId].map((_, idx) => `
+            galleryIndicators.innerHTML = window.venueImages[venueId].map((_, idx) => `
                 <button onclick="setGalleryImage(${idx})" class="w-3 h-3 rounded-full transition-all ${idx === 0 ? 'bg-white scale-110' : 'bg-white/30 hover:bg-white/50'}"></button>
             `).join('');
 
@@ -348,7 +403,7 @@
         let expectedImageSrc = null;
 
         const updateGalleryView = () => {
-            const imgSrc = venueImages[currentVenueId][currentImageIndex];
+            const imgSrc = window.venueImages[currentVenueId][currentImageIndex];
             expectedImageSrc = imgSrc;
             
             // Fade out current image
@@ -359,7 +414,7 @@
                 // If user skipped image within the 200ms fade transition
                 if (expectedImageSrc !== imgSrc) return;
                 
-                galleryTitle.innerText = venueTitles[currentVenueId];
+                galleryTitle.innerText = window.venueTitles[currentVenueId];
                 
                 // Update indicators
                 Array.from(galleryIndicators.children).forEach((btn, idx) => {
@@ -392,12 +447,12 @@
         };
 
         const nextImage = () => {
-            currentImageIndex = (currentImageIndex + 1) % venueImages[currentVenueId].length;
+            currentImageIndex = (currentImageIndex + 1) % window.venueImages[currentVenueId].length;
             updateGalleryView();
         };
 
         const prevImage = () => {
-            currentImageIndex = (currentImageIndex - 1 + venueImages[currentVenueId].length) % venueImages[currentVenueId].length;
+            currentImageIndex = (currentImageIndex - 1 + window.venueImages[currentVenueId].length) % window.venueImages[currentVenueId].length;
             updateGalleryView();
         };
 

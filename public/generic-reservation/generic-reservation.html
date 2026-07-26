@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Make a Reservation - PGSO</title>
+    <link rel="icon" type="image/png" href="../pgso.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="../index.css">
+    <link rel="stylesheet" href="generic-reservation.css">
+    <style>
+        .profile-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: #334155;
+            outline: none;
+            transition: all 0.2s;
+            background-color: #ffffff;
+        }
+        .profile-input:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        .profile-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .required-star {
+            color: #ef4444;
+            margin-left: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-slate-800 font-sans selection:bg-blue-100 selection:text-blue-900 flex flex-col min-h-screen">
+
+    <!-- Premium Navigation -->
+    <nav class="bg-white py-4 px-6 sm:px-12 flex flex-col md:flex-row justify-between items-center shadow-sm sticky top-0 z-50">
+        <div class="flex items-center gap-4 mb-4 md:mb-0">
+            <img src="../pgso.png" alt="PGSO Logo" class="w-12 h-12 sm:w-14 sm:h-14 drop-shadow-sm">
+            <div class="border-l-2 border-slate-200 pl-4 py-1">
+                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">PGSO-RES</h1>
+                <p id="venue-category-badge" class="hidden sm:block text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest mt-0.5">
+                    Facility Reservation</p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap justify-center items-center gap-4 sm:gap-8 mt-4 md:mt-0">
+            <div class="flex flex-wrap justify-center gap-4 sm:gap-8 text-[11px] sm:text-[13px] font-bold text-slate-700 uppercase tracking-widest w-full sm:w-auto">
+                <a href="../venues.html#services" class="hover:text-blue-700 transition-colors py-1 sm:py-2 border-b-2 border-transparent hover:border-blue-700">Services</a>
+                <a href="../venues.html" class="text-blue-700 transition-colors py-1 sm:py-2 border-b-2 border-blue-700">Facilities</a>
+            </div>
+            <div id="auth-container" class="w-full sm:w-auto">
+                <div class="w-10 h-10 rounded-full bg-slate-200 animate-pulse border-2 border-white shadow-sm flex-shrink-0"></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-6 py-12 flex-1 w-full">
+        <a href="../venues.html" class="inline-flex items-center text-sm font-medium text-slate-500 mb-8 hover:text-blue-700 transition">
+            <i class="fa-solid fa-arrow-left mr-2"></i> Back to Venues
+        </a>
+
+        <div class="mb-8 border-b border-gray-200 pb-4">
+            <h2 id="venue-name-heading" class="text-3xl font-bold text-slate-900 tracking-tight">Venue Title</h2>
+            <p id="venue-desc-paragraph" class="text-slate-500 mt-2 text-sm">Loading venue details...</p>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 pb-12 flex-1 lg:w-2/3">
+                <form id="reservation-form">
+                    
+                    <h3 class="text-lg font-bold text-slate-800 mb-6">Contact details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                        <div>
+                            <label class="profile-label">Full Name <span class="required-star">*</span></label>
+                            <input type="text" id="contact-name" class="form-input profile-input" placeholder="e.g. Juan Dela Cruz" required>
+                        </div>
+                        <div>
+                            <label class="profile-label">Contact Number <span class="required-star">*</span></label>
+                            <div class="flex rounded-lg border border-gray-200 overflow-hidden focus-within:border-blue-700 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                                <span class="inline-flex items-center px-4 bg-gray-50 text-slate-500 font-bold text-sm border-r border-gray-200">09</span>
+                                <input type="text" id="contact-number" maxlength="9" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="form-input w-full px-3 py-3 text-sm text-slate-700 outline-none bg-transparent" placeholder="123456789" required>
+                            </div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="profile-label">Email Address <span class="required-star">*</span></label>
+                            <input type="email" id="contact-email" class="form-input profile-input" placeholder="e.g. juan@gmail.com" required>
+                        </div>
+                    </div>
+
+                    <h3 class="text-lg font-bold text-slate-800 mb-6">Reservation Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                        <div class="md:col-span-2">
+                            <label class="profile-label">Event Name / Type of Activity <span class="required-star">*</span></label>
+                            <input type="text" id="event-type" class="form-input profile-input" placeholder="e.g. Wedding Reception, Seminar, Basketball Tournament" required>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="profile-label flex items-center justify-between">
+                                <span>Select Dates <span class="required-star">*</span></span>
+                                <span class="text-[10px] text-slate-400 font-medium normal-case">Click days to select. Click again to unselect.</span>
+                            </label>
+                            
+                            <!-- Custom Calendar Grid -->
+                            <div class="border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white mt-1">
+                                <div class="bg-slate-900 text-white py-3 px-4 flex justify-between items-center">
+                                    <button type="button" id="prevMonth" class="hover:text-blue-400 transition text-lg"><i class="fa-solid fa-chevron-left"></i></button>
+                                    <h4 id="currentMonthYear" class="font-bold tracking-wide text-sm">Loading Month...</h4>
+                                    <button type="button" id="nextMonth" class="hover:text-blue-400 transition text-lg"><i class="fa-solid fa-chevron-right"></i></button>
+                                </div>
+                                <div class="grid grid-cols-7 text-center font-bold text-[10px] text-slate-400 py-2 border-b border-gray-100 uppercase bg-slate-50 tracking-wider">
+                                    <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+                                </div>
+                                <div id="calendar-grid" class="grid grid-cols-7 gap-y-1 p-2 text-center text-sm font-medium"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="profile-label">Start Time <span class="required-star">*</span></label>
+                            <input type="time" id="start-time" class="form-input profile-input text-center" required>
+                        </div>
+                        <div>
+                            <label class="profile-label">End Time <span class="required-star">*</span></label>
+                            <input type="time" id="end-time" class="form-input profile-input text-center" required>
+                        </div>
+                    </div>
+
+                    <div id="duration-section" class="mb-10">
+                        <label class="profile-label">Duration Option <span class="required-star">*</span></label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2" id="duration-options-container">
+                            <!-- Dynamic duration radios loaded via JS -->
+                        </div>
+                    </div>
+
+                    <div class="mb-10">
+                        <label class="profile-label">Registration Fee Option <span class="required-star">*</span></label>
+                        <div class="flex gap-6 mt-2">
+                            <label class="inline-flex items-center gap-3 cursor-pointer">
+                                <input type="radio" name="regFee" value="no-fee" checked class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                                <span class="text-sm text-slate-700 font-semibold">With NO Registration Fee</span>
+                            </label>
+                            <label class="inline-flex items-center gap-3 cursor-pointer">
+                                <input type="radio" name="regFee" value="with-fee" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                                <span class="text-sm text-slate-700 font-semibold">With Registration Fee</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-10">
+                        <label class="profile-label">Equipment / Services Inventory <span class="text-[10px] text-slate-400 lowercase normal-case">(Optional)</span></label>
+                        <div class="border border-gray-200 rounded-xl overflow-hidden mt-2 bg-white">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-xs text-left text-slate-600 border-collapse">
+                                    <thead class="bg-slate-900 text-slate-200 uppercase text-[9px] tracking-wider font-bold">
+                                        <tr>
+                                            <th class="p-3 w-10">Select</th>
+                                            <th class="p-3">Item Name</th>
+                                            <th class="p-3">Unit</th>
+                                            <th class="p-3">Price</th>
+                                            <th class="p-3 text-center w-28">Quantity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="equipment-table-body" class="divide-y divide-gray-100 font-medium">
+                                        <!-- Dynamically loaded -->
+                                        <tr><td colspan="5" class="text-center p-6 text-slate-400">Select reservation dates to see available equipment.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-10">
+                        <label class="profile-label">Additional Event Notes / Request</label>
+                        <textarea id="notes" rows="4" class="form-input profile-input resize-none" placeholder="Provide extra requirements, special settings, equipment placement..."></textarea>
+                    </div>
+
+                    <button type="submit" class="pgso-btn w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-xl uppercase tracking-widest text-sm transition shadow-lg flex items-center justify-center gap-2">
+                        <i class="fa-regular fa-calendar-check text-lg"></i> Proceed to Review Summary
+                    </button>
+                </form>
+            </div>
+
+            <!-- Price Summary Panel -->
+            <div class="lg:w-1/3 space-y-6">
+                <div class="bg-[#1C1F2D] text-slate-300 rounded-2xl p-6 shadow-xl sticky top-28 border border-white/5 flex flex-col">
+                    <h3 class="text-white font-bold text-lg border-b border-white/10 pb-4 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-receipt text-blue-400"></i> Reservation Summary
+                    </h3>
+                    
+                    <div class="space-y-4 text-xs font-semibold">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Selected Days</span>
+                            <span id="days-reserved-display" class="text-white">0 day(s)</span>
+                        </div>
+                        <div class="flex justify-between items-start">
+                            <span class="text-slate-400">Base Venue Price</span>
+                            <span id="base-price-display" class="text-white text-right">₱0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Equipment & Services</span>
+                            <span id="equipment-cost-display" class="text-white">₱0.00</span>
+                        </div>
+                        <div class="flex justify-between border-t border-white/10 pt-3">
+                            <span class="text-slate-400">Subtotal</span>
+                            <span id="subtotal-display" class="text-white">₱0.00</span>
+                        </div>
+                        <div class="flex justify-between text-slate-400">
+                            <span>Refundable Security Deposit</span>
+                            <span id="security-deposit-display" class="text-white">₱3,000.00</span>
+                        </div>
+                        
+                        <div class="bg-white/5 border border-white/10 rounded-xl p-4 mt-6 text-center">
+                            <span class="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Estimated Total</span>
+                            <span id="estimated-total-display" class="text-white font-black text-2xl tracking-tight">₱3,000.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 py-16 text-center text-slate-400 border-t border-slate-800">
+        <div class="max-w-6xl mx-auto px-6 flex flex-col items-center">
+            <div class="flex items-center gap-4 mb-6 grayscale opacity-80">
+                <img src="../pgso.png" alt="PGSO" class="w-10 h-10">
+                <span class="text-white font-bold tracking-widest uppercase text-xl">PGSO-RES</span>
+            </div>
+            <p class="text-sm font-light max-w-md mx-auto mb-6 text-slate-400">
+                Official Reservation System for the Provincial General Services Office.
+            </p>
+            <p class="text-[13px] font-semibold tracking-wider uppercase text-slate-500">
+                &copy; 2025 Provincial General Services Office. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Profile Sidebar (Copy of main sidebar structure) -->
+    <div id="sidebar-backdrop" class="fixed inset-0 bg-black/50 z-[100] hidden transition-opacity opacity-0 duration-300"></div>
+    <div id="profile-sidebar" class="fixed top-0 right-0 h-full w-72 bg-[#1C1F2D] text-slate-300 shadow-2xl z-[110] transform translate-x-full transition-transform duration-300 flex flex-col">
+        <button id="close-sidebar" class="absolute top-5 right-5 text-slate-400 hover:text-white transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="pt-8 pb-6 px-6 flex items-center gap-3">
+            <div class="w-10 h-10 bg-[#5453E0] rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                <i class="fa-solid fa-building-columns"></i>
+            </div>
+            <h2 class="text-xl font-bold text-white tracking-wide">PGSO-RES</h2>
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 flex flex-col gap-6 scrollbar-hide pb-6">
+            <div>
+                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 px-2">Main Menu</p>
+                <div class="flex flex-col gap-1">
+                    <a href="../venues.html" class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-450 hover:bg-white/5 hover:text-white transition font-medium text-[13px]">
+                        <i class="fa-solid fa-house w-5 text-center text-lg"></i> Home
+                    </a>
+                    <a href="../client-reservations.html" class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition font-medium text-[13px]">
+                        <i class="fa-regular fa-calendar-check w-5 text-center text-lg"></i> My Reservations
+                    </a>
+                    <a href="../client-archive.html" class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition font-medium text-[13px]">
+                        <i class="fa-solid fa-box-archive w-5 text-center text-lg"></i> Archive
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="px-4 pb-4">
+            <button id="sidebar-logout" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-[#F15B50] hover:bg-[#F15B50]/10 hover:text-[#F15B50] transition font-bold text-[13px]">
+                <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center text-lg"></i> Log Out
+            </button>
+        </div>
+        <div class="p-6 bg-[#161824] border-t border-white/5">
+            <div class="flex items-center gap-3">
+                <div id="sidebar-avatar" class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold border-2 border-[#1C1F2D]">
+                    <span>U</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p id="sidebar-name" class="text-[13px] font-bold text-white truncate">Client Name</p>
+                    <p class="text-[11px] text-slate-500 truncate mt-0.5" id="sidebar-email">client@email.com</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Initialization & Imports -->
+    <script type="module" src="generic-reservation.js"></script>
+    <script type="module" src="../client-login.js"></script>
+</body>
+</html>
