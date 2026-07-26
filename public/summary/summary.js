@@ -33,20 +33,20 @@ const formatReservationDates = (dateStr) => {
     const formatGrp = (grp) => {
         const first = grp[0];
         const last = grp[grp.length-1];
-        const m = first.toLocaleDateString('en-US', { month: 'short' });
+        const m = first.toLocaleDateString('en-US', { month: 'long' });
         const y = first.toLocaleDateString('en-US', { year: 'numeric' });
         
         if (grp.length === 1) {
-            return `${m}. ${first.getDate()}, ${y}`;
+            return `${m} ${first.getDate()}, ${y}`;
         } else {
-            const lastM = last.toLocaleDateString('en-US', { month: 'short' });
+            const lastM = last.toLocaleDateString('en-US', { month: 'long' });
             const lastY = last.toLocaleDateString('en-US', { year: 'numeric' });
             if (y !== lastY) {
-                return `${m}. ${first.getDate()}, ${y} - ${lastM}. ${last.getDate()}, ${lastY}`;
+                return `${m} ${first.getDate()}, ${y} - ${lastM} ${last.getDate()}, ${lastY}`;
             } else if (m !== lastM) {
-                return `${m}. ${first.getDate()} - ${lastM}. ${last.getDate()}, ${y}`;
+                return `${m} ${first.getDate()} - ${lastM} ${last.getDate()}, ${y}`;
             } else {
-                return `${m}. ${first.getDate()}-${last.getDate()}, ${y}`;
+                return `${m} ${first.getDate()}-${last.getDate()}, ${y}`;
             }
         }
     };

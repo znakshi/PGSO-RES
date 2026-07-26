@@ -157,20 +157,20 @@ import { supabase } from "../supabase-config.js";
             const formatGrp = (grp) => {
                 const first = grp[0];
                 const last = grp[grp.length-1];
-                const m = first.toLocaleDateString('en-US', { month: 'short' });
+                const m = first.toLocaleDateString('en-US', { month: 'long' });
                 const y = first.toLocaleDateString('en-US', { year: 'numeric' });
                 
                 if (grp.length === 1) {
-                    return `${m}. ${first.getDate()}, ${y}`;
+                    return `${m} ${first.getDate()}, ${y}`;
                 } else {
-                    const lastM = last.toLocaleDateString('en-US', { month: 'short' });
+                    const lastM = last.toLocaleDateString('en-US', { month: 'long' });
                     const lastY = last.toLocaleDateString('en-US', { year: 'numeric' });
                     if (y !== lastY) {
-                        return `${m}. ${first.getDate()}, ${y} - ${lastM}. ${last.getDate()}, ${lastY}`;
+                        return `${m} ${first.getDate()}, ${y} - ${lastM} ${last.getDate()}, ${lastY}`;
                     } else if (m !== lastM) {
-                        return `${m}. ${first.getDate()} - ${lastM}. ${last.getDate()}, ${y}`;
+                        return `${m} ${first.getDate()} - ${lastM} ${last.getDate()}, ${y}`;
                     } else {
-                        return `${m}. ${first.getDate()}-${last.getDate()}, ${y}`;
+                        return `${m} ${first.getDate()}-${last.getDate()}, ${y}`;
                     }
                 }
             };
@@ -189,6 +189,17 @@ import { supabase } from "../supabase-config.js";
             document.getElementById('edit-venue').value = res.event.venue;
             document.getElementById('edit-type').value = res.event.eventType;
             document.getElementById('edit-dates').value = res.event.dates;
+            
+            if (!window.fpEditDatesInstance) {
+                window.fpEditDatesInstance = flatpickr("#edit-dates", {
+                    mode: "multiple",
+                    dateFormat: "Y-m-d",
+                    altInput: true,
+                    altFormat: "F j, Y"
+                });
+            } else {
+                window.fpEditDatesInstance.setDate(res.event.dates.split(', '));
+            }
             document.getElementById('edit-start').value = res.event.startTime;
             document.getElementById('edit-end').value = res.event.endTime;
             document.getElementById('edit-status').value = res.status;
@@ -657,7 +668,7 @@ window.printReservation = function(id, event) {
                             await supabase.from('notifications').insert([{
                                 user_email: reservations[resIndex].contact.email.toLowerCase(),
                                 title: `Reservation ${status.toUpperCase()}`,
-                                message: `Your reservation for ${reservations[resIndex].event?.venue} on ${reservations[resIndex].event?.dates} was ${status}.`
+                                message: `Your reservation for ${reservations[resIndex].event?.venue} on ${window.formatReservationDates(reservations[resIndex].event?.dates)} was ${status}.`
                             }]);
                         } catch(e) { console.warn('Notification failed', e); }
                     }
@@ -1379,7 +1390,7 @@ function renderInventory() {
                         </td>
                         <td class="py-4 px-5">
                             <p class="font-bold text-slate-800">${r.event.venue}</p>
-                            <p class="text-xs text-slate-500">${r.event.dates}</p>
+                            <p class="text-xs text-slate-500">${window.formatReservationDates(r.event.dates)}</p>
                         </td>
                         <td class="py-4 px-5"><span class="${badge} text-[10px] px-2 py-1 rounded-md uppercase font-bold tracking-widest">${r.status}</span></td>
                         <td class="py-4 px-5 text-right flex justify-end gap-3">
@@ -1432,7 +1443,9 @@ function renderInventory() {
             if (!window.fpDatesInstance) {
                 window.fpDatesInstance = flatpickr("#add-dates", {
                     mode: "multiple",
-                    dateFormat: "Y-m-d"
+                    dateFormat: "Y-m-d",
+                    altInput: true,
+                    altFormat: "F j, Y"
                 });
             } else {
                 window.fpDatesInstance.clear();
