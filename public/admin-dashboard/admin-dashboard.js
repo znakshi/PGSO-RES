@@ -42,9 +42,9 @@ import { supabase } from "../supabase-config.js";
         };
         document.addEventListener('DOMContentLoaded', injectGlobalModals);
 
-        window.showAwesomeAlert = function(msg, isError = false) {
+        window.showAwesomeAlert = function(msg, isError = false, customTitle = null) {
             document.getElementById('pgsoAlertMessage').innerText = msg;
-            document.getElementById('pgsoAlertTitle').innerText = isError ? "Error" : "Success";
+            document.getElementById('pgsoAlertTitle').innerText = customTitle ? customTitle : (isError ? "Error" : "Success");
             const iconWrap = document.getElementById('pgsoAlertIconWrap');
             const icon = document.getElementById('pgsoAlertIcon');
             const borderTop = document.querySelector('#pgsoAlertModal > div');
@@ -741,15 +741,33 @@ window.printReservation = function(id, event) {
                 const events = reservations.filter(r => r.event.dates && r.event.dates.includes(dateStr));
                 if(events.length > 0) {
                     cell.classList.add('has-event');
-                    if(events.some(e => e.status === 'declined')) cell.classList.add('status-declined');
+                    if (events.every(e => e.event.eventType && e.event.eventType.startsWith('Blocked:'))) {
+                        cell.classList.add('status-declined'); // using red/declined style for blocked
+                    }
+                    else if(events.some(e => e.status === 'declined')) cell.classList.add('status-declined');
                     else if(events.some(e => e.status === 'pending')) cell.classList.add('status-pending');
                     else cell.classList.add('status-confirmed');
                 }
+                if (window.isBlockingMode && window.blockingSelectedDates && window.blockingSelectedDates.includes(dateStr)) {
+                    cell.classList.add('bg-slate-600', 'text-white');
+                }
+
                 cell.onclick = () => {
-                    document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('cal-selected'));
-                    cell.classList.add('cal-selected');
-                    window.currentSelectedDateStr = dateStr;
-                    renderReservationList(dateStr);
+                    if (window.isBlockingMode) {
+                        const idx = window.blockingSelectedDates.indexOf(dateStr);
+                        if (idx > -1) {
+                            window.blockingSelectedDates.splice(idx, 1);
+                            cell.classList.remove('bg-slate-600', 'text-white');
+                        } else {
+                            window.blockingSelectedDates.push(dateStr);
+                            cell.classList.add('bg-slate-600', 'text-white');
+                        }
+                    } else {
+                        document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('cal-selected'));
+                        cell.classList.add('cal-selected');
+                        window.currentSelectedDateStr = dateStr;
+                        renderReservationList(dateStr);
+                    }
                 };
                 grid.appendChild(cell);
             }
@@ -770,19 +788,22 @@ window.printReservation = function(id, event) {
                 card.className = "border border-gray-200 rounded-lg p-4 hover:shadow-md transition bg-white cursor-pointer relative group";
                 card.onclick = () => viewReservation(res.id);
                 let badge = res.status === 'pending' ? "bg-yellow-100 text-yellow-800" : res.status === 'confirmed' ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+                if (res.event.eventType && res.event.eventType.startsWith('Blocked:')) {
+                    badge = "bg-slate-200 text-slate-800";
+                }
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
                         <div><h4 class="font-bold text-gray-900 group-hover:text-pgso-blue transition">${res.contact.fullName}</h4><p class="text-xs text-gray-500">${res.event.venue}</p></div>
-                        <span class="${badge} text-[10px] px-2 py-1 rounded uppercase font-bold tracking-wider">${res.status}</span>
+                        <span class="${badge} text-[10px] px-2 py-1 rounded uppercase font-bold tracking-wider">${res.event.eventType && res.event.eventType.startsWith('Blocked:') ? 'BLOCKED' : res.status}</span>
                     </div>
                     <div class="text-xs text-gray-600 space-y-1 mb-3 pt-2 border-t border-gray-100">
                         <p><strong>Time:</strong> ${res.event.startTime} - ${res.event.endTime}</p>
                         <p><strong>Total:</strong> ₱${(res.pricing.grandTotal).toLocaleString()}</p>
                     </div>
                     <div class="flex gap-2 relative z-10">
-                        ${res.status === 'pending' ? `<button onclick="setStatus('${res.id}', 'confirmed', event)" class="flex-1 bg-green-600 text-white py-1.5 rounded text-xs font-bold hover:bg-green-700">Accept</button><button onclick="setStatus('${res.id}', 'declined', event)" class="flex-1 bg-red-500 text-white py-1.5 rounded text-xs font-bold hover:bg-red-600">Decline</button>` : ''}
-                        ${res.status === 'confirmed' ? `<button onclick="printReservation('${res.id}', event)" class="px-3 border border-gray-200 rounded text-blue-600 hover:text-blue-800 hover:bg-blue-50" title="Print Permit"><i class="fa-solid fa-print"></i></button>` : ''}
-                        <button onclick="deleteRes('${res.id}', event)" title="Archive Reservation" class="px-3 border border-gray-200 rounded text-amber-500 hover:text-amber-700 hover:bg-amber-50"><i class="fa-solid fa-box-archive"></i></button>
+                        ${(res.status === 'pending' && (!res.event.eventType || !res.event.eventType.startsWith('Blocked:'))) ? `<button onclick="setStatus('${res.id}', 'confirmed', event)" class="flex-1 bg-green-600 text-white py-1.5 rounded text-xs font-bold hover:bg-green-700">Accept</button><button onclick="setStatus('${res.id}', 'declined', event)" class="flex-1 bg-red-500 text-white py-1.5 rounded text-xs font-bold hover:bg-red-600">Decline</button>` : ''}
+                        ${(res.status === 'confirmed' && (!res.event.eventType || !res.event.eventType.startsWith('Blocked:'))) ? `<button onclick="printReservation('${res.id}', event)" class="px-3 border border-gray-200 rounded text-blue-600 hover:text-blue-800 hover:bg-blue-50" title="Print Permit"><i class="fa-solid fa-print"></i></button>` : ''}
+                        <button onclick="deleteRes('${res.id}', event)" title="${(res.event.eventType && res.event.eventType.startsWith('Blocked:')) ? 'Unblock Date' : 'Archive Reservation'}" class="px-3 border border-gray-200 rounded ${(res.event.eventType && res.event.eventType.startsWith('Blocked:')) ? 'text-red-500 hover:text-red-700 hover:bg-red-50' : 'text-amber-500 hover:text-amber-700 hover:bg-amber-50'}"><i class="fa-solid ${res.event.eventType && res.event.eventType.startsWith('Blocked:') ? 'fa-unlock' : 'fa-box-archive'}"></i></button>
                     </div>
                 `;
                 list.appendChild(card);
@@ -1634,6 +1655,7 @@ function renderInventory() {
         window.openVenueModal = function() {
             document.getElementById('venueForm').reset();
             document.getElementById('venue-id').value = "";
+            document.getElementById('venue-has-reg-fee').checked = false;
             document.getElementById('venueModalTitle').innerText = "Register New Venue";
             venueSelectedImages = [];
             renderVenueImagesPreview();
@@ -1654,6 +1676,7 @@ function renderInventory() {
             document.getElementById('venue-price-daily').value = venue.price_daily || "";
             document.getElementById('venue-deposit').value = venue.security_deposit || 3000;
             document.getElementById('venue-pricing-details').value = venue.pricing_details || "";
+            document.getElementById('venue-has-reg-fee').checked = venue.has_registration_fee || false;
 
             document.getElementById('venueModalTitle').innerText = "Edit Venue Details";
             venueSelectedImages = [...(venue.images || [])];
@@ -1750,6 +1773,7 @@ function renderInventory() {
             const price_succeeding_hour = price_ot_val ? parseFloat(price_ot_val) : null;
             const price_daily = price_daily_val ? parseFloat(price_daily_val) : null;
             const security_deposit = parseFloat(document.getElementById('venue-deposit').value) || 3000;
+            const has_registration_fee = document.getElementById('venue-has-reg-fee').checked;
             
             let pricing_details = document.getElementById('venue-pricing-details').value.trim();
             if (!pricing_details) {
@@ -1772,6 +1796,7 @@ function renderInventory() {
                 price_daily,
                 security_deposit,
                 pricing_details,
+                has_registration_fee,
                 images: venueSelectedImages
             };
 
@@ -1873,3 +1898,98 @@ function renderInventory() {
             }).subscribe();
 
         window.fetchVenues();
+
+        window.isBlockingMode = false;
+        window.blockingSelectedDates = [];
+
+        window.toggleBlockMode = function() {
+            if (!window.isBlockingMode) {
+                window.isBlockingMode = true;
+                window.blockingSelectedDates = [];
+                
+                document.getElementById('btn-block-mode').className = "bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-sm flex items-center";
+                document.getElementById('text-block-mode').innerText = "Confirm Selection";
+                document.getElementById('icon-block-mode').className = "fa-solid fa-check mr-2";
+                
+                document.getElementById('btn-cancel-block-mode').classList.remove('hidden');
+                document.getElementById('btn-add-booking').classList.add('hidden');
+                
+                showAwesomeAlert("Click dates on the calendar to select them for blocking, then click 'Confirm Selection'.", false, "Blocking");
+                renderCalendar();
+            } else {
+                if (window.blockingSelectedDates.length === 0) {
+                    showAwesomeAlert("Please select at least one date on the calendar.", true);
+                    return;
+                }
+                
+                const select = document.getElementById('block-venue-select');
+                select.innerHTML = '<option value="All Venues">All Venues</option>';
+                supabase.from('venues').select('name').then(({data}) => {
+                    if(data) {
+                        data.forEach(v => {
+                            select.innerHTML += `<option value="${v.name}">${v.name}</option>`;
+                        });
+                    }
+                });
+                
+                window.blockingSelectedDates.sort();
+                document.getElementById('block-date').value = window.blockingSelectedDates.join(', ');
+                document.getElementById('block-date-display').value = window.formatReservationDates(window.blockingSelectedDates.join(', '));
+                document.getElementById('block-reason').value = 'Holiday';
+                
+                document.getElementById('blockDateModal').classList.remove('hidden');
+            }
+        };
+
+        window.cancelBlockMode = function() {
+            window.isBlockingMode = false;
+            window.blockingSelectedDates = [];
+            
+            document.getElementById('btn-block-mode').className = "bg-slate-600 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-sm flex items-center";
+            document.getElementById('text-block-mode').innerText = "Block Date";
+            document.getElementById('icon-block-mode').className = "fa-solid fa-ban mr-2";
+            
+            document.getElementById('btn-cancel-block-mode').classList.add('hidden');
+            document.getElementById('btn-add-booking').classList.remove('hidden');
+            
+            renderCalendar();
+        };
+
+        window.saveBlockDate = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('block-submit-btn');
+            const origText = btn.innerText;
+            btn.innerText = 'Saving...';
+            
+            const venue = document.getElementById('block-venue-select').value;
+            const dateStr = document.getElementById('block-date').value;
+            const reason = document.getElementById('block-reason').value.trim();
+            
+            if(!dateStr) {
+                showAwesomeAlert("Please select at least one date.", true);
+                btn.innerText = origText;
+                return;
+            }
+            
+            const reservationData = {
+                contact: { fullName: 'System Admin', contactNumber: '09000000000', email: 'admin@system.local' },
+                event: { venue: venue, eventType: 'Blocked: ' + reason, dates: dateStr, startTime: '00:00', endTime: '23:59', durationLabel: 'Whole Day' },
+                pricing: { grandTotal: 0, venueTotal: 0, equipmentTotal: 0, securityDeposit: 0 },
+                equipment: [],
+                status: 'confirmed',
+                notes: 'Blocked by Admin'
+            };
+            
+            try {
+                const { error } = await supabase.from('reservations').insert([reservationData]);
+                if(error) throw error;
+                showAwesomeAlert('Date blocked successfully!');
+                closeModal('blockDateModal');
+                window.cancelBlockMode(); // resets the UI
+                fetchReservations(); // re-render calendar
+            } catch(err) {
+                showAwesomeAlert('Error: ' + err.message, true);
+            } finally {
+                btn.innerText = origText;
+            }
+        };

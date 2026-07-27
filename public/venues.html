@@ -354,16 +354,7 @@
                             const coverImg = v.images && v.images.length > 0 ? v.images[0] : 'pgso-building.jpg';
                             const coverSrc = coverImg.startsWith('http') || coverImg.includes('/') ? coverImg : coverImg;
                             
-                            let reserveLink = "";
-                            if (v.name === "Gov. Ben Palispis Auditorium") {
-                                reserveLink = "palispis-reservation/palispis-reservation.html";
-                            } else if (v.name === "Provincial Gymnasium") {
-                                reserveLink = "gym-reservation/gym-reservation.html";
-                            } else if (v.name === "PCL Hall") {
-                                reserveLink = "pcl-reservation/pcl-reservation.html";
-                            } else {
-                                reserveLink = `generic-reservation/generic-reservation.html?venue=${encodeURIComponent(v.name)}`;
-                            }
+                            let reserveLink = `generic-reservation/generic-reservation.html?venue=${encodeURIComponent(v.name)}`;
                             
                             grid.innerHTML += `
                                 <div class="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group relative">

@@ -63,6 +63,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             document.getElementById('venue-desc-paragraph').innerText = venueDetails.description || "No description available.";
             document.getElementById('venue-category-badge').innerText = venueDetails.category;
             depositDisplay.innerText = `₱${parseFloat(venueDetails.security_deposit || 3000).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+            
+            if (venueDetails.has_registration_fee) {
+                document.getElementById('registration-fee-container').classList.remove('hidden');
+            }
 
             // Populate Duration Options
             buildDurationOptions();
@@ -85,13 +89,13 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (venueDetails.price_daily !== null && venueDetails.price_daily !== undefined) {
             // Daily pricing only
             durationContainer.innerHTML = `
-                <label class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl hover:bg-slate-50 transition cursor-pointer">
-                    <input type="radio" name="duration" value="24" checked data-duration-value="24" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                <input type="hidden" name="duration" value="24" data-duration-value="24" checked>
+                <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50">
                     <div>
                         <span class="block text-sm font-bold text-slate-800 font-sans">Whole Day</span>
                         <span class="block text-xs text-slate-500">Flat rate of ₱${parseFloat(venueDetails.price_daily).toLocaleString()} per day</span>
                     </div>
-                </label>
+                </div>
             `;
             // For daily pricing, default start and end times to whole day
             startTimeInput.value = "08:00";
@@ -99,27 +103,25 @@ document.addEventListener('DOMContentLoaded', async function () {
         } else if (venueDetails.price_first_4_hours !== null && venueDetails.price_first_4_hours !== undefined) {
             // Hourly pricing option
             durationContainer.innerHTML = `
-                <label class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl hover:bg-slate-50 transition cursor-pointer">
-                    <input type="radio" name="duration" value="4" checked data-duration-value="4" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                <input type="hidden" name="duration" value="4" data-duration-value="4" checked>
+                <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50">
                     <div>
                         <span class="block text-sm font-bold text-slate-800 font-sans">First 4 Hours</span>
                         <span class="block text-xs text-slate-500">Rate of ₱${parseFloat(venueDetails.price_first_4_hours).toLocaleString()}</span>
                     </div>
-                </label>
-                <label class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl hover:bg-slate-50 transition cursor-pointer">
-                    <input type="radio" name="duration" value="8" data-duration-value="8" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                </div>
+                <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50">
                     <div>
                         <span class="block text-sm font-bold text-slate-800 font-sans">8 Hours</span>
                         <span class="block text-xs text-slate-500">Rate of ₱${parseFloat(venueDetails.price_first_4_hours * 1.8).toLocaleString()}</span>
                     </div>
-                </label>
+                </div>
             `;
             
-            // Attach event listeners to update end time automatically for hourly
-            const radios = document.getElementsByName('duration');
-            radios.forEach(r => r.addEventListener('change', autoUpdateEndTime));
-            startTimeInput.addEventListener('change', autoUpdateEndTime);
+            // --- LISTENERS ---
+            startTimeInput.addEventListener('change', calculateTotal);
             endTimeInput.addEventListener('change', calculateTotal);
+            document.querySelectorAll('input[name="regFee"]').forEach(r => r.addEventListener('change', calculateTotal));
         }
     }
 
@@ -129,7 +131,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             const { data, error } = await supabase
                 .from('reservations')
                 .select('*')
-                .eq('event->>venue', venueDetails.name)
+                .or(`event->>venue.eq.${venueDetails.name},event->>venue.eq.All Venues`)
                 .neq('status', 'declined');
 
             if (error) throw error;
@@ -382,26 +384,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         calculateTotal();
     }
 
-    // --- 7. AUTO SUGGEST END TIME ---
-    function autoUpdateEndTime() {
-        if (startTimeInput.value) {
-            const selectedRadio = document.querySelector('input[name="duration"]:checked');
-            if (selectedRadio) {
-                const durVal = parseInt(selectedRadio.dataset.durationValue);
-                if (durVal && !isNaN(durVal) && durVal !== 24) {
-                    const [h, m] = startTimeInput.value.split(':').map(Number);
-                    const date = new Date();
-                    date.setHours(h, m, 0, 0);
-                    date.setHours(date.getHours() + durVal);
-                    
-                    const endH = String(date.getHours()).padStart(2, '0');
-                    const endM = String(date.getMinutes()).padStart(2, '0');
-                    endTimeInput.value = `${endH}:${endM}`;
-                }
-            }
-        }
-        calculateTotal();
-    }
+
 
     // --- 8. CALCULATE TOTAL COST ---
     function calculateTotal() {
@@ -443,6 +426,14 @@ document.addEventListener('DOMContentLoaded', async function () {
         const totalVenueCost = (basePrice + overtimeCost) * (totalDays || 1);
         let totalEquipmentCost = 0;
 
+        let surcharge = 0;
+        if (venueDetails && venueDetails.has_registration_fee) {
+            const regFeeRadio = document.querySelector('input[name="regFee"]:checked');
+            if (regFeeRadio && regFeeRadio.value === 'with-fee') {
+                surcharge = totalVenueCost * 0.10;
+            }
+        }
+
         const rows = document.querySelectorAll('#equipment-table-body tr');
         rows.forEach(row => {
             const cb = row.querySelector('.equipment-checkbox');
@@ -462,15 +453,20 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         });
 
-        const displayVenue = totalDays === 0 ? 0 : totalVenueCost;
+        const finalVenueCost = totalVenueCost + surcharge;
+        const displayVenue = totalDays === 0 ? 0 : finalVenueCost;
         const subTotal = displayVenue + totalEquipmentCost;
         const securityDeposit = parseFloat(venueDetails.security_deposit || 3000);
         const grandTotal = subTotal + securityDeposit;
 
         daysDisplay.textContent = `${totalDays} day(s)`;
 
-        if (overtimeCost > 0) {
-            basePriceDisplay.innerHTML = `₱${(basePrice * (totalDays || 1)).toLocaleString()} <span class="text-red-500 text-[10px] block mt-0.5">(+₱${(overtimeCost * (totalDays || 1)).toLocaleString()} Overtime)</span>`;
+        if (overtimeCost > 0 || surcharge > 0) {
+            let detailsHtml = "";
+            if (surcharge > 0) detailsHtml += `<span class="text-orange-500 text-[10px] block mt-0.5">(+₱${surcharge.toLocaleString()} Reg Fee Surcharge)</span>`;
+            if (overtimeCost > 0) detailsHtml += `<span class="text-red-500 text-[10px] block mt-0.5">(+₱${(overtimeCost * (totalDays || 1)).toLocaleString()} Overtime)</span>`;
+            
+            basePriceDisplay.innerHTML = `₱${displayVenue.toLocaleString()} ${detailsHtml}`;
         } else {
             basePriceDisplay.textContent = `₱${displayVenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
         }
@@ -479,7 +475,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         subtotalDisplay.textContent = `₱${subTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
         totalDisplay.textContent = `₱${grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 
-        return { totalVenueCost, totalEquipmentCost, grandTotal, hoursDuration, durationLabel, totalDays, securityDeposit };
+        return { totalVenueCost: finalVenueCost, totalEquipmentCost, grandTotal, hoursDuration, durationLabel, totalDays, securityDeposit, surcharge };
     }
 
     // --- 9. SUBMIT EVENT HANDLER ---
@@ -548,7 +544,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 venueTotal: calc.totalVenueCost,
                 equipmentTotal: calc.totalEquipmentCost,
                 securityDeposit: calc.securityDeposit,
-                grandTotal: calc.grandTotal
+                grandTotal: calc.grandTotal,
+                surcharge: calc.surcharge || 0
             },
             notes: notesInput.value.trim()
         };
