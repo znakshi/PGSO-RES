@@ -89,13 +89,15 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (venueDetails.price_daily !== null && venueDetails.price_daily !== undefined) {
             // Daily pricing only
             durationContainer.innerHTML = `
-                <input type="hidden" name="duration" value="24" data-duration-value="24" checked>
-                <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50">
-                    <div>
-                        <span class="block text-sm font-bold text-slate-800 font-sans">Whole Day</span>
-                        <span class="block text-xs text-slate-500">Flat rate of ₱${parseFloat(venueDetails.price_daily).toLocaleString()} per day</span>
+                <label class="cursor-pointer block">
+                    <input type="radio" name="duration" value="24" data-duration-value="24" class="peer hidden" checked>
+                    <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-colors">
+                        <div>
+                            <span class="block text-sm font-bold text-slate-800 peer-checked:text-blue-900 font-sans">Whole Day</span>
+                            <span class="block text-xs text-slate-500 peer-checked:text-blue-700">Flat rate of ₱${parseFloat(venueDetails.price_daily).toLocaleString()} per day</span>
+                        </div>
                     </div>
-                </div>
+                </label>
             `;
             // For daily pricing, default start and end times to whole day
             startTimeInput.value = "08:00";
@@ -103,26 +105,39 @@ document.addEventListener('DOMContentLoaded', async function () {
         } else if (venueDetails.price_first_4_hours !== null && venueDetails.price_first_4_hours !== undefined) {
             // Hourly pricing option
             durationContainer.innerHTML = `
-                <input type="hidden" name="duration" value="4" data-duration-value="4" checked>
-                <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50">
-                    <div>
-                        <span class="block text-sm font-bold text-slate-800 font-sans">First 4 Hours</span>
-                        <span class="block text-xs text-slate-500">Rate of ₱${parseFloat(venueDetails.price_first_4_hours).toLocaleString()}</span>
+                <label class="cursor-pointer block">
+                    <input type="radio" name="duration" value="4" data-duration-value="4" class="peer hidden" checked>
+                    <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-colors">
+                        <div>
+                            <span class="block text-sm font-bold text-slate-800 peer-checked:text-blue-900 font-sans">First 4 Hours</span>
+                            <span class="block text-xs text-slate-500 peer-checked:text-blue-700">Rate of ₱${parseFloat(venueDetails.price_first_4_hours).toLocaleString()}</span>
+                        </div>
                     </div>
-                </div>
-                <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50">
-                    <div>
-                        <span class="block text-sm font-bold text-slate-800 font-sans">8 Hours</span>
-                        <span class="block text-xs text-slate-500">Rate of ₱${parseFloat(venueDetails.price_first_4_hours * 1.8).toLocaleString()}</span>
+                </label>
+                <label class="cursor-pointer block">
+                    <input type="radio" name="duration" value="8" data-duration-value="8" class="peer hidden">
+                    <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-colors">
+                        <div>
+                            <span class="block text-sm font-bold text-slate-800 peer-checked:text-blue-900 font-sans">8 Hours</span>
+                            <span class="block text-xs text-slate-500 peer-checked:text-blue-700">Rate of ₱${parseFloat(venueDetails.price_first_4_hours * 1.8).toLocaleString()}</span>
+                        </div>
                     </div>
-                </div>
+                </label>
             `;
-            
-            // --- LISTENERS ---
-            startTimeInput.addEventListener('change', calculateTotal);
-            endTimeInput.addEventListener('change', calculateTotal);
-            document.querySelectorAll('input[name="regFee"]').forEach(r => r.addEventListener('change', calculateTotal));
         }
+        
+        // --- LISTENERS ---
+        document.querySelectorAll('input[name="duration"]').forEach(r => r.addEventListener('change', calculateTotal));
+        
+        startTimeInput.removeEventListener('change', calculateTotal);
+        endTimeInput.removeEventListener('change', calculateTotal);
+        startTimeInput.addEventListener('change', calculateTotal);
+        endTimeInput.addEventListener('change', calculateTotal);
+        
+        document.querySelectorAll('input[name="regFee"]').forEach(r => {
+            r.removeEventListener('change', calculateTotal);
+            r.addEventListener('change', calculateTotal);
+        });
     }
 
     // --- 3. FETCH BLOCKED DATES ---
