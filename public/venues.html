@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 
 <head>
     <meta charset="UTF-8">
@@ -279,6 +279,19 @@
                 const backdrop = document.getElementById('sidebar-backdrop');
                 const closeBtn = document.getElementById('close-sidebar');
                 const logoutBtn = document.getElementById('sidebar-logout');
+                
+                // Hide What We Offer / Services section for logged in clients
+                const servicesSection = document.getElementById('services');
+                if (servicesSection) {
+                    servicesSection.classList.add('hidden');
+                }
+
+                // Change Services nav link to My Reservations
+                const navServicesLink = document.querySelector('a[href="#services"]');
+                if (navServicesLink) {
+                    navServicesLink.textContent = "My Reservations";
+                    navServicesLink.href = "client-reservations.html";
+                }
 
                 // Determine user name
                 const fullName = session.user.user_metadata?.full_name || "Client";
