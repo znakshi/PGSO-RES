@@ -810,15 +810,30 @@ window.printReservation = function(id, event) {
             });
         }
 
+        window.allReservationsCurrentPage = 1;
+        window.allReservationsPerPage = 10;
+        let lastAllReservationsFilter = '';
+        let lastAllReservationsSearch = '';
+
         window.renderAllReservations = function() {
             const tbody = document.getElementById('all-reservations-tbody');
             if (!tbody) return;
             const filter = document.getElementById('filter-all-reservations')?.value || 'all';
             const searchQuery = document.getElementById('search-all-reservations')?.value.toLowerCase().trim() || '';
             
+            if (filter !== lastAllReservationsFilter || searchQuery !== lastAllReservationsSearch) {
+                window.allReservationsCurrentPage = 1;
+                lastAllReservationsFilter = filter;
+                lastAllReservationsSearch = searchQuery;
+            }
+            
             let filtered = reservations.filter(r => r.status === 'pending' || r.status === 'confirmed' || r.status === 'declined');
             if (filter !== 'all') {
-                filtered = filtered.filter(r => r.status === filter);
+                if (filter === 'blocked') {
+                    filtered = filtered.filter(r => r.event && r.event.eventType && r.event.eventType.startsWith('Blocked:'));
+                } else {
+                    filtered = filtered.filter(r => r.status === filter && !(r.event && r.event.eventType && r.event.eventType.startsWith('Blocked:')));
+                }
             }
             if (searchQuery) {
                 filtered = filtered.filter(r => r.contact?.fullName?.toLowerCase().includes(searchQuery));
@@ -837,11 +852,25 @@ window.printReservation = function(id, event) {
                 return;
             }
 
-            filtered.forEach(res => {
+            // Pagination Logic
+            const totalItems = filtered.length;
+            const totalPages = Math.ceil(totalItems / window.allReservationsPerPage) || 1;
+            
+            if (window.allReservationsCurrentPage > totalPages) {
+                window.allReservationsCurrentPage = totalPages;
+            }
+
+            const startIndex = (window.allReservationsCurrentPage - 1) * window.allReservationsPerPage;
+            const endIndex = startIndex + window.allReservationsPerPage;
+            const paginated = filtered.slice(startIndex, endIndex);
+
+            paginated.forEach(res => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50 border-b border-gray-50 transition";
                 
-                let badge = res.status === 'pending' ? "bg-yellow-100 text-yellow-800 border-yellow-200" : 
+                let isBlocked = res.event && res.event.eventType && res.event.eventType.startsWith('Blocked:');
+                let badge = isBlocked ? "bg-slate-200 text-slate-800 border-slate-300" :
+                            res.status === 'pending' ? "bg-yellow-100 text-yellow-800 border-yellow-200" : 
                             res.status === 'confirmed' ? "bg-green-100 text-green-800 border-green-200" : 
                             "bg-red-100 text-red-800 border-red-200";
 
@@ -880,7 +909,7 @@ window.printReservation = function(id, event) {
                         <div class="text-xs text-slate-500">${res.event?.startTime || ''} - ${res.event?.endTime || ''}</div>
                     </td>
                     <td class="px-4 py-3 text-center align-top">
-                        <span class="${badge} text-[10px] px-2 py-1 rounded uppercase font-bold tracking-wider inline-block border">${res.status}</span>
+                        <span class="${badge} text-[10px] px-2 py-1 rounded uppercase font-bold tracking-wider inline-block border">${isBlocked ? 'BLOCKED' : res.status}</span>
                         ${reasonHtml}
                     </td>
                     <td class="px-4 py-3 font-bold text-blue-700 text-right whitespace-nowrap align-top">
@@ -892,6 +921,30 @@ window.printReservation = function(id, event) {
                 `;
                 tbody.appendChild(tr);
             });
+
+            // Update Pagination UI
+            const infoEl = document.getElementById('pagination-info');
+            if (infoEl) {
+                const endDisplay = Math.min(endIndex, totalItems);
+                infoEl.innerText = `Showing ${totalItems > 0 ? startIndex + 1 : 0}-${endDisplay} of ${totalItems}`;
+            }
+
+            const prevBtn = document.getElementById('pagination-prev');
+            const nextBtn = document.getElementById('pagination-next');
+            if (prevBtn) prevBtn.disabled = window.allReservationsCurrentPage === 1;
+            if (nextBtn) nextBtn.disabled = window.allReservationsCurrentPage === totalPages || totalPages === 0;
+        };
+
+        window.prevAllReservationsPage = function() {
+            if (window.allReservationsCurrentPage > 1) {
+                window.allReservationsCurrentPage--;
+                window.renderAllReservations();
+            }
+        };
+
+        window.nextAllReservationsPage = function() {
+            window.allReservationsCurrentPage++;
+            window.renderAllReservations();
         };
 
         window.filterFromAnalytics = function(status) {
