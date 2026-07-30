@@ -82,22 +82,21 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    // --- 2. BUILD DURATION RADIOS ---
+    // --- 2. BUILD DURATION RADIOS (NOW INFORMATIONAL ONLY) ---
     function buildDurationOptions() {
         durationContainer.innerHTML = "";
         
         if (venueDetails.price_daily !== null && venueDetails.price_daily !== undefined) {
             // Daily pricing only
             durationContainer.innerHTML = `
-                <label class="cursor-pointer block">
-                    <input type="radio" name="duration" value="24" data-duration-value="24" class="peer hidden" checked>
-                    <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-colors">
+                <div class="block">
+                    <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50">
                         <div>
-                            <span class="block text-sm font-bold text-slate-800 peer-checked:text-blue-900 font-sans">Whole Day</span>
-                            <span class="block text-xs text-slate-500 peer-checked:text-blue-700">Flat rate of ₱${parseFloat(venueDetails.price_daily).toLocaleString()} per day</span>
+                            <span class="block text-sm font-bold text-slate-800 font-sans">Whole Day</span>
+                            <span class="block text-xs text-slate-500">Flat rate of ₱${parseFloat(venueDetails.price_daily).toLocaleString()} per day</span>
                         </div>
                     </div>
-                </label>
+                </div>
             `;
             // For daily pricing, default start and end times to whole day
             startTimeInput.value = "08:00";
@@ -105,30 +104,39 @@ document.addEventListener('DOMContentLoaded', async function () {
         } else if (venueDetails.price_first_4_hours !== null && venueDetails.price_first_4_hours !== undefined) {
             // Hourly pricing option
             durationContainer.innerHTML = `
-                <label class="cursor-pointer block">
-                    <input type="radio" name="duration" value="4" data-duration-value="4" class="peer hidden" checked>
-                    <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-colors">
+                <div class="block">
+                    <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50">
                         <div>
-                            <span class="block text-sm font-bold text-slate-800 peer-checked:text-blue-900 font-sans">First 4 Hours</span>
-                            <span class="block text-xs text-slate-500 peer-checked:text-blue-700">Rate of ₱${parseFloat(venueDetails.price_first_4_hours).toLocaleString()}</span>
+                            <span class="block text-sm font-bold text-slate-800 font-sans">First 4 Hours</span>
+                            <span class="block text-xs text-slate-500">Rate of ₱${parseFloat(venueDetails.price_first_4_hours).toLocaleString()}</span>
                         </div>
                     </div>
-                </label>
-                <label class="cursor-pointer block">
-                    <input type="radio" name="duration" value="8" data-duration-value="8" class="peer hidden">
-                    <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-colors">
+                </div>
+                <div class="block">
+                    <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50">
                         <div>
-                            <span class="block text-sm font-bold text-slate-800 peer-checked:text-blue-900 font-sans">8 Hours</span>
-                            <span class="block text-xs text-slate-500 peer-checked:text-blue-700">Rate of ₱${parseFloat(venueDetails.price_first_4_hours * 1.8).toLocaleString()}</span>
+                            <span class="block text-sm font-bold text-slate-800 font-sans">8 Hours</span>
+                            <span class="block text-xs text-slate-500">Rate of ₱${parseFloat(venueDetails.price_first_4_hours * 1.8).toLocaleString()}</span>
                         </div>
                     </div>
-                </label>
+                </div>
             `;
+            
+            if (venueDetails.price_succeeding_hour) {
+                 durationContainer.innerHTML += `
+                    <div class="block sm:col-span-2">
+                        <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50">
+                            <div>
+                                <span class="block text-sm font-bold text-slate-800 font-sans">Overtime (Succeeding Hour)</span>
+                                <span class="block text-xs text-slate-500">Rate of ₱${parseFloat(venueDetails.price_succeeding_hour).toLocaleString()} per hour</span>
+                            </div>
+                        </div>
+                    </div>
+                 `;
+            }
         }
         
         // --- LISTENERS ---
-        document.querySelectorAll('input[name="duration"]').forEach(r => r.addEventListener('change', calculateTotal));
-        
         startTimeInput.removeEventListener('change', calculateTotal);
         endTimeInput.removeEventListener('change', calculateTotal);
         startTimeInput.addEventListener('change', calculateTotal);
@@ -407,34 +415,50 @@ document.addEventListener('DOMContentLoaded', async function () {
         let basePrice = 0;
         let baseDuration = 0;
         let durationLabel = "";
-
-        const selectedRadio = document.querySelector('input[name="duration"]:checked');
-        if (selectedRadio) {
-            baseDuration = parseInt(selectedRadio.dataset.durationValue);
-            durationLabel = selectedRadio.closest('label').querySelector('span').innerText;
-            
-            if (venueDetails.price_daily !== null && venueDetails.price_daily !== undefined) {
-                basePrice = parseFloat(venueDetails.price_daily);
-            } else {
-                basePrice = baseDuration === 4 ? parseFloat(venueDetails.price_first_4_hours) : parseFloat(venueDetails.price_first_4_hours * 1.8);
-            }
-        }
-
-        let hoursDuration = baseDuration;
+        let hoursDuration = 0;
         let overtimeCost = 0;
 
-        if (startTimeInput.value && endTimeInput.value && baseDuration !== 24) {
+        let exactHours = 0;
+        if (startTimeInput.value && endTimeInput.value) {
             const start = new Date(`1970-01-01T${startTimeInput.value}Z`);
             const end = new Date(`1970-01-01T${endTimeInput.value}Z`);
             let diffMs = end - start;
             if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000;
-            const exactHours = diffMs / (1000 * 60 * 60);
-            
-            if (exactHours > 0) hoursDuration = exactHours;
-            
-            if (hoursDuration > baseDuration && baseDuration > 0 && venueDetails.price_succeeding_hour) {
-                const overTimeRate = parseFloat(venueDetails.price_succeeding_hour);
-                overtimeCost = Math.ceil(hoursDuration - baseDuration) * overTimeRate;
+            exactHours = diffMs / (1000 * 60 * 60);
+        }
+
+        if (venueDetails.price_daily !== null && venueDetails.price_daily !== undefined) {
+            basePrice = parseFloat(venueDetails.price_daily);
+            baseDuration = 24;
+            hoursDuration = 24;
+            durationLabel = "Whole Day";
+        } else {
+            hoursDuration = exactHours > 0 ? exactHours : 0;
+
+            if (exactHours > 0) {
+                if (exactHours < 8) {
+                    basePrice = parseFloat(venueDetails.price_first_4_hours);
+                    baseDuration = 4;
+                    durationLabel = "First 4 Hours";
+                    
+                    if (exactHours > 4 && venueDetails.price_succeeding_hour) {
+                        const overTimeRate = parseFloat(venueDetails.price_succeeding_hour);
+                        overtimeCost = Math.ceil(exactHours - 4) * overTimeRate;
+                    }
+                } else {
+                    basePrice = parseFloat(venueDetails.price_first_4_hours * 1.8);
+                    baseDuration = 8;
+                    durationLabel = "8 Hours";
+                    
+                    if (exactHours > 8 && venueDetails.price_succeeding_hour) {
+                        const overTimeRate = parseFloat(venueDetails.price_succeeding_hour);
+                        overtimeCost = Math.ceil(exactHours - 8) * overTimeRate;
+                    }
+                }
+            } else {
+                basePrice = 0;
+                baseDuration = 0;
+                durationLabel = "Time Not Set";
             }
         }
 
@@ -591,17 +615,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             eventTypeInput.value = clean(data.event.eventType);
             startTimeInput.value = data.event.startTime || "";
             endTimeInput.value = data.event.endTime || "";
-
-            // Select matching duration
-            if (data.event.durationLabel) {
-                const radios = document.getElementsByName('duration');
-                radios.forEach(r => {
-                    const lbl = r.closest('label').querySelector('span').innerText;
-                    if (lbl === data.event.durationLabel) {
-                        r.checked = true;
-                    }
-                });
-            }
 
             // Restore fee selection
             if (data.event.registrationFee) {
