@@ -486,7 +486,7 @@ function initClientLogin() {
                         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Logging out...';
                         btn.disabled = true;
                         await supabase.auth.signOut();
-                        window.location.href = basePath + 'index.html';
+                        window.location.replace(basePath + 'index.html');
                     });
                 }
                 backModal.classList.remove('hidden');

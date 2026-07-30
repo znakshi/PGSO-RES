@@ -379,7 +379,7 @@
             logoutBtn.addEventListener('click', async () => {
                 logoutBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Logging out...';
                 await supabase.auth.signOut();
-                window.location.href = 'index.html';
+                window.location.replace('index.html');
             });
             
             // Profile Form Handling
