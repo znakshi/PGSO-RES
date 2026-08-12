@@ -576,12 +576,14 @@ window.printReservation = function(id, event) {
                 notifs.forEach(n => {
                     const el = document.createElement('div');
                     el.className = `px-4 py-3 border-b border-gray-50 flex flex-col gap-1 ${n.is_read ? 'opacity-60 bg-white' : 'bg-blue-50/50'}`;
+                    const dateStr = n.created_at ? new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
                     el.innerHTML = `
                         <div class="flex justify-between items-start">
                             <span class="font-bold text-sm ${n.is_read ? 'text-slate-600' : 'text-slate-900'}">${n.title}</span>
                             ${!n.is_read ? '<span class="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></span>' : ''}
                         </div>
                         <p class="text-xs text-slate-500 line-clamp-2">${n.message}</p>
+                        ${dateStr ? `<span class="text-[10px] text-slate-400 mt-1">${dateStr}</span>` : ''}
                     `;
                     notifList.appendChild(el);
                 });
@@ -742,7 +744,7 @@ window.printReservation = function(id, event) {
                 if(events.length > 0) {
                     cell.classList.add('has-event');
                     if (events.every(e => e.event.eventType && e.event.eventType.startsWith('Blocked:'))) {
-                        cell.classList.add('status-declined'); // using red/declined style for blocked
+                        cell.classList.add('status-blocked'); // use slate/gray style for blocked
                     }
                     else if(events.some(e => e.status === 'declined')) cell.classList.add('status-declined');
                     else if(events.some(e => e.status === 'pending')) cell.classList.add('status-pending');
@@ -885,6 +887,12 @@ window.printReservation = function(id, event) {
                 } else if(res.status === 'confirmed') {
                     actionsStr += `<button onclick="printReservation('${res.id}', event)" class="px-3 border border-gray-200 rounded text-slate-600 hover:text-blue-700 hover:bg-blue-50 py-1 font-bold text-xs" title="Print Form"><i class="fa-solid fa-print"></i></button>`;
                 }
+
+                let archiveBtnClass = isBlocked ? 'text-red-500 hover:text-red-700 hover:bg-red-50' : 'text-amber-500 hover:text-amber-700 hover:bg-amber-50';
+                let archiveBtnIcon = isBlocked ? 'fa-unlock' : 'fa-box-archive';
+                let archiveBtnTitle = isBlocked ? 'Unblock Date' : 'Archive Reservation';
+                actionsStr += `<button onclick="deleteRes('${res.id}', event)" class="px-3 border border-gray-200 rounded ${archiveBtnClass} py-1 font-bold text-xs" title="${archiveBtnTitle}"><i class="fa-solid ${archiveBtnIcon}"></i></button>`;
+
                 actionsStr += `</div>`;
 
                 let reasonHtml = '';

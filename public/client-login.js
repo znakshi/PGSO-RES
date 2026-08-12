@@ -552,12 +552,14 @@ async function setupClientNotifications() {
                 notifs.forEach(n => {
                     const el = document.createElement('div');
                     el.className = `px-4 py-3 border-b border-gray-50 flex flex-col gap-1 ${n.is_read ? 'opacity-60 bg-white' : 'bg-blue-50/50'}`;
+                    const dateStr = n.created_at ? new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
                     el.innerHTML = `
                         <div class="flex justify-between items-start">
                             <span class="font-bold text-sm ${n.is_read ? 'text-slate-600' : 'text-slate-900'}">${n.title}</span>
                             ${!n.is_read ? '<span class="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></span>' : ''}
                         </div>
                         <p class="text-xs text-slate-500 line-clamp-2">${n.message}</p>
+                        ${dateStr ? `<span class="text-[10px] text-slate-400 mt-1">${dateStr}</span>` : ''}
                     `;
                     notifList.appendChild(el);
                 });
