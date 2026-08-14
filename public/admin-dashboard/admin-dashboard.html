@@ -359,6 +359,7 @@
                                         <th class="py-4 px-5 font-bold">Price</th>
                                         <th class="py-4 px-5 text-center font-bold">Total Stock</th>
                                         <th class="py-4 px-5 text-center font-bold">Booked Today</th>
+                                        <th class="py-4 px-5 text-center font-bold">Standalone</th>
                                         <th class="py-4 px-5 text-center font-bold text-green-700"><i
                                                 class="fa-solid fa-check-circle mr-1"></i> Available</th>
                                         <th class="py-4 px-5 text-right font-bold w-24">Actions</th>
@@ -777,6 +778,10 @@
                                 <input type="text" id="inv-unit"
                                     class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-medium focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition"
                                     required placeholder="e.g. per day, per set">
+                            </div>
+                            <div class="mb-5 flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl p-4 mt-2">
+                                <input type="checkbox" id="inv-standalone" class="w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500">
+                                <label for="inv-standalone" class="text-sm font-bold text-slate-700">Available for Standalone Reservation</label>
                             </div>
                             <div class="grid grid-cols-2 gap-5 mb-8">
                                 <div>

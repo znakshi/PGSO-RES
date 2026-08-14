@@ -46,17 +46,28 @@ document.addEventListener('DOMContentLoaded', async function () {
     // --- 1. FETCH VENUE DETAILS ---
     async function loadVenueDetails() {
         try {
-            const { data, error } = await supabase
-                .from('venues')
-                .select('*')
-                .eq('name', targetVenueName)
-                .single();
+            if (targetVenueName === 'Equipment Only') {
+                venueDetails = {
+                    name: 'Equipment Only',
+                    description: 'Reserve equipment and services independently of a venue.',
+                    category: 'Standalone Equipment',
+                    security_deposit: 0,
+                    price_daily: 0,
+                    has_registration_fee: false
+                };
+            } else {
+                const { data, error } = await supabase
+                    .from('venues')
+                    .select('*')
+                    .eq('name', targetVenueName)
+                    .single();
 
-            if (error || !data) {
-                throw new Error("Venue not found in database.");
+                if (error || !data) {
+                    throw new Error("Venue not found in database.");
+                }
+
+                venueDetails = data;
             }
-
-            venueDetails = data;
 
             // Populate UI Elements
             document.getElementById('venue-name-heading').innerText = venueDetails.name;
@@ -234,10 +245,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             const { data, error } = await supabase.from('inventory').select('*');
             if (error) throw error;
 
-            const activeInventory = (data || []).filter(item => 
-                !item.is_archived && 
-                (!item.venue || item.venue === 'All Venues' || item.venue === venueDetails.name)
-            );
+            const activeInventory = (data || []).filter(item => {
+                if (item.is_archived) return false;
+                if (venueDetails.name === 'Equipment Only') return item.is_standalone_reservable === true;
+                return !item.venue || item.venue === 'All Venues' || item.venue === venueDetails.name;
+            });
 
             globalInventory = [];
             tableBody.innerHTML = "";

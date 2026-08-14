@@ -1,5 +1,18 @@
 import { supabase } from "../supabase-config.js";
 
+        // --- AUTH CHECK ---
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (!session) {
+                window.location.replace("../admin-login/admin-login.html");
+            }
+        });
+
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT' || !session) {
+                window.location.replace("../admin-login/admin-login.html");
+            }
+        });
+
         let reservations = [];
         let inventory = [];
         let archivedReservations = [];
@@ -81,7 +94,7 @@ import { supabase } from "../supabase-config.js";
         };
         window.logoutAdmin = async function() {
             await supabase.auth.signOut();
-            window.location.href = "../admin-login/admin-login.html";
+            window.location.replace("../admin-login/admin-login.html");
         };
 
         window.switchTab = function(t) {
@@ -1355,6 +1368,7 @@ function renderInventory() {
                 <td class="px-4 py-3">₱${item.price}</td>
                 <td class="px-4 py-3 text-center font-bold">${item.qty}</td>
                 <td class="px-4 py-3 text-center text-orange-600">${used > 0 ? used : '-'}</td>
+                <td class="px-4 py-3 text-center">${item.is_standalone_reservable ? '<i class="fa-solid fa-check text-green-600"></i>' : '<i class="fa-solid fa-xmark text-red-400"></i>'}</td>
                 <td class="px-4 py-3 text-center font-bold ${avail<=0?'text-red-600':'text-green-600'}">${avail}</td>
                 <td class="px-4 py-3 text-right">
                     <button onclick="openInventoryModal('${item.id}')" class="text-blue-600 hover:underline text-xs mr-3 font-medium">Edit</button>
@@ -1377,12 +1391,14 @@ function renderInventory() {
                 document.getElementById('inv-unit').value = item.unit;
                 document.getElementById('inv-price').value = item.price;
                 document.getElementById('inv-qty').value = item.qty;
+                document.getElementById('inv-standalone').checked = !!item.is_standalone_reservable;
             } else {
                 document.getElementById('inv-modal-title').innerText = "Add Item";
                 document.getElementById('inv-id').value = "";
                 document.getElementById('inventory-form').reset();
                 document.getElementById('inv-category').value = 'equipment';
                 document.getElementById('inv-venue').value = 'All Venues';
+                document.getElementById('inv-standalone').checked = false;
             }
         };
 
@@ -1399,7 +1415,8 @@ function renderInventory() {
                 name: document.getElementById('inv-name').value.trim(),
                 unit: document.getElementById('inv-unit').value.trim(),
                 price: parseFloat(document.getElementById('inv-price').value),
-                qty: parseInt(document.getElementById('inv-qty').value) 
+                qty: parseInt(document.getElementById('inv-qty').value),
+                is_standalone_reservable: document.getElementById('inv-standalone').checked
             };
 
             try {
@@ -1613,7 +1630,7 @@ function renderInventory() {
 
             showAwesomeConfirm("You went back. Do you want to securely log out?", async () => {
                 await supabase.auth.signOut();
-                window.location.href = "../index.html";
+                window.location.replace("../index.html");
             }, () => {
                 // If they cancel, restore the state so they can't go back without triggering this again
                 history.pushState({ adminBase: true }, null, location.href);
