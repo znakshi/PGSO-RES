@@ -1613,14 +1613,14 @@ function renderInventory() {
                 equipment: [],
                 pricing: { grandTotal: price, venueTotal: price, equipmentTotal: 0, securityDeposit: 0 },
                 notes: notes,
-                status: 'confirmed'
+                status: 'pending'
             };
 
             try {
                 const { error } = await supabase.from('reservations').insert([reservationData]);
                 if (error) throw error;
                 closeModal('addReservationModal');
-                showAwesomeAlert("Block added to calendar successfully!");
+                showAwesomeAlert("Reservation added successfully!");
                 await fetchReservations();
             } catch (err) {
                 showAwesomeAlert("Error saving reservation: " + err.message, true);
