@@ -827,22 +827,30 @@ window.printReservation = function(id, event) {
 
         window.allReservationsCurrentPage = 1;
         window.allReservationsPerPage = 10;
-        let lastAllReservationsFilter = '';
+        let lastAllReservationsFilter = 'all';
         let lastAllReservationsSearch = '';
+        let lastAllReservationsVenueFilter = 'all';
 
         window.renderAllReservations = function() {
             const tbody = document.getElementById('all-reservations-tbody');
             if (!tbody) return;
             const filter = document.getElementById('filter-all-reservations')?.value || 'all';
+            const venueFilter = document.getElementById('filter-venue-reservations')?.value || 'all';
             const searchQuery = document.getElementById('search-all-reservations')?.value.toLowerCase().trim() || '';
             
-            if (filter !== lastAllReservationsFilter || searchQuery !== lastAllReservationsSearch) {
+            if (filter !== lastAllReservationsFilter || searchQuery !== lastAllReservationsSearch || venueFilter !== lastAllReservationsVenueFilter) {
                 window.allReservationsCurrentPage = 1;
                 lastAllReservationsFilter = filter;
                 lastAllReservationsSearch = searchQuery;
+                lastAllReservationsVenueFilter = venueFilter;
             }
             
             let filtered = reservations.filter(r => r.status === 'pending' || r.status === 'confirmed' || r.status === 'declined');
+            
+            if (venueFilter !== 'all') {
+                filtered = filtered.filter(r => r.event && r.event.venue === venueFilter);
+            }
+
             if (filter !== 'all') {
                 if (filter === 'blocked') {
                     filtered = filtered.filter(r => r.event && r.event.eventType && r.event.eventType.startsWith('Blocked:'));
@@ -1685,6 +1693,7 @@ function renderInventory() {
         const populateVenueSelects = () => {
             const addSelect = document.getElementById('add-venue');
             const invSelect = document.getElementById('inv-venue');
+            const filterResSelect = document.getElementById('filter-venue-reservations');
             
             if (addSelect) {
                 addSelect.innerHTML = venuesList.map(v => `<option value="${v.name}">${v.name}</option>`).join('');
@@ -1693,6 +1702,16 @@ function renderInventory() {
             if (invSelect) {
                 invSelect.innerHTML = `<option value="All Venues" class="font-bold text-blue-700">All Venues</option>` +
                     venuesList.map(v => `<option value="${v.name}">${v.name}</option>`).join('');
+            }
+
+            if (filterResSelect) {
+                const prevVal = filterResSelect.value;
+                filterResSelect.innerHTML = `<option value="all">All Venues</option>` +
+                    venuesList.map(v => `<option value="${v.name}">${v.name}</option>`).join('') +
+                    `<option value="Equipment Only">Equipment Only</option>`;
+                if (filterResSelect.querySelector(`option[value="${prevVal}"]`)) {
+                    filterResSelect.value = prevVal;
+                }
             }
         };
 

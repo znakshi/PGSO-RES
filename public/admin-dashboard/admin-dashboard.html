@@ -203,7 +203,10 @@
                                     class="fa-solid fa-list-ul text-blue-600"></i> All Reservations</h2>
                             <div class="flex gap-2">
                                 <input type="text" id="search-all-reservations" oninput="renderAllReservations()" placeholder="Search client name..." class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition w-full sm:w-64">
-                                <select id="filter-all-reservations"
+                                <select id="filter-venue-reservations" onchange="renderAllReservations()" class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                                    <option value="all">All Venues</option>
+                                </select>
+                                <select id="filter-all-reservations" onchange="renderAllReservations()"
                                     class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
                                     <option value="all">All Statuses</option>
                                     <option value="pending">Pending</option>

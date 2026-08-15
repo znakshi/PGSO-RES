@@ -113,6 +113,27 @@
         </div>
     </section>
 
+    <!-- Equipment Booking Section -->
+    <section id="equipment-only" class="py-16 bg-white border-t border-gray-100 relative">
+        <div class="max-w-6xl mx-auto px-6 relative z-10">
+            <div class="text-center mb-10">
+                <h2
+                    class="text-sm font-bold text-purple-600 uppercase tracking-widest mb-3 flex items-center justify-center gap-2">
+                    <div class="w-8 h-0.5 bg-purple-600 rounded"></div> Booking Open <div
+                        class="w-8 h-0.5 bg-purple-600 rounded"></div>
+                </h2>
+                <h3 class="text-3xl md:text-4xl font-bold text-slate-900">Reserve Equipment Only</h3>
+                <p class="mt-4 text-slate-500 max-w-2xl mx-auto">Need additional equipment or services independently of any venue? You can reserve our high-quality inventory here.</p>
+            </div>
+            
+            <div class="flex justify-center">
+                <button onclick="window.location.href='generic-reservation/generic-reservation.html?venue=Equipment%20Only'" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-10 rounded-full text-sm uppercase tracking-widest transition-colors shadow-lg shadow-purple-500/30 flex items-center gap-3">
+                    <i class="fa-solid fa-boxes-stacked text-lg"></i> Browse Equipment Inventory
+                </button>
+            </div>
+        </div>
+    </section>
+
     <!-- What We Do / Offers Section -->
     <section id="services" class="py-24 bg-white border-t border-gray-100 relative">
         <div class="max-w-6xl mx-auto px-6 relative z-10">
@@ -403,38 +424,6 @@
                                 </div>
                             `;
                         });
-                        
-                        // Add Standalone Equipment Card
-                        grid.innerHTML += `
-                                <div class="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group relative">
-                                    <div class="h-56 relative overflow-hidden cursor-pointer" onclick="window.location.href='generic-reservation/generic-reservation.html?venue=Equipment%20Only'">
-                                        <div class="w-full h-full bg-slate-800 flex items-center justify-center group-hover:scale-110 transition-transform duration-700">
-                                            <i class="fa-solid fa-boxes-stacked text-6xl text-slate-600"></i>
-                                        </div>
-                                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80"></div>
-                                        <div class="absolute bottom-4 left-4 text-white pointer-events-none">
-                                            <span class="bg-purple-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-sm inline-block mb-1">Standalone Equipment</span>
-                                            <h3 class="font-bold text-xl drop-shadow-md">Equipment & Services</h3>
-                                        </div>
-                                    </div>
-                                    <div class="p-8 flex-1 flex flex-col items-center text-center">
-                                        <p class="text-sm text-slate-500 mb-6 font-light leading-relaxed">Reserve our equipment and services independently of any venue.</p>
-                                        <div class="flex items-center gap-2 text-sm text-slate-700 font-semibold mb-6 uppercase tracking-wider bg-gray-50 px-4 py-2 rounded-lg border border-gray-100 w-full justify-center">
-                                            <i class="fa-solid fa-boxes-stacked text-purple-700"></i> No Venue Required
-                                        </div>
-                                        <div class="mt-auto w-full pt-6 border-t border-gray-100">
-                                            <div class="mb-6">
-                                                <span class="text-3xl font-bold text-slate-900 tracking-tight">Varies</span>
-                                                <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider block mt-1">Per Item</span>
-                                            </div>
-                                            <button onclick="window.location.href='generic-reservation/generic-reservation.html?venue=Equipment%20Only'"
-                                                class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3.5 px-6 rounded-sm text-[13px] uppercase tracking-widest transition-colors shadow-md">
-                                                Reserve Equipment
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                        `;
                     } else {
                         grid.innerHTML = `<div class="col-span-1 md:col-span-3 text-center py-12 text-slate-500"><p>No facilities available at the moment.</p></div>`;
                     }

@@ -95,6 +95,14 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // --- 2. BUILD DURATION RADIOS (NOW INFORMATIONAL ONLY) ---
     function buildDurationOptions() {
+        const durationSection = document.getElementById('duration-section');
+        if (targetVenueName === 'Equipment Only') {
+            if (durationSection) durationSection.classList.add('hidden');
+            return;
+        } else {
+            if (durationSection) durationSection.classList.remove('hidden');
+        }
+        
         durationContainer.innerHTML = "";
         
         if (venueDetails.price_daily !== null && venueDetails.price_daily !== undefined) {
@@ -255,7 +263,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             tableBody.innerHTML = "";
 
             if (activeInventory.length === 0) {
-                tableBody.innerHTML = "<tr><td colspan='5' class='text-center p-6 text-slate-400'>No equipment available.</td></tr>";
+                tableBody.innerHTML = "<tr><td colspan='6' class='text-center p-6 text-slate-400'>No equipment available.</td></tr>";
                 return;
             }
 
@@ -273,10 +281,11 @@ document.addEventListener('DOMContentLoaded', async function () {
                     <td class="py-3 font-semibold text-slate-900 equipment-name">${item.name}</td>
                     <td class="py-3 text-slate-500">${item.unit}</td>
                     <td class="py-3 font-bold">₱${item.price}</td>
+                    <td class="py-3 text-center text-slate-500 font-bold">${item.qty || 0}</td>
                     <td class="py-3 text-center">
                         <div class="flex items-center justify-center space-x-2">
                             <button type="button" class="qty-btn qty-minus w-6 h-6 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center font-bold" disabled><i class="fa-solid fa-minus text-[10px]"></i></button>
-                            <input type="number" min="0" value="0" class="equipment-quantity w-10 text-center border border-gray-200 rounded p-0.5 hide-arrows" disabled>
+                            <input type="number" min="0" max="${item.qty || 0}" value="0" class="equipment-quantity w-10 text-center border border-gray-200 rounded p-0.5 hide-arrows" disabled>
                             <button type="button" class="qty-btn qty-plus w-6 h-6 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center font-bold" disabled><i class="fa-solid fa-plus text-[10px]"></i></button>
                         </div>
                     </td>
@@ -652,4 +661,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // Initialize Page
     await loadVenueDetails();
+
+    // Pull client email if logged in
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session && session.user && session.user.email) {
+        if (!emailInput.value) {
+            emailInput.value = session.user.email;
+        }
+    }
 });
