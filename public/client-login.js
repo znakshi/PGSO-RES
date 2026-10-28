@@ -503,13 +503,13 @@ async function setupClientNotifications() {
         if (authContainer && !document.getElementById('client-notif-wrapper')) {
             const notifWrapper = document.createElement('div');
             notifWrapper.id = "client-notif-wrapper";
-            notifWrapper.className = "relative mr-4";
+            notifWrapper.className = "relative mr-3 sm:mr-4 flex-shrink-0";
             notifWrapper.innerHTML = `
                 <button id="client-notif-btn" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition flex items-center justify-center relative shadow-sm border border-slate-200">
                     <i class="fa-regular fa-bell"></i>
                     <span id="client-notif-badge" class="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border border-white hidden"></span>
                 </button>
-                <div id="client-notif-dropdown" class="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 hidden flex flex-col overflow-hidden z-[200]">
+                <div id="client-notif-dropdown" class="absolute right-0 mt-3 w-[calc(100vw-2rem)] sm:w-80 max-w-sm bg-white rounded-xl shadow-2xl border border-gray-100 hidden flex flex-col overflow-hidden z-[200]">
                     <div class="px-4 py-3 bg-slate-50 border-b border-gray-100 flex justify-between items-center">
                         <span class="font-bold text-slate-800 text-sm">Notifications</span>
                         <button id="client-mark-read" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Mark all as read</button>

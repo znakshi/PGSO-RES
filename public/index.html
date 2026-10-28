@@ -31,21 +31,21 @@
 
     <!-- Top Utility Bar -->
     <div
-        class="bg-slate-900 text-slate-300 text-xs py-2 px-6 sm:px-12 flex flex-col sm:flex-row justify-between items-center border-b border-slate-800">
-        <div class="flex gap-4 mb-2 sm:mb-0">
+        class="bg-slate-900 text-slate-300 text-xs py-2 px-4 sm:px-12 flex flex-col sm:flex-row justify-between items-center border-b border-slate-800 gap-1.5 sm:gap-0">
+        <div class="flex flex-wrap justify-center sm:justify-start gap-x-4 gap-y-1 mb-1 sm:mb-0 text-center sm:text-left">
             <span class="flex items-center gap-2 text-slate-400"><i class="fa-solid fa-phone text-red-500"></i> Contact:
                 <span class="text-white">(074) 422-5760</span></span>
             <span class="flex items-center gap-2 text-slate-400"><i class="fa-regular fa-clock text-red-500"></i> Open
                 Hours: <span class="text-white">Mon - Fri 8:00 AM - 5:00 PM</span></span>
         </div>
-        <div class="flex gap-4 font-medium uppercase tracking-wider">
+        <div class="flex gap-4 font-medium uppercase tracking-wider text-center">
             <span>La Trinidad, Benguet</span>
         </div>
     </div>
 
     <!-- Navigation -->
     <nav
-        class="bg-white py-4 px-6 sm:px-12 flex flex-col md:flex-row justify-between items-center shadow-sm sticky top-0 z-50">
+        class="bg-white py-4 px-4 sm:px-12 flex flex-col md:flex-row justify-between items-center shadow-sm sticky top-0 z-50">
         <div class="flex items-center gap-4 mb-4 md:mb-0">
             <img src="pgso.png" alt="PGSO Logo" class="w-12 h-12 sm:w-14 sm:h-14 drop-shadow-sm">
             <div class="border-l-2 border-slate-200 pl-4 py-1">
@@ -69,7 +69,7 @@
                 class="text-slate-600 hover:text-blue-700 text-[11px] sm:text-[13px] font-bold uppercase tracking-widest transition-colors mb-2 sm:mb-0">
                 Admin
             </button>
-            <div id="auth-container" class="w-full sm:w-auto">
+            <div id="auth-container" class="flex items-center justify-center sm:justify-start">
                 <button
                     class="open-client-login bg-transparent border-2 border-blue-700 text-blue-700 hover:bg-blue-700 hover:text-white font-bold py-1.5 sm:py-2 px-4 sm:px-6 rounded-sm text-[11px] sm:text-[13px] uppercase tracking-widest transition-colors w-full h-full">
                     <span id="user-display">Client Login</span>
@@ -326,9 +326,9 @@
         </button>
 
         <!-- Gallery Container -->
-        <div class="relative w-full max-w-5xl h-[70vh] flex items-center justify-center px-12 md:px-20">
+        <div class="relative w-full max-w-5xl h-[60vh] sm:h-[70vh] flex items-center justify-center px-4 sm:px-12 md:px-20">
             <!-- Navigation Prev -->
-            <button id="gallery-prev" class="absolute left-4 md:left-8 text-white/50 hover:text-white transition text-4xl w-12 h-12 flex items-center justify-center cursor-pointer">
+            <button id="gallery-prev" class="absolute left-2 sm:left-4 md:left-8 text-white/70 hover:text-white transition text-2xl sm:text-4xl w-10 sm:w-12 h-10 sm:h-12 bg-black/40 sm:bg-transparent rounded-full flex items-center justify-center cursor-pointer z-20">
                 <i class="fa-solid fa-chevron-left"></i>
             </button>
 
@@ -338,7 +338,7 @@
             </div>
 
             <!-- Navigation Next -->
-            <button id="gallery-next" class="absolute right-4 md:right-8 text-white/50 hover:text-white transition text-4xl w-12 h-12 flex items-center justify-center cursor-pointer">
+            <button id="gallery-next" class="absolute right-2 sm:right-4 md:right-8 text-white/70 hover:text-white transition text-2xl sm:text-4xl w-10 sm:w-12 h-10 sm:h-12 bg-black/40 sm:bg-transparent rounded-full flex items-center justify-center cursor-pointer z-20">
                 <i class="fa-solid fa-chevron-right"></i>
             </button>
         </div>

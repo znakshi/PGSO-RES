@@ -23,7 +23,7 @@
         </div>
     </nav>
 
-    <main class="container mx-auto px-4 py-8 max-w-5xl">
+    <main class="container mx-auto px-4 py-6 sm:py-8 max-w-5xl">
         
         <a id="edit-reservation-link" href="#" class="inline-flex items-center text-sm font-bold text-gray-900 mb-4 hover:underline">
             <i class="fa-regular fa-pen-to-square mr-2"></i> Edit Reservation
@@ -31,98 +31,98 @@
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             
-            <div class="pgso-blue text-white p-6">
-                <h2 class="text-xl font-medium">Reservation Summary</h2>
-                <p class="text-slate-300 text-sm font-light">Please review your reservation details</p>
+            <div class="pgso-blue text-white p-4 sm:p-6">
+                <h2 class="text-lg sm:text-xl font-medium">Reservation Summary</h2>
+                <p class="text-slate-300 text-xs sm:text-sm font-light">Please review your reservation details</p>
             </div>
 
-            <div class="p-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
+            <div class="p-4 sm:p-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10 mb-6 sm:mb-10">
                     <div>
-                        <h3 class="text-pgso-text font-medium mb-4 text-lg">Contact Information</h3>
+                        <h3 class="text-pgso-text font-medium mb-3 sm:mb-4 text-base sm:text-lg">Contact Information</h3>
                         <div class="mb-4">
                             <p class="text-xs text-gray-500 mb-1">Name:</p>
-                            <p class="font-bold text-gray-900 text-lg" id="summary-name">Loading...</p>
+                            <p class="font-bold text-gray-900 text-base sm:text-lg" id="summary-name">Loading...</p>
                         </div>
                         <div class="mb-4">
                             <p class="text-xs text-gray-500 mb-1">Contact Number:</p>
-                            <p class="font-bold text-gray-900 text-lg" id="summary-contact">Loading...</p>
+                            <p class="font-bold text-gray-900 text-base sm:text-lg" id="summary-contact">Loading...</p>
                         </div>
                         <div class="mb-4">
                              <p class="text-xs text-gray-500 mb-1">Email Address:</p>
-                             <p class="font-bold text-gray-900 text-lg" id="summary-email">Loading...</p>
+                             <p class="font-bold text-gray-900 text-base sm:text-lg" id="summary-email">Loading...</p>
                         </div>
                     </div>
 
                     <div>
-                        <h3 class="text-pgso-text font-medium mb-4 text-lg">Event Details</h3>
+                        <h3 class="text-pgso-text font-medium mb-3 sm:mb-4 text-base sm:text-lg">Event Details</h3>
                         <div class="mb-4">
                             <p class="text-xs text-gray-500 mb-1">Venue:</p>
-                            <p class="font-bold text-gray-900 text-lg" id="summary-venue">Loading...</p>
+                            <p class="font-bold text-gray-900 text-base sm:text-lg" id="summary-venue">Loading...</p>
                         </div>
                         <div class="mb-4">
                             <p class="text-xs text-gray-500 mb-1">Event Type:</p>
-                            <p class="font-bold text-gray-900 text-lg" id="summary-event-type">Loading...</p>
+                            <p class="font-bold text-gray-900 text-base sm:text-lg" id="summary-event-type">Loading...</p>
                         </div>
                         <div class="mb-4">
                             <p class="text-xs text-gray-500 mb-1">Date(s):</p>
-                            <p class="font-bold text-gray-900 text-lg" id="summary-date">Loading...</p>
+                            <p class="font-bold text-gray-900 text-base sm:text-lg" id="summary-date">Loading...</p>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
-                            <div><p class="text-xs text-gray-500 mb-1">Time:</p><p class="font-bold text-gray-900" id="summary-time">Loading...</p></div>
-                            <div><p class="text-xs text-gray-500 mb-1">Duration:</p><p class="font-bold text-gray-900" id="summary-duration">Loading...</p></div>
+                            <div><p class="text-xs text-gray-500 mb-1">Time:</p><p class="font-bold text-gray-900 text-sm sm:text-base" id="summary-time">Loading...</p></div>
+                            <div><p class="text-xs text-gray-500 mb-1">Duration:</p><p class="font-bold text-gray-900 text-sm sm:text-base" id="summary-duration">Loading...</p></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="mb-8">
-                    <h3 class="text-pgso-text font-medium mb-4 text-lg">Additional Equipment</h3>
-                    <div class="border border-gray-200 rounded-lg overflow-hidden">
-                        <table class="w-full text-sm text-left">
+                <div class="mb-6 sm:mb-8">
+                    <h3 class="text-pgso-text font-medium mb-3 sm:mb-4 text-base sm:text-lg">Additional Equipment</h3>
+                    <div class="border border-gray-200 rounded-lg overflow-x-auto">
+                        <table class="w-full text-sm text-left whitespace-nowrap">
                             <thead class="bg-white border-b border-gray-200">
                                 <tr>
-                                    <th class="px-6 py-4 font-bold text-gray-900">Equipment</th>
-                                    <th class="px-6 py-4 font-bold text-gray-900 text-center">Quantity</th>
-                                    <th class="px-6 py-4 font-bold text-gray-900">Unit</th>
-                                    <th class="px-6 py-4 font-bold text-gray-900 text-right">Unit Price</th>
-                                    <th class="px-6 py-4 font-bold text-gray-900 text-right">Subtotal</th>
+                                    <th class="px-4 sm:px-6 py-3 sm:py-4 font-bold text-gray-900">Equipment</th>
+                                    <th class="px-4 sm:px-6 py-3 sm:py-4 font-bold text-gray-900 text-center">Quantity</th>
+                                    <th class="px-4 sm:px-6 py-3 sm:py-4 font-bold text-gray-900">Unit</th>
+                                    <th class="px-4 sm:px-6 py-3 sm:py-4 font-bold text-gray-900 text-right">Unit Price</th>
+                                    <th class="px-4 sm:px-6 py-3 sm:py-4 font-bold text-gray-900 text-right">Subtotal</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100" id="equipment-summary-tbody">
-                                <tr><td colspan="5" class="px-6 py-4 text-center text-gray-500" id="no-equipment-message">No additional equipment selected.</td></tr>
+                                <tr><td colspan="5" class="px-4 sm:px-6 py-4 text-center text-gray-500" id="no-equipment-message">No additional equipment selected.</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <div class="mb-8">
-                    <h3 class="text-pgso-text font-medium mb-2 text-lg">Notes / Remarks</h3>
-                    <div class="bg-gray-50 border border-gray-200 rounded p-4 text-gray-700" id="summary-notes">None</div>
+                <div class="mb-6 sm:mb-8">
+                    <h3 class="text-pgso-text font-medium mb-2 text-base sm:text-lg">Notes / Remarks</h3>
+                    <div class="bg-gray-50 border border-gray-200 rounded p-4 text-gray-700 text-sm" id="summary-notes">None</div>
                 </div>
 
-                <div class="bg-slate-100 rounded-lg p-8 mb-8 border border-slate-200">
-                    <h4 class="text-pgso-text font-medium mb-6">Payment Breakdown</h4>
-                    <div class="flex justify-between text-sm mb-3 text-gray-800">
+                <div class="bg-slate-100 rounded-lg p-4 sm:p-8 mb-6 sm:mb-8 border border-slate-200">
+                    <h4 class="text-pgso-text font-medium mb-4 sm:mb-6 text-base">Payment Breakdown</h4>
+                    <div class="flex justify-between text-xs sm:text-sm mb-3 text-gray-800">
                         <span>Venue Rental (Base + Overage):</span><span class="font-bold" id="summary-base-rental">₱0</span>
                     </div>
-                    <div class="flex justify-between text-sm mb-3 text-gray-800">
+                    <div class="flex justify-between text-xs sm:text-sm mb-3 text-gray-800">
                         <span>Total Equipment Cost:</span><span class="font-bold" id="summary-equipment-cost">₱0</span>
                     </div>
-                    <div class="flex justify-between text-sm mb-6 text-gray-800 border-b border-gray-300 pb-6">
+                    <div class="flex justify-between text-xs sm:text-sm mb-6 text-gray-800 border-b border-gray-300 pb-4 sm:pb-6">
                         <span>Security Deposit (Refundable):</span><span class="font-bold">₱3,000</span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-xl font-bold text-pgso-text">Total Amount:</span>
-                        <span class="text-3xl font-bold text-pgso-text" id="summary-total-amount">₱3,000</span>
+                        <span class="text-base sm:text-xl font-bold text-pgso-text">Total Amount:</span>
+                        <span class="text-2xl sm:text-3xl font-bold text-pgso-text" id="summary-total-amount">₱3,000</span>
                     </div>
                     <p class="text-xs text-gray-500 mt-4 font-light">Note: The security deposit of ₱3,000 will be refunded after event completion, subject to inspection and no damages.</p>
                 </div>
 
-                <div class="flex flex-col md:flex-row gap-4 justify-between">
-                    <button onclick="goBack()" class="px-8 py-3 border border-gray-300 rounded-lg text-gray-700 font-bold hover:bg-gray-50 transition text-center w-full md:w-auto">
+                <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between">
+                    <button onclick="goBack()" class="px-6 sm:px-8 py-3 border border-gray-300 rounded-lg text-gray-700 font-bold hover:bg-gray-50 transition text-center w-full sm:w-auto text-sm sm:text-base">
                         Go Back to Edit
                     </button>
-                    <button onclick="openRules()" class="px-8 py-3 pgso-btn text-white rounded-lg font-bold shadow-md w-full md:w-auto">
+                    <button onclick="openRules()" class="px-6 sm:px-8 py-3 pgso-btn text-white rounded-lg font-bold shadow-md w-full sm:w-auto text-sm sm:text-base text-center">
                         Confirm & Submit Reservation
                     </button>
                 </div>
@@ -130,6 +130,7 @@
             </div>
         </div>
     </main>
+
 
     <footer class="text-center py-8 text-gray-400 text-sm">
         &copy; 2025 Provincial General Services Office. All rights reserved.

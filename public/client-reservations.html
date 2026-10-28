@@ -14,43 +14,56 @@
 <body class="bg-gray-50 text-slate-800 font-sans selection:bg-blue-100 selection:text-blue-900">
 
     <!-- Navigation -->
-    <nav class="bg-white py-4 px-6 sm:px-12 flex flex-col md:flex-row justify-between items-center shadow-sm sticky top-0 z-50">
-        <div class="flex items-center gap-4 mb-4 md:mb-0">
-            <img src="pgso.png" alt="PGSO Logo" class="w-12 h-12 sm:w-14 sm:h-14 drop-shadow-sm">
-            <div class="border-l-2 border-slate-200 pl-4 py-1">
+    <nav class="bg-white py-3.5 sm:py-4 px-4 sm:px-12 flex flex-col md:flex-row justify-between items-center shadow-sm sticky top-0 z-50 gap-4">
+        <div class="flex items-center gap-3 sm:gap-4">
+            <img src="pgso.png" alt="PGSO Logo" class="w-10 h-10 sm:w-14 sm:h-14 drop-shadow-sm flex-shrink-0">
+            <div class="border-l-2 border-slate-200 pl-3 sm:pl-4 py-0.5 sm:py-1">
                 <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">PGSO-RES</h1>
-                <p class="hidden sm:block text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest mt-0.5">
+                <p class="text-[9px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest mt-0.5">
                     Provincial General Services Office</p>
             </div>
         </div>
 
-        <div class="flex flex-wrap justify-center items-center gap-4 sm:gap-8 mt-4 md:mt-0">
-            <div class="flex flex-wrap justify-center gap-4 sm:gap-8 text-[11px] sm:text-[13px] font-bold text-slate-700 uppercase tracking-widest w-full sm:w-auto">
+        <div class="flex flex-wrap justify-center items-center gap-3 sm:gap-8">
+            <div class="flex flex-wrap justify-center gap-3 sm:gap-6 text-[11px] sm:text-[13px] font-bold text-slate-700 uppercase tracking-widest">
                 <a href="venues.html" class="hover:text-blue-700 transition-colors py-1 sm:py-2 border-b-2 border-transparent hover:border-blue-700">Home</a>
                 <a href="client-reservations.html" class="text-blue-700 transition-colors py-1 sm:py-2 border-b-2 border-blue-700">My Reservations</a>
                 <a href="venues.html#venues" class="hover:text-blue-700 transition-colors py-1 sm:py-2 border-b-2 border-transparent hover:border-blue-700">Facilities</a>
             </div>
-            <div id="auth-container" class="w-full sm:w-auto">
+            <div id="auth-container" class="flex items-center">
                 <div class="w-10 h-10 rounded-full bg-slate-200 animate-pulse border-2 border-white shadow-sm flex-shrink-0"></div>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="max-w-6xl mx-auto px-6 py-12 min-h-[70vh]">
-        <div class="flex flex-col md:flex-row justify-between items-end mb-8 border-b border-gray-200 pb-4">
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-12 min-h-[70vh]">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 border-b border-gray-200 pb-4 gap-4">
             <div>
-                <h2 class="text-3xl font-bold text-slate-900 tracking-tight">My Reservations</h2>
-                <p class="text-slate-500 mt-2 text-sm">Manage your venue bookings, edit details, or safely cancel pending requests.</p>
+                <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">My Reservations</h2>
+                <p class="text-slate-500 mt-1.5 text-xs sm:text-sm">Manage your venue bookings, edit details, or safely cancel pending requests.</p>
             </div>
-            <div class="mt-4 md:mt-0 flex items-center gap-4">
-                <select id="filter-my-reservations" class="bg-white border border-slate-200 rounded-lg py-2.5 px-4 text-sm font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition shadow-sm text-slate-600">
-                    <option value="all">All Statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
-                <a href="venues.html" class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2.5 rounded-lg text-sm font-bold uppercase tracking-widest shadow-md transition flex items-center gap-2 whitespace-nowrap">
+            <div class="mt-2 md:mt-0 flex flex-wrap items-center gap-3 w-full md:w-auto">
+                <input type="hidden" id="filter-my-reservations" value="all">
+                <div class="flex items-center gap-1.5 flex-wrap" id="status-filter-btn-group">
+                    <button type="button" onclick="setMyReservationFilter('all')" data-status="all"
+                        class="my-res-filter-btn px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg text-xs font-bold transition shadow-sm text-white border bg-blue-700 border-blue-700 flex items-center gap-1.5">
+                        All
+                    </button>
+                    <button type="button" onclick="setMyReservationFilter('pending')" data-status="pending"
+                        class="my-res-filter-btn px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg text-xs font-bold transition border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-amber-400"></span> Pending
+                    </button>
+                    <button type="button" onclick="setMyReservationFilter('confirmed')" data-status="confirmed"
+                        class="my-res-filter-btn px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg text-xs font-bold transition border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Confirmed
+                    </button>
+                    <button type="button" onclick="setMyReservationFilter('cancelled')" data-status="cancelled"
+                        class="my-res-filter-btn px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg text-xs font-bold transition border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-rose-500"></span> Cancelled
+                    </button>
+                </div>
+                <a href="venues.html" class="bg-blue-700 hover:bg-blue-800 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md transition flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto">
                     <i class="fa-solid fa-plus"></i> New Booking
                 </a>
             </div>
@@ -362,7 +375,7 @@
 
                             // Card HTML
                             const card = document.createElement('div');
-                            card.className = "bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition flex flex-col md:flex-row gap-6 items-start md:items-center";
+                            card.className = "bg-white border border-gray-200 rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-md transition flex flex-col md:flex-row gap-4 sm:gap-6 items-start md:items-center";
                             
                             const grandTotal = formatCurrency(res.pricing?.grandTotal || 0);
                             
@@ -394,7 +407,7 @@
 
                             card.innerHTML = `
                                 <div class="flex-1 w-full">
-                                    <div class="flex items-center gap-3 mb-2">
+                                    <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
                                         <h3 class="text-lg font-bold text-slate-900">${res.event?.venue || 'Unknown Venue'}</h3>
                                         <span class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border flex items-center gap-1.5 ${statusColor}">
                                             <i class="fa-regular ${statusIcon}"></i> ${res.status}
@@ -428,10 +441,28 @@
                             if(cancelBtn) cancelBtn.addEventListener('click', () => handleCancel(res.id));
                         });
                     }
+            window.setMyReservationFilter = function(status) {
+                const hiddenInput = document.getElementById('filter-my-reservations');
+                if (hiddenInput) hiddenInput.value = status;
+
+                const buttons = document.querySelectorAll('.my-res-filter-btn');
+                buttons.forEach(btn => {
+                    const btnStatus = btn.getAttribute('data-status');
+                    if (btnStatus === status) {
+                        btn.className = 'my-res-filter-btn px-3.5 py-2.5 rounded-lg text-xs font-bold transition shadow-sm text-white border bg-blue-700 border-blue-700 flex items-center gap-1.5';
+                    } else {
+                        btn.className = 'my-res-filter-btn px-3.5 py-2.5 rounded-lg text-xs font-bold transition border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 flex items-center gap-1.5';
+                    }
+                });
+
+                renderClientReservations();
             };
 
             // Bind filter change event
-            document.getElementById('filter-my-reservations').addEventListener('change', renderClientReservations);
+            const filterInput = document.getElementById('filter-my-reservations');
+            if (filterInput) {
+                filterInput.addEventListener('change', renderClientReservations);
+            }
 
             const handleView = (res) => {
                 const existing = document.getElementById('view-modal');
@@ -444,32 +475,32 @@
                 }
 
                 const modalHTML = `
-                <div id="view-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 p-4">
-                    <div class="bg-white rounded-2xl shadow-2xl flex flex-col w-full max-w-lg overflow-hidden transform transition-transform duration-300">
-                        <div class="bg-blue-700 text-white p-6 flex justify-between items-center">
-                            <h2 class="text-xl font-bold tracking-wide">Reservation Details</h2>
-                            <button id="btn-close-view" class="text-white/80 hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <div id="view-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 p-2 sm:p-4">
+                    <div class="bg-white rounded-2xl shadow-2xl flex flex-col w-full max-w-lg max-h-[90vh] overflow-hidden transform transition-transform duration-300">
+                        <div class="bg-blue-700 text-white p-4 sm:p-6 flex justify-between items-center">
+                            <h2 class="text-lg sm:text-xl font-bold tracking-wide">Reservation Details</h2>
+                            <button id="btn-close-view" class="text-white/80 hover:text-white transition p-1"><i class="fa-solid fa-xmark text-xl"></i></button>
                         </div>
-                        <div class="p-6 overflow-y-auto max-h-[70vh] space-y-4">
+                        <div class="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-80px)] space-y-4">
                             <div>
-                                <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1 flex items-center gap-2"><i class="fa-solid fa-location-dot text-blue-500"></i> Event</h3>
+                                <h3 class="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1 flex items-center gap-2"><i class="fa-solid fa-location-dot text-blue-500"></i> Event</h3>
                                 <p class="text-slate-800 text-sm mb-1"><span class="font-bold text-slate-600">Venue:</span> ${res.event?.venue}</p>
                                 <p class="text-slate-800 text-sm mb-1"><span class="font-bold text-slate-600">Type:</span> ${res.event?.eventType}</p>
                                 <p class="text-slate-800 text-sm mb-1"><span class="font-bold text-slate-600">Date(s):</span> ${formatReservationDates(res.event?.dates)}</p>
                                 <p class="text-slate-800 text-sm mb-1"><span class="font-bold text-slate-600">Time:</span> ${res.event?.startTime} - ${res.event?.endTime}</p>
                             </div>
                             <div>
-                                <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1 flex items-center gap-2"><i class="fa-solid fa-user text-blue-500"></i> Contact</h3>
+                                <h3 class="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1 flex items-center gap-2"><i class="fa-solid fa-user text-blue-500"></i> Contact</h3>
                                 <p class="text-slate-800 text-sm mb-1"><span class="font-bold text-slate-600">Name:</span> ${res.contact?.fullName}</p>
                                 <p class="text-slate-800 text-sm mb-1"><span class="font-bold text-slate-600">Phone:</span> ${res.contact?.contactNumber}</p>
                             </div>
                             <div>
-                                <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1 flex items-center gap-2"><i class="fa-solid fa-box-open text-blue-500"></i> Equipment</h3>
-                                <p class="text-slate-800 text-sm leading-loose">${equipText}</p>
+                                <h3 class="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1 flex items-center gap-2"><i class="fa-solid fa-box-open text-blue-500"></i> Equipment</h3>
+                                <p class="text-slate-800 text-sm leading-relaxed">${equipText}</p>
                             </div>
-                            <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 mt-4 flex justify-between items-center">
-                                <p class="text-blue-800 font-bold uppercase tracking-wider text-xs mb-1">Total Estimated Cost</p>
-                                <p class="text-2xl font-black text-blue-700">${grandTotal}</p>
+                            <div class="bg-blue-50 p-3 sm:p-4 rounded-xl border border-blue-100 mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 sm:gap-4">
+                                <p class="text-blue-800 font-bold uppercase tracking-wider text-xs">Total Estimated Cost</p>
+                                <p class="text-xl sm:text-2xl font-black text-blue-700">${grandTotal}</p>
                             </div>
                         </div>
                     </div>
@@ -490,16 +521,16 @@
                 if(existing) existing.remove();
 
                 const modalHTML = `
-                <div id="cancel-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300">
-                    <div class="bg-white rounded-xl shadow-2xl flex flex-col w-[90%] max-w-sm overflow-visible transform transition-transform duration-300 relative mt-8">
+                <div id="cancel-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 p-3 sm:p-4">
+                    <div class="bg-white rounded-xl shadow-2xl flex flex-col w-full max-w-sm max-h-[90vh] overflow-y-auto transform transition-transform duration-300 relative mt-8">
                         <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm z-10 border border-gray-100">
                             <div class="w-12 h-12 bg-[#2b6cb0] rounded-full flex items-center justify-center shadow-inner">
                                 <img src="pgso.png" alt="PGSO" class="w-8 h-8 opacity-90 brightness-0 invert">
                             </div>
                         </div>
-                        <div class="p-8 pt-12 text-center flex flex-col items-center">
-                            <h2 class="text-xl font-bold text-gray-800 mb-3 tracking-wide">Cancel Reservation?</h2>
-                            <p class="text-gray-500 mb-4 text-[14px] leading-relaxed">
+                        <div class="p-5 sm:p-8 pt-10 sm:pt-12 text-center flex flex-col items-center">
+                            <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-2 sm:mb-3 tracking-wide">Cancel Reservation?</h2>
+                            <p class="text-gray-500 mb-4 text-xs sm:text-sm leading-relaxed">
                                 Are you sure you want to cancel this reservation? It will be moved to the archive and this action cannot be undone.
                             </p>
                             <div class="w-full text-left mb-6">
@@ -507,10 +538,10 @@
                                 <textarea id="cancel-reason" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 resize-none h-24 transition-colors" placeholder="Please briefly explain why you are cancelling..." required></textarea>
                             </div>
                             <div class="flex flex-col gap-3 w-full">
-                                <button id="btn-confirm-cancel" class="w-full bg-[#185adb] hover:bg-[#0f44ad] text-white font-bold py-3.5 rounded-full transition shadow-md text-sm">
+                                <button id="btn-confirm-cancel" class="w-full bg-[#185adb] hover:bg-[#0f44ad] text-white font-bold py-3 sm:py-3.5 rounded-full transition shadow-md text-sm">
                                     Yes, Cancel Reservation
                                 </button>
-                                <button id="btn-close-cancel" class="w-full bg-white text-[#185adb] hover:bg-blue-50 font-bold py-3 rounded-full transition text-sm">
+                                <button id="btn-close-cancel" class="w-full bg-white text-[#185adb] hover:bg-blue-50 font-bold py-2.5 sm:py-3 rounded-full transition text-sm">
                                     No thanks
                                 </button>
                             </div>

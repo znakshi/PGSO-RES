@@ -17,6 +17,7 @@ import { supabase } from "../supabase-config.js";
         let inventory = [];
         let archivedReservations = [];
         let archivedInventory = [];
+        let venuesList = [];
         let currentDate = new Date();
         let charts = {};
         
@@ -98,23 +99,29 @@ import { supabase } from "../supabase-config.js";
         };
 
         window.switchTab = function(t) {
-            ['calendar','analytics','inventory','venues','archive'].forEach(id => {
+            ['dashboard','calendar','analytics','inventory','venues','archive'].forEach(id => {
                 const sec = document.getElementById('section-'+id);
                 if(sec) sec.classList.add('hidden');
                 const tab = document.getElementById('tab-'+id);
                 if(tab) tab.className = "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition font-medium tracking-wide";
             });
-            document.getElementById('section-'+t).classList.remove('hidden');
-            document.getElementById('tab-'+t).className = "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl bg-blue-600/10 text-blue-500 font-bold tracking-wide transition";
+            const targetSec = document.getElementById('section-'+t);
+            if(targetSec) targetSec.classList.remove('hidden');
+            const targetTab = document.getElementById('tab-'+t);
+            if(targetTab) targetTab.className = "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl bg-blue-600/10 text-blue-500 font-bold tracking-wide transition";
             
-            let title = "Calendar & Bookings";
+            let title = "Dashboard Overview";
+            if(t==='dashboard') title = "Dashboard Overview";
+            if(t==='calendar') title = "Calendar & Bookings";
             if(t==='analytics') title = "Analytics Dashboard";
             if(t==='inventory') title = "Equipment Management";
             if(t==='venues') title = "Venues & Facilities";
             if(t==='archive') title = "Archive Center";
-            document.getElementById('dash-title').innerText = title;
+            const titleEl = document.getElementById('dash-title');
+            if(titleEl) titleEl.innerText = title;
 
             // Render content
+            if(t === 'dashboard' && typeof window.renderAdminDashboard === 'function') window.renderAdminDashboard();
             if(t === 'analytics') renderAnalytics();
             if(t === 'inventory') renderInventory();
             if(t === 'venues') window.renderVenues();
@@ -188,6 +195,371 @@ import { supabase } from "../supabase-config.js";
                 }
             };
             return groups.map(formatGrp).join(', ');
+        };
+
+        // --- DASHBOARD HELPERS & JUMP LINKS ---
+        window.openBlockModal = function() {
+            const modal = document.getElementById('blockDateModal');
+            if (modal) modal.classList.remove('hidden');
+        };
+
+        window.dashboardFilterPending = function() {
+            window.filterFromAnalytics('pending');
+        };
+
+        window.dashboardViewToday = function() {
+            window.switchTab('calendar');
+            const today = new Date();
+            currentDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            renderCalendar();
+            const todayStr = today.toISOString().split('T')[0];
+            window.currentSelectedDateStr = todayStr;
+            renderReservationList(todayStr);
+
+            document.querySelectorAll('.cal-cell').forEach(c => {
+                if (c.dataset.date === todayStr) {
+                    c.classList.add('cal-selected');
+                } else {
+                    c.classList.remove('cal-selected');
+                }
+            });
+
+            const reservationSection = document.getElementById('selected-date-display');
+            if (reservationSection) {
+                reservationSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        };
+
+        // --- EXECUTIVE DASHBOARD OVERVIEW ---
+        window.dashPendingCurrentPage = 1;
+        window.dashPendingPerPage = 5;
+
+        window.prevDashPendingPage = function() {
+            if (window.dashPendingCurrentPage > 1) {
+                window.dashPendingCurrentPage--;
+                window.renderAdminDashboard();
+            }
+        };
+
+        window.nextDashPendingPage = function() {
+            window.dashPendingCurrentPage = (window.dashPendingCurrentPage || 1) + 1;
+            window.renderAdminDashboard();
+        };
+
+        window.renderAdminDashboard = function() {
+            const dashSection = document.getElementById('section-dashboard');
+            if (!dashSection) return;
+
+            // 1. Live Date Display
+            const dateTextEl = document.getElementById('dash-current-date-text');
+            if (dateTextEl) {
+                const now = new Date();
+                dateTextEl.innerText = now.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+
+            // 2. Compute Metric Counters
+            const todayStr = new Date().toISOString().split('T')[0];
+            
+            const pendingList = reservations.filter(r => 
+                r.status === 'pending' && 
+                !(r.event?.eventType && r.event.eventType.startsWith('Blocked:'))
+            );
+            
+            const todayConfirmedList = reservations.filter(r => 
+                r.status === 'confirmed' && 
+                r.event?.dates && 
+                r.event.dates.includes(todayStr) &&
+                !(r.event?.eventType && r.event.eventType.startsWith('Blocked:'))
+            );
+
+            const allConfirmedList = reservations.filter(r => 
+                r.status === 'confirmed' && 
+                !(r.event?.eventType && r.event.eventType.startsWith('Blocked:'))
+            );
+
+            // 3. Update KPI Counters
+            const statPendingEl = document.getElementById('dash-stat-pending');
+            if (statPendingEl) statPendingEl.innerText = pendingList.length;
+
+            const badgePendingEl = document.getElementById('dash-pending-badge');
+            if (badgePendingEl) badgePendingEl.innerText = pendingList.length;
+
+            const statTodayEl = document.getElementById('dash-stat-today');
+            if (statTodayEl) statTodayEl.innerText = todayConfirmedList.length;
+
+            const statConfirmedEl = document.getElementById('dash-stat-confirmed');
+            if (statConfirmedEl) statConfirmedEl.innerText = allConfirmedList.length;
+
+            const statInvEl = document.getElementById('dash-stat-inventory');
+            if (statInvEl) statInvEl.innerText = inventory.length;
+
+            // 4. Render Pending Approvals Queue (5 items per page)
+            const pendingContainer = document.getElementById('dash-pending-list');
+            const paginationEl = document.getElementById('dash-pending-pagination');
+            if (pendingContainer) {
+                if (pendingList.length === 0) {
+                    window.dashPendingCurrentPage = 1;
+                    pendingContainer.innerHTML = `
+                        <div class="py-12 flex flex-col items-center justify-center text-center p-6 bg-slate-50/70 rounded-2xl border border-dashed border-slate-200">
+                            <div class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl mb-3 shadow-inner">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                            <h4 class="text-sm font-bold text-slate-800">Pending Queue is Clean!</h4>
+                            <p class="text-xs text-slate-400 mt-1 max-w-sm">
+                                No client booking requests are currently awaiting approval. All reservations have been addressed.
+                            </p>
+                        </div>
+                    `;
+                    if (paginationEl) {
+                        paginationEl.classList.add('hidden');
+                        paginationEl.classList.remove('flex');
+                    }
+                } else {
+                    const totalItems = pendingList.length;
+                    const perPage = window.dashPendingPerPage || 5;
+                    const totalPages = Math.ceil(totalItems / perPage) || 1;
+
+                    if (!window.dashPendingCurrentPage || window.dashPendingCurrentPage < 1) {
+                        window.dashPendingCurrentPage = 1;
+                    }
+                    if (window.dashPendingCurrentPage > totalPages) {
+                        window.dashPendingCurrentPage = totalPages;
+                    }
+
+                    const startIndex = (window.dashPendingCurrentPage - 1) * perPage;
+                    const endIndex = startIndex + perPage;
+                    const displayList = pendingList.slice(startIndex, endIndex);
+
+                    pendingContainer.innerHTML = displayList.map(res => {
+                        const clientName = res.contact?.fullName || 'Client Request';
+                        const venue = res.event?.venue || 'Unspecified Venue';
+                        const eventType = res.event?.eventType || 'Reservation';
+                        const datesFormatted = window.formatReservationDates(res.event?.dates);
+                        const timeRange = (res.event?.startTime && res.event?.endTime) ? `${res.event.startTime} - ${res.event.endTime}` : 'All Day';
+                        const grandTotal = (res.pricing?.grandTotal || 0).toLocaleString();
+
+                        return `
+                            <div class="border border-slate-200 hover:border-amber-400/80 rounded-xl p-4 transition-all bg-white hover:shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 group">
+                                <div class="flex items-start gap-3.5 min-w-0">
+                                    <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/70 text-amber-600 flex items-center justify-center text-base font-bold flex-shrink-0 mt-0.5">
+                                        <i class="fa-solid fa-clock-rotate-left"></i>
+                                    </div>
+                                    <div class="space-y-1 min-w-0">
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <h4 class="text-sm font-bold text-slate-800 group-hover:text-blue-700 transition cursor-pointer truncate" onclick="window.viewReservation('${res.id}')">${clientName}</h4>
+                                            <span class="bg-amber-100/80 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Pending Action</span>
+                                        </div>
+                                        <p class="text-xs font-semibold text-slate-600 flex items-center gap-1.5 truncate">
+                                            <i class="fa-solid fa-location-dot text-blue-500 text-[11px]"></i>
+                                            <span class="truncate">${venue}</span>
+                                            <span class="text-slate-300 font-normal">|</span>
+                                            <span class="text-slate-500 font-normal truncate">${eventType}</span>
+                                        </p>
+                                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400 pt-0.5">
+                                            <span class="flex items-center gap-1"><i class="fa-regular fa-calendar"></i> ${datesFormatted}</span>
+                                            <span class="flex items-center gap-1"><i class="fa-regular fa-clock"></i> ${timeRange}</span>
+                                            <span class="font-bold text-slate-700">₱${grandTotal}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end sm:justify-start flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                                    <button onclick="window.viewReservation('${res.id}')"
+                                        class="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 text-xs font-bold transition flex items-center gap-1.5"
+                                        title="View / Edit Details">
+                                        <i class="fa-solid fa-eye"></i> Details
+                                    </button>
+                                    <button onclick="window.setStatus('${res.id}', 'confirmed', event); setTimeout(window.renderAdminDashboard, 200);"
+                                        class="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5"
+                                        title="Accept / Confirm Booking">
+                                        <i class="fa-solid fa-check"></i> Approve
+                                    </button>
+                                    <button onclick="window.setStatus('${res.id}', 'declined', event); setTimeout(window.renderAdminDashboard, 200);"
+                                        class="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition flex items-center gap-1.5"
+                                        title="Decline Booking">
+                                        <i class="fa-solid fa-xmark"></i> Decline
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    // Update Pagination Controls
+                    if (paginationEl) {
+                        if (totalItems <= perPage) {
+                            paginationEl.classList.add('hidden');
+                            paginationEl.classList.remove('flex');
+                        } else {
+                            paginationEl.classList.remove('hidden');
+                            paginationEl.classList.add('flex');
+
+                            const pageInfoEl = document.getElementById('dash-pending-page-info');
+                            if (pageInfoEl) {
+                                const endDisplay = Math.min(endIndex, totalItems);
+                                pageInfoEl.innerText = `Showing ${startIndex + 1}-${endDisplay} of ${totalItems}`;
+                            }
+
+                            const pageNumbersEl = document.getElementById('dash-pending-page-numbers');
+                            if (pageNumbersEl) {
+                                pageNumbersEl.innerText = `Page ${window.dashPendingCurrentPage} of ${totalPages}`;
+                            }
+
+                            const prevBtn = document.getElementById('dash-pending-prev');
+                            const nextBtn = document.getElementById('dash-pending-next');
+                            if (prevBtn) prevBtn.disabled = window.dashPendingCurrentPage <= 1;
+                            if (nextBtn) nextBtn.disabled = window.dashPendingCurrentPage >= totalPages;
+                        }
+                    }
+                }
+            }
+
+            // 5. Render Today's Facility Status
+            const venuesContainer = document.getElementById('dash-venues-list');
+            if (venuesContainer) {
+                const listToRender = (venuesList && venuesList.length > 0) ? venuesList : [
+                    { name: "Gov. Ben Palispis Auditorium" },
+                    { name: "Provincial Gymnasium" },
+                    { name: "Benguet Sports Complex Gym" }
+                ];
+
+                venuesContainer.innerHTML = listToRender.map(v => {
+                    const vBookings = reservations.filter(r => 
+                        r.event?.venue === v.name && 
+                        r.event?.dates && 
+                        r.event.dates.includes(todayStr)
+                    );
+                    const isBlocked = vBookings.some(r => r.event?.eventType && r.event.eventType.startsWith('Blocked:'));
+                    const confirmed = vBookings.find(r => r.status === 'confirmed' && (!r.event?.eventType || !r.event.eventType.startsWith('Blocked:')));
+                    const pending = vBookings.find(r => r.status === 'pending');
+
+                    let statusBadge = '';
+                    let borderClass = 'border-slate-100';
+                    let bgClass = 'bg-slate-50/50';
+
+                    if (isBlocked) {
+                        statusBadge = `<span class="bg-slate-200 text-slate-800 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1"><i class="fa-solid fa-ban text-[9px]"></i> Blocked</span>`;
+                        borderClass = 'border-slate-200';
+                        bgClass = 'bg-slate-50';
+                    } else if (confirmed) {
+                        statusBadge = `<span class="bg-rose-100 text-rose-800 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> In Use / Booked</span>`;
+                        borderClass = 'border-rose-200';
+                        bgClass = 'bg-rose-50/30';
+                    } else if (pending) {
+                        statusBadge = `<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1"><i class="fa-solid fa-clock text-[9px]"></i> Pending Req</span>`;
+                        borderClass = 'border-amber-200';
+                        bgClass = 'bg-amber-50/30';
+                    } else {
+                        statusBadge = `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1"><i class="fa-solid fa-check text-[9px]"></i> Available</span>`;
+                        borderClass = 'border-emerald-100';
+                        bgClass = 'bg-emerald-50/20';
+                    }
+
+                    const subtitle = confirmed ? `${confirmed.contact?.fullName || 'Client'} (${confirmed.event?.startTime || ''} - ${confirmed.event?.endTime || ''})`
+                        : isBlocked ? 'Maintenance / Blocked Date'
+                        : pending ? `${pending.contact?.fullName || 'Client'} requested`
+                        : 'No events scheduled today';
+
+                    return `
+                        <div onclick="switchTab('venues')" class="p-3.5 rounded-xl border ${borderClass} ${bgClass} hover:border-blue-300 transition-all cursor-pointer flex items-center justify-between gap-3 group">
+                            <div class="min-w-0">
+                                <h5 class="text-xs font-bold text-slate-800 truncate group-hover:text-blue-700 transition">${v.name}</h5>
+                                <p class="text-[11px] text-slate-500 truncate mt-0.5">${subtitle}</p>
+                            </div>
+                            <div class="flex-shrink-0">
+                                ${statusBadge}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // 6. Render Upcoming Confirmed Events in Next 7 Days
+            const upcomingContainer = document.getElementById('dash-upcoming-list');
+            if (upcomingContainer) {
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const next7Days = new Date(today);
+                next7Days.setDate(next7Days.getDate() + 7);
+                next7Days.setHours(23,59,59,999);
+
+                const upcomingEvents = [];
+                reservations.forEach(r => {
+                    if (r.status !== 'confirmed') return;
+                    if (!r.event?.dates) return;
+                    const isBlocked = r.event?.eventType && r.event.eventType.startsWith('Blocked:');
+                    
+                    const datesArr = r.event.dates.split(',').map(d => d.trim()).filter(Boolean);
+                    datesArr.forEach(dStr => {
+                        const d = new Date(dStr + "T00:00:00");
+                        if (d >= today && d <= next7Days) {
+                            upcomingEvents.push({
+                                date: d,
+                                dateStr: dStr,
+                                res: r,
+                                isBlocked
+                            });
+                        }
+                    });
+                });
+
+                upcomingEvents.sort((a,b) => a.date - b.date);
+
+                if (upcomingEvents.length === 0) {
+                    upcomingContainer.innerHTML = `
+                        <div class="py-8 flex flex-col items-center justify-center text-center p-6 bg-slate-50/70 rounded-2xl border border-dashed border-slate-200">
+                            <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-xl mb-2">
+                                <i class="fa-regular fa-calendar-xmark"></i>
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-700">No confirmed events in the next 7 days</h4>
+                            <p class="text-[11px] text-slate-400 mt-0.5">There are no reservations scheduled for this coming week.</p>
+                        </div>
+                    `;
+                } else {
+                    const displayUpcoming = upcomingEvents.slice(0, 5);
+                    upcomingContainer.innerHTML = displayUpcoming.map(item => {
+                        const r = item.res;
+                        const monthShort = item.date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+                        const dayNum = item.date.getDate();
+                        const weekday = item.date.toLocaleDateString('en-US', { weekday: 'short' });
+                        const title = item.isBlocked ? (r.event?.eventType || 'Date Blocked') : (r.contact?.fullName || 'Client Event');
+                        const venue = r.event?.venue || 'Venue';
+                        const time = (r.event?.startTime && r.event?.endTime) ? `${r.event.startTime} - ${r.event.endTime}` : 'All Day';
+
+                        return `
+                            <div onclick="window.viewReservation('${r.id}')"
+                                class="p-3.5 rounded-xl border border-slate-100 hover:border-emerald-300 bg-slate-50/40 hover:bg-white hover:shadow-sm transition-all cursor-pointer flex items-center justify-between gap-4 group">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-12 h-12 rounded-xl bg-white border border-slate-200 shadow-xs flex flex-col items-center justify-center flex-shrink-0 group-hover:border-emerald-400 transition">
+                                        <span class="text-[10px] font-black text-emerald-700 leading-tight">${monthShort}</span>
+                                        <span class="text-base font-black text-slate-800 leading-none">${dayNum}</span>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <h5 class="text-xs font-bold text-slate-800 truncate group-hover:text-emerald-700 transition">${title}</h5>
+                                            ${item.isBlocked ? '<span class="bg-slate-200 text-slate-700 text-[9px] font-bold px-1.5 py-0.5 rounded">BLOCKED</span>' : ''}
+                                        </div>
+                                        <p class="text-[11px] text-slate-500 truncate mt-0.5 flex items-center gap-2">
+                                            <span><i class="fa-solid fa-location-dot text-slate-400 text-[10px]"></i> ${venue}</span>
+                                            <span><i class="fa-regular fa-clock text-slate-400 text-[10px]"></i> ${time}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 flex-shrink-0">
+                                    <span class="text-[11px] font-semibold text-slate-400 hidden sm:inline">${weekday}</span>
+                                    <div class="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-emerald-600 group-hover:border-emerald-200 transition text-xs">
+                                        <i class="fa-solid fa-arrow-right"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
         };
 
         // --- 1. VIEW & EDIT RESERVATION LOGIC ---
@@ -645,6 +1017,7 @@ window.printReservation = function(id, event) {
             renderReservationList(showDateStr);
             if (typeof window.renderAllReservations === 'function') window.renderAllReservations();
             renderAnalytics();
+            if (typeof window.renderAdminDashboard === 'function') window.renderAdminDashboard();
             if(!document.getElementById('section-inventory').classList.contains('hidden')) renderInventory();
             if(!document.getElementById('section-archive').classList.contains('hidden')) switchArchiveTab();
         };
@@ -669,6 +1042,7 @@ window.printReservation = function(id, event) {
                 renderReservationList(showDateStr);
                 if (typeof window.renderAllReservations === 'function') window.renderAllReservations();
                 renderAnalytics();
+                if (typeof window.renderAdminDashboard === 'function') window.renderAdminDashboard();
             }
 
             try { 
@@ -709,6 +1083,7 @@ window.printReservation = function(id, event) {
                     renderReservationList(showDateStr);
                     if (typeof window.renderAllReservations === 'function') window.renderAllReservations();
                     renderAnalytics();
+                    if (typeof window.renderAdminDashboard === 'function') window.renderAdminDashboard();
                     if(document.getElementById('section-archive') && !document.getElementById('section-archive').classList.contains('hidden')) {
                         if (typeof switchArchiveTab === 'function') switchArchiveTab();
                     }
@@ -976,76 +1351,260 @@ window.printReservation = function(id, event) {
             window.renderAllReservations();
         };
 
-        window.filterFromAnalytics = function(status) {
-            // First switch to calendar tab
-            switchTab('calendar');
-            // Then find the filter select
-            const filterSelect = document.getElementById('filter-all-reservations');
-            if(filterSelect) {
-                filterSelect.value = status;
-                if (typeof window.renderAllReservations === 'function') {
-                    window.renderAllReservations();
+        window.setReservationStatusFilter = function(status) {
+            const hiddenInput = document.getElementById('filter-all-reservations');
+            if (hiddenInput) hiddenInput.value = status;
+
+            const buttons = document.querySelectorAll('.res-status-filter-btn');
+            buttons.forEach(btn => {
+                const btnStatus = btn.getAttribute('data-status');
+                if (btnStatus === status) {
+                    btn.className = 'res-status-filter-btn px-3 py-2 rounded-lg text-xs font-bold transition shadow-sm text-white border bg-blue-600 border-blue-600 flex items-center gap-1.5';
+                } else {
+                    btn.className = 'res-status-filter-btn px-3 py-2 rounded-lg text-xs font-bold transition border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 flex items-center gap-1.5';
                 }
-                setTimeout(() => {
-                    filterSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 50);
+            });
+
+            if (typeof window.renderAllReservations === 'function') {
+                window.renderAllReservations();
             }
         };
 
-        // Attach event listener for the dropdown filter
-        document.addEventListener('DOMContentLoaded', () => {
-            const filterSelect = document.getElementById('filter-all-reservations');
-            if(filterSelect) {
-                filterSelect.addEventListener('change', window.renderAllReservations);
+        window.filterFromAnalytics = function(status) {
+            // First switch to calendar tab
+            switchTab('calendar');
+            // Then apply status button filter
+            if (typeof window.setReservationStatusFilter === 'function') {
+                window.setReservationStatusFilter(status);
+            } else {
+                const hiddenInput = document.getElementById('filter-all-reservations');
+                if (hiddenInput) hiddenInput.value = status;
+                if (typeof window.renderAllReservations === 'function') {
+                    window.renderAllReservations();
+                }
             }
-        });
+            setTimeout(() => {
+                const target = document.getElementById('status-filter-btn-group') || document.getElementById('filter-all-reservations');
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 50);
+        };
 
-        window.showMonthlyBreakdownModal = function(status) {
-            const currentYear = new Date().getFullYear();
-            const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-            const monthlyData = new Array(12).fill(0);
+        // Helper: Extract valid Date object from reservation
+        function getReservationDate(r) {
+            if (!r) return null;
+            let d = null;
+            if (r.event && r.event.dates) {
+                let firstDate = r.event.dates.split(',')[0].trim();
+                if (firstDate) {
+                    d = new Date(firstDate.includes('T') ? firstDate : firstDate + "T12:00:00");
+                }
+            }
+            if (!d || isNaN(d.getTime())) {
+                if (r.timestamp) {
+                    d = r.timestamp.toDate ? r.timestamp.toDate() : new Date(r.timestamp);
+                } else if (r.submittedAt) {
+                    d = new Date(r.submittedAt);
+                } else if (r.created_at) {
+                    d = new Date(r.created_at);
+                }
+            }
+            return (d && !isNaN(d.getTime())) ? d : null;
+        }
+
+        const analyticsMonthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        const analyticsMonthShortNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+        window.analyticsFilter = {
+            mode: 'yearly', // 'yearly' | 'monthly' | 'all'
+            year: new Date().getFullYear(),
+            month: new Date().getMonth()
+        };
+
+        window.getAvailableAnalyticsYears = function() {
+            const yearsSet = new Set();
+            const currYear = new Date().getFullYear();
+            yearsSet.add(currYear);
+            yearsSet.add(currYear - 1);
             
             reservations.forEach(r => {
-                let include = false;
-                if (status === 'all') {
-                    if (r.status !== 'archived' && r.status !== 'rejected') include = true;
-                } else if (status === 'pending') {
-                    if (r.status === 'pending') include = true;
-                } else if (status === 'declined') {
-                    if (r.status === 'declined' || r.status === 'cancelled') include = true;
-                }
-
-                if (!include) return;
-
-                let d = null;
-                if(r.timestamp) {
-                    d = r.timestamp.toDate ? r.timestamp.toDate() : new Date(r.timestamp); 
-                } else if (r.event && r.event.dates) {
-                    let firstDate = r.event.dates.split(',')[0].trim();
-                    if(firstDate) d = new Date(firstDate);
-                }
-                
-                if (d && d.getFullYear() === currentYear) {
-                    monthlyData[d.getMonth()]++;
+                const d = getReservationDate(r);
+                if (d && !isNaN(d.getFullYear())) {
+                    yearsSet.add(d.getFullYear());
                 }
             });
+            return Array.from(yearsSet).sort((a, b) => b - a);
+        };
+
+        window.populateAnalyticsFilters = function() {
+            const yearSelect = document.getElementById('analytics-year-select');
+            if (yearSelect) {
+                const availableYears = window.getAvailableAnalyticsYears();
+                const currentSelected = window.analyticsFilter.year;
+                const existingYears = Array.from(yearSelect.options).map(o => parseInt(o.value, 10));
+                const isDifferent = existingYears.length !== availableYears.length || 
+                                    availableYears.some((y, i) => existingYears[i] !== y);
+                if (isDifferent || yearSelect.options.length === 0) {
+                    yearSelect.innerHTML = availableYears.map(y => 
+                        `<option value="${y}" ${y === currentSelected ? 'selected' : ''}>${y}</option>`
+                    ).join('');
+                } else {
+                    yearSelect.value = currentSelected;
+                }
+            }
+            const monthSelect = document.getElementById('analytics-month-select');
+            if (monthSelect) {
+                monthSelect.value = window.analyticsFilter.month;
+            }
+        };
+
+        window.setAnalyticsFilterMode = function(mode) {
+            window.analyticsFilter.mode = mode;
+            
+            const btnMonthly = document.getElementById('analytics-filter-btn-monthly');
+            const btnYearly = document.getElementById('analytics-filter-btn-yearly');
+            const btnAll = document.getElementById('analytics-filter-btn-all');
+            const monthContainer = document.getElementById('analytics-month-select-container');
+            const yearContainer = document.getElementById('analytics-year-select-container');
+
+            const activeClass = "px-3.5 py-1.5 rounded-lg bg-white text-blue-700 shadow-sm transition-all duration-200 font-bold";
+            const inactiveClass = "px-3.5 py-1.5 rounded-lg transition-all duration-200 hover:text-slate-900 text-slate-600 font-bold";
+
+            if (btnMonthly) btnMonthly.className = mode === 'monthly' ? activeClass : inactiveClass;
+            if (btnYearly) btnYearly.className = mode === 'yearly' ? activeClass : inactiveClass;
+            if (btnAll) btnAll.className = mode === 'all' ? activeClass : inactiveClass;
+
+            if (monthContainer) {
+                if (mode === 'monthly') monthContainer.classList.remove('hidden');
+                else monthContainer.classList.add('hidden');
+            }
+
+            if (yearContainer) {
+                if (mode === 'all') yearContainer.classList.add('hidden');
+                else yearContainer.classList.remove('hidden');
+            }
+
+            renderAnalytics();
+        };
+
+        window.applyAnalyticsFilters = function() {
+            const monthSelect = document.getElementById('analytics-month-select');
+            const yearSelect = document.getElementById('analytics-year-select');
+            
+            if (monthSelect) {
+                window.analyticsFilter.month = parseInt(monthSelect.value, 10);
+            }
+            if (yearSelect) {
+                window.analyticsFilter.year = parseInt(yearSelect.value, 10);
+            }
+            renderAnalytics();
+        };
+
+        window.resetAnalyticsFilter = function() {
+            window.analyticsFilter.mode = 'yearly';
+            window.analyticsFilter.year = new Date().getFullYear();
+            window.analyticsFilter.month = new Date().getMonth();
+            window.populateAnalyticsFilters();
+            window.setAnalyticsFilterMode('yearly');
+        };
+
+        window.showMonthlyBreakdownModal = function(status) {
+            const mode = window.analyticsFilter ? window.analyticsFilter.mode : 'yearly';
+            const targetYear = window.analyticsFilter ? window.analyticsFilter.year : new Date().getFullYear();
+            const targetMonth = window.analyticsFilter ? window.analyticsFilter.month : new Date().getMonth();
+            const months = analyticsMonthNames;
+
+            const filterStatus = (r) => {
+                if (status === 'all') {
+                    return r.status !== 'archived' && r.status !== 'rejected';
+                } else if (status === 'pending') {
+                    return r.status === 'pending';
+                } else if (status === 'declined') {
+                    return r.status === 'declined' || r.status === 'cancelled';
+                }
+                return true;
+            };
 
             const listDiv = document.getElementById('mb-list');
             listDiv.innerHTML = "";
             let total = 0;
-            months.forEach((m, i) => {
-                const count = monthlyData[i];
-                const textColor = count > 0 ? "text-slate-800" : "text-slate-400";
-                listDiv.innerHTML += `
-                    <div class="flex justify-between items-center bg-slate-50 border border-slate-100 p-3 rounded-lg">
-                        <span class="font-bold text-slate-600 text-sm">${m}</span>
-                        <span class="font-black ${textColor} text-base">${count}</span>
-                    </div>
-                `;
-                total += count;
-            });
-            
-            // Add Total at the bottom
+
+            if (mode === 'monthly') {
+                const venueCounts = {};
+                reservations.forEach(r => {
+                    if (!filterStatus(r)) return;
+                    const d = getReservationDate(r);
+                    if (d && d.getFullYear() === targetYear && d.getMonth() === targetMonth) {
+                        const v = (r.event && r.event.venue) ? r.event.venue : 'Other / Unspecified';
+                        venueCounts[v] = (venueCounts[v] || 0) + 1;
+                        total++;
+                    }
+                });
+
+                const venues = Object.keys(venueCounts);
+                if (venues.length === 0) {
+                    listDiv.innerHTML = `<p class="text-sm text-slate-400 text-center py-6 font-medium">No reservations found for ${months[targetMonth]} ${targetYear}.</p>`;
+                } else {
+                    venues.forEach(v => {
+                        const count = venueCounts[v];
+                        listDiv.innerHTML += `
+                            <div class="flex justify-between items-center bg-slate-50 border border-slate-100 p-3 rounded-lg">
+                                <span class="font-bold text-slate-600 text-sm truncate mr-2">${v}</span>
+                                <span class="font-black text-slate-800 text-base">${count}</span>
+                            </div>
+                        `;
+                    });
+                }
+            } else if (mode === 'all') {
+                const yearCounts = {};
+                reservations.forEach(r => {
+                    if (!filterStatus(r)) return;
+                    const d = getReservationDate(r);
+                    if (d) {
+                        const y = d.getFullYear();
+                        yearCounts[y] = (yearCounts[y] || 0) + 1;
+                        total++;
+                    }
+                });
+                const sortedYears = Object.keys(yearCounts).sort((a,b) => b - a);
+                if (sortedYears.length === 0) {
+                    listDiv.innerHTML = `<p class="text-sm text-slate-400 text-center py-6 font-medium">No reservations found.</p>`;
+                } else {
+                    sortedYears.forEach(y => {
+                        const count = yearCounts[y];
+                        listDiv.innerHTML += `
+                            <div class="flex justify-between items-center bg-slate-50 border border-slate-100 p-3 rounded-lg">
+                                <span class="font-bold text-slate-600 text-sm">Year ${y}</span>
+                                <span class="font-black text-slate-800 text-base">${count}</span>
+                            </div>
+                        `;
+                    });
+                }
+            } else {
+                const monthlyData = new Array(12).fill(0);
+                reservations.forEach(r => {
+                    if (!filterStatus(r)) return;
+                    const d = getReservationDate(r);
+                    if (d && d.getFullYear() === targetYear) {
+                        monthlyData[d.getMonth()]++;
+                    }
+                });
+
+                months.forEach((m, i) => {
+                    const count = monthlyData[i];
+                    const textColor = count > 0 ? "text-slate-800" : "text-slate-400";
+                    listDiv.innerHTML += `
+                        <div class="flex justify-between items-center bg-slate-50 border border-slate-100 p-3 rounded-lg">
+                            <span class="font-bold text-slate-600 text-sm">${m}</span>
+                            <span class="font-black ${textColor} text-base">${count}</span>
+                        </div>
+                    `;
+                    total += count;
+                });
+            }
+
+            // Total footer
             listDiv.innerHTML += `
                 <div class="flex justify-between items-center bg-blue-50 border border-blue-200 p-3 rounded-lg mt-4 sticky bottom-0">
                     <span class="font-bold text-blue-800 text-sm uppercase tracking-wider">Total</span>
@@ -1055,7 +1614,14 @@ window.printReservation = function(id, event) {
 
             const titleEl = document.getElementById('mb-title');
             const subtitleEl = document.getElementById('mb-subtitle');
-            subtitleEl.innerText = `Monthly Breakdown (${currentYear})`;
+            
+            if (mode === 'monthly') {
+                subtitleEl.innerText = `Venue Breakdown (${months[targetMonth]} ${targetYear})`;
+            } else if (mode === 'all') {
+                subtitleEl.innerText = `Yearly Breakdown (All Time)`;
+            } else {
+                subtitleEl.innerText = `Monthly Breakdown (${targetYear})`;
+            }
             
             const iconWrap = document.getElementById('mb-icon-wrap');
             const icon = document.getElementById('mb-icon');
@@ -1063,19 +1629,19 @@ window.printReservation = function(id, event) {
 
             if (status === 'all') {
                 titleEl.innerText = "Total Bookings";
-                iconWrap.className = "w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center";
-                icon.className = "fa-solid fa-calendar-check text-white text-xl";
-                topBorder.className = "bg-white rounded-2xl shadow-xl w-full max-w-sm relative flex flex-col mt-8 border-t-8 border-blue-600";
+                if(iconWrap) iconWrap.className = "w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center";
+                if(icon) icon.className = "fa-solid fa-calendar-check text-white text-xl";
+                if(topBorder) topBorder.className = "bg-white rounded-2xl shadow-xl w-full max-w-sm relative flex flex-col mt-8 border-t-8 border-blue-600";
             } else if (status === 'pending') {
                 titleEl.innerText = "Pending Bookings";
-                iconWrap.className = "w-14 h-14 bg-yellow-500 rounded-full flex items-center justify-center";
-                icon.className = "fa-solid fa-clock text-white text-xl";
-                topBorder.className = "bg-white rounded-2xl shadow-xl w-full max-w-sm relative flex flex-col mt-8 border-t-8 border-yellow-500";
+                if(iconWrap) iconWrap.className = "w-14 h-14 bg-yellow-500 rounded-full flex items-center justify-center";
+                if(icon) icon.className = "fa-solid fa-clock text-white text-xl";
+                if(topBorder) topBorder.className = "bg-white rounded-2xl shadow-xl w-full max-w-sm relative flex flex-col mt-8 border-t-8 border-yellow-500";
             } else if (status === 'declined') {
                 titleEl.innerText = "Cancelled Bookings";
-                iconWrap.className = "w-14 h-14 bg-red-500 rounded-full flex items-center justify-center";
-                icon.className = "fa-solid fa-ban text-white text-xl";
-                topBorder.className = "bg-white rounded-2xl shadow-xl w-full max-w-sm relative flex flex-col mt-8 border-t-8 border-red-500";
+                if(iconWrap) iconWrap.className = "w-14 h-14 bg-red-500 rounded-full flex items-center justify-center";
+                if(icon) icon.className = "fa-solid fa-ban text-white text-xl";
+                if(topBorder) topBorder.className = "bg-white rounded-2xl shadow-xl w-full max-w-sm relative flex flex-col mt-8 border-t-8 border-red-500";
             }
 
             document.getElementById('monthlyBreakdownModal').classList.remove('hidden');
@@ -1083,10 +1649,61 @@ window.printReservation = function(id, event) {
 
         // --- ANALYTICS ---
         function renderAnalytics() {
-            const confirmed = reservations.filter(r => r.status === 'confirmed').length;
-            const pending = reservations.filter(r => r.status === 'pending').length;
-            const declined = reservations.filter(r => r.status === 'declined').length;
-            document.getElementById('stat-total-bookings').innerText = reservations.length;
+            window.populateAnalyticsFilters();
+
+            const mode = window.analyticsFilter.mode;
+            const targetYear = window.analyticsFilter.year;
+            const targetMonth = window.analyticsFilter.month;
+
+            let timeframeText = "";
+            let timeframeShort = "";
+            if (mode === 'monthly') {
+                const mName = analyticsMonthNames[targetMonth];
+                timeframeText = `Monthly (${mName} ${targetYear})`;
+                timeframeShort = `${mName.substring(0, 3)} ${targetYear}`;
+            } else if (mode === 'yearly') {
+                timeframeText = `Yearly (${targetYear})`;
+                timeframeShort = `${targetYear}`;
+            } else {
+                timeframeText = "All Time";
+                timeframeShort = "All Time";
+            }
+
+            const filterBadge = document.getElementById('analytics-filter-badge');
+            if (filterBadge) filterBadge.innerText = timeframeText;
+
+            const filterSubtitle = document.getElementById('analytics-filter-subtitle');
+            if (filterSubtitle) {
+                if (mode === 'monthly') {
+                    filterSubtitle.innerText = `Viewing reservation analytics for ${analyticsMonthNames[targetMonth]} ${targetYear}`;
+                } else if (mode === 'yearly') {
+                    filterSubtitle.innerText = `Viewing reservation analytics for Year ${targetYear}`;
+                } else {
+                    filterSubtitle.innerText = `Viewing all-time historical reservation analytics`;
+                }
+            }
+
+            document.querySelectorAll('.analytics-timeframe-tag').forEach(tag => {
+                tag.innerText = timeframeShort;
+            });
+
+            // Filter reservations for stats and charts
+            const filteredReservations = reservations.filter(r => {
+                if (mode === 'all') return true;
+                const d = getReservationDate(r);
+                if (!d) return false;
+                if (mode === 'yearly') {
+                    return d.getFullYear() === targetYear;
+                } else if (mode === 'monthly') {
+                    return d.getFullYear() === targetYear && d.getMonth() === targetMonth;
+                }
+                return true;
+            });
+
+            const pending = filteredReservations.filter(r => r.status === 'pending').length;
+            const declined = filteredReservations.filter(r => r.status === 'declined' || r.status === 'cancelled').length;
+
+            document.getElementById('stat-total-bookings').innerText = filteredReservations.length;
             document.getElementById('stat-pending').innerText = pending;
             document.getElementById('stat-cancelled').innerText = declined;
 
@@ -1095,63 +1712,164 @@ window.printReservation = function(id, event) {
             if(charts.forecast) charts.forecast.destroy();
             if(charts.runRate) charts.runRate.destroy();
 
+            // Top Venue & Popularity
             const venues_list = {};
-            reservations.forEach(r => { venues_list[r.event.venue] = (venues_list[r.event.venue] || 0) + 1; });
-            let topV = "N/A", max=0;
-            for(let v in venues_list) { if(venues_list[v]>max){ max=venues_list[v]; topV=v; } }
+            filteredReservations.forEach(r => { 
+                if (r.event && r.event.venue) {
+                    venues_list[r.event.venue] = (venues_list[r.event.venue] || 0) + 1; 
+                }
+            });
+            let topV = "N/A", max = 0;
+            for(let v in venues_list) { 
+                if(venues_list[v] > max){ 
+                    max = venues_list[v]; 
+                    topV = v; 
+                } 
+            }
             document.getElementById('stat-venue').innerText = topV;
+
+            const venueTitleEl = document.getElementById('venue-chart-title');
+            if (venueTitleEl) venueTitleEl.innerText = `Venue Popularity (${timeframeShort})`;
+            const venueBadgeEl = document.getElementById('venue-chart-badge');
+            if (venueBadgeEl) venueBadgeEl.innerText = `${filteredReservations.length} Bookings`;
 
             const ctxV = document.getElementById('venueChart');
             if(ctxV) {
+                const venueLabels = Object.keys(venues_list);
+                const venueData = Object.values(venues_list);
                 charts.venue = new Chart(ctxV.getContext('2d'), {
                     type: 'bar',
-                    data: { labels: Object.keys(venues_list), datasets: [{ label: 'Bookings', data: Object.values(venues_list), backgroundColor: '#3c5473' }] },
-                    options: { responsive: true, maintainAspectRatio: false }
+                    data: { 
+                        labels: venueLabels.length ? venueLabels : ['No Bookings'], 
+                        datasets: [{ 
+                            label: 'Bookings', 
+                            data: venueLabels.length ? venueData : [0], 
+                            backgroundColor: '#3c5473',
+                            borderRadius: 6
+                        }] 
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { precision: 0 }
+                            }
+                        }
+                    }
                 });
             }
 
-            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            const monthlyData = new Array(12).fill(0);
-            
-            const currentYear = new Date().getFullYear();
-            const lastYear = currentYear - 1;
+            // Trend Chart
+            let trendLabels = [];
+            let trendData = [];
+            let trendTitle = "";
+            let trendBadge = "";
 
-            const currentYearData = new Array(12).fill(0);
-            const lastYearData = new Array(12).fill(0);
-
-            reservations.forEach(r => {
-                let d = null;
-                if(r.timestamp) {
-                    d = r.timestamp.toDate ? r.timestamp.toDate() : new Date(r.timestamp); 
-                } else if (r.event && r.event.dates) {
-                    let firstDate = r.event.dates.split(',')[0].trim();
-                    if(firstDate) d = new Date(firstDate);
-                }
+            if (mode === 'monthly') {
+                const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+                trendLabels = Array.from({ length: daysInMonth }, (_, i) => `${i + 1}`);
+                trendData = new Array(daysInMonth).fill(0);
                 
-                if(d) {
-                    monthlyData[d.getMonth()]++;
-                    if(d.getFullYear() === currentYear) currentYearData[d.getMonth()]++;
-                    else if(d.getFullYear() === lastYear) lastYearData[d.getMonth()]++;
-                }
-            });
+                filteredReservations.forEach(r => {
+                    const d = getReservationDate(r);
+                    if (d && d.getFullYear() === targetYear && d.getMonth() === targetMonth) {
+                        const day = d.getDate();
+                        if (day >= 1 && day <= daysInMonth) {
+                            trendData[day - 1]++;
+                        }
+                    }
+                });
+
+                trendTitle = `Daily Trend (${analyticsMonthNames[targetMonth]} ${targetYear})`;
+                trendBadge = `${daysInMonth} Days`;
+            } else if (mode === 'yearly') {
+                trendLabels = analyticsMonthShortNames;
+                trendData = new Array(12).fill(0);
+
+                filteredReservations.forEach(r => {
+                    const d = getReservationDate(r);
+                    if (d && d.getFullYear() === targetYear) {
+                        trendData[d.getMonth()]++;
+                    }
+                });
+
+                trendTitle = `Monthly Trend (${targetYear})`;
+                trendBadge = `12 Months`;
+            } else {
+                const availableYears = window.getAvailableAnalyticsYears().sort((a, b) => a - b);
+                trendLabels = availableYears.map(String);
+                trendData = new Array(availableYears.length).fill(0);
+
+                reservations.forEach(r => {
+                    const d = getReservationDate(r);
+                    if (d) {
+                        const yIdx = availableYears.indexOf(d.getFullYear());
+                        if (yIdx !== -1) trendData[yIdx]++;
+                    }
+                });
+
+                trendTitle = `Annual Trend (All Years)`;
+                trendBadge = `${availableYears.length} Years`;
+            }
+
+            const trendTitleEl = document.getElementById('trend-chart-title');
+            if (trendTitleEl) trendTitleEl.innerText = trendTitle;
+            const trendBadgeEl = document.getElementById('trend-chart-badge');
+            if (trendBadgeEl) trendBadgeEl.innerText = trendBadge;
 
             const ctxL = document.getElementById('lineChart');
             if(ctxL) {
                 charts.line = new Chart(ctxL.getContext('2d'), {
                     type: 'line',
-                    data: { labels: months, datasets: [{ label: 'Reservations', data: monthlyData, borderColor: '#8b5cf6', tension: 0.3, fill: true, backgroundColor: 'rgba(139, 92, 246, 0.1)' }] },
-                    options: { responsive: true, maintainAspectRatio: false }
+                    data: { 
+                        labels: trendLabels, 
+                        datasets: [{ 
+                            label: 'Reservations', 
+                            data: trendData, 
+                            borderColor: '#8b5cf6', 
+                            tension: 0.3, 
+                            fill: true, 
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)' 
+                        }] 
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { precision: 0 }
+                            }
+                        }
+                    }
                 });
             }
 
-            // --- FORECAST CHART ---
-            const currentMonthIdx = new Date().getMonth();
+            // Forecast Chart (Evaluated for targetYear)
+            const evalYear = (mode === 'yearly' || mode === 'monthly') ? targetYear : new Date().getFullYear();
+            const prevYear = evalYear - 1;
+
+            const evalYearData = new Array(12).fill(0);
+            const prevYearData = new Array(12).fill(0);
+
+            reservations.forEach(r => {
+                const d = getReservationDate(r);
+                if(d) {
+                    if(d.getFullYear() === evalYear) evalYearData[d.getMonth()]++;
+                    else if(d.getFullYear() === prevYear) prevYearData[d.getMonth()]++;
+                }
+            });
+
+            const currentMonthIdx = (evalYear === new Date().getFullYear()) ? new Date().getMonth() : 11;
             let n = 0, sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
             
             for(let i = 0; i < 4; i++) {
                 let mIdx = (currentMonthIdx - i + 12) % 12;
                 let x = 4 - i; 
-                let y = currentYearData[mIdx];
+                let y = evalYearData[mIdx];
                 if (y > 0 || i === 0) {
                     n++; sumX += x; sumY += y; sumXY += x * y; sumXX += x * x;
                 }
@@ -1168,30 +1886,32 @@ window.printReservation = function(id, event) {
             }
 
             const forecastData = new Array(12).fill(null);
-            forecastData[currentMonthIdx] = currentYearData[currentMonthIdx];
+            forecastData[currentMonthIdx] = evalYearData[currentMonthIdx];
             
             for(let i = 1; i <= 6; i++) {
                 if (currentMonthIdx + i < 12) {
                     let nextMIdx = currentMonthIdx + i;
                     let nextX = 4 + i;
                     let predicted = Math.max(0, Math.round(m_slope * nextX + b)); 
-                    if (n <= 1 && predicted === 0) predicted = Math.max(2, Math.round((currentYearData[currentMonthIdx]||1) * 1.1)); 
+                    if (n <= 1 && predicted === 0) predicted = Math.max(2, Math.round((evalYearData[currentMonthIdx]||1) * 1.1)); 
                     forecastData[nextMIdx] = predicted;
                 }
             }
 
-            // Cap future months as null in currentYearData so graph matches visual style
-            for(let i = currentMonthIdx + 1; i < 12; i++) currentYearData[i] = null;
+            const displayEvalYearData = [...evalYearData];
+            if (evalYear === new Date().getFullYear()) {
+                for(let i = currentMonthIdx + 1; i < 12; i++) displayEvalYearData[i] = null;
+            }
 
             const ctxF = document.getElementById('forecastChart');
             if(ctxF) {
                 charts.forecast = new Chart(ctxF.getContext('2d'), {
                     type: 'line',
                     data: { 
-                        labels: months, 
+                        labels: analyticsMonthShortNames, 
                         datasets: [
-                            { label: `${lastYear}`, data: lastYearData, borderColor: '#3b82f6', tension: 0.3, fill: false },
-                            { label: `${currentYear}`, data: currentYearData, borderColor: '#ea580c', tension: 0.3, fill: false },
+                            { label: `${prevYear}`, data: prevYearData, borderColor: '#3b82f6', tension: 0.3, fill: false },
+                            { label: `${evalYear}`, data: displayEvalYearData, borderColor: '#ea580c', tension: 0.3, fill: false },
                             { label: 'Forecast', data: forecastData, borderColor: '#9ca3af', tension: 0.3, fill: false, borderDash: [5, 5] }
                         ] 
                     },
@@ -1203,52 +1923,47 @@ window.printReservation = function(id, event) {
                 });
             }
 
-            // --- RUN RATE CHART ---
+            // Run Rate Chart
             const monthlyRevenue = new Array(12).fill(0);
-            let lastYearTotalRev = 0;
+            let prevYearTotalRev = 0;
 
             reservations.forEach(r => {
                 if (r.status === 'declined' || r.status === 'cancelled' || r.status === 'rejected') return;
                 
-                let d = null;
-                if(r.timestamp) {
-                    d = r.timestamp.toDate ? r.timestamp.toDate() : new Date(r.timestamp);
-                } else if (r.event && r.event.dates) {
-                    let firstDate = r.event.dates.split(',')[0].trim();
-                    if(firstDate) d = new Date(firstDate);
-                }
-                
+                const d = getReservationDate(r);
                 if(d) {
                     let rev = r.pricing ? (r.pricing.grandTotal || 0) : 0;
-                    if(d.getFullYear() === currentYear) monthlyRevenue[d.getMonth()] += rev;
-                    else if(d.getFullYear() === lastYear) lastYearTotalRev += rev;
+                    if(d.getFullYear() === evalYear) monthlyRevenue[d.getMonth()] += rev;
+                    else if(d.getFullYear() === prevYear) prevYearTotalRev += rev;
                 }
             });
 
             let cumActuals = [];
             let currentCum = 0;
-            for(let i=0; i<=currentMonthIdx; i++) {
+            const upToMonth = (evalYear === new Date().getFullYear()) ? currentMonthIdx : 11;
+            for(let i=0; i<=upToMonth; i++) {
                 currentCum += monthlyRevenue[i];
                 cumActuals.push(currentCum);
             }
-            for(let i=currentMonthIdx+1; i<12; i++) cumActuals.push(null);
+            for(let i=upToMonth+1; i<12; i++) cumActuals.push(null);
 
-            const yearStart = new Date(currentYear, 0, 1);
+            const isCurrentEvalYear = evalYear === new Date().getFullYear();
+            const yearStart = new Date(evalYear, 0, 1);
             const now = new Date();
-            const daysElapsed = Math.max(1, (now - yearStart) / (1000 * 60 * 60 * 24));
+            const daysElapsed = isCurrentEvalYear ? Math.max(1, (now - yearStart) / (1000 * 60 * 60 * 24)) : 365;
             const dailyRunRate = currentCum / daysElapsed;
             
             let cumProjected = new Array(12).fill(null);
-            cumProjected[currentMonthIdx] = currentCum;
+            cumProjected[upToMonth] = currentCum;
             let tempCum = currentCum;
-            for(let i=currentMonthIdx+1; i<12; i++) {
-                let daysInMonth = new Date(currentYear, i + 1, 0).getDate();
+            for(let i=upToMonth+1; i<12; i++) {
+                let daysInMonth = new Date(evalYear, i + 1, 0).getDate();
                 tempCum += dailyRunRate * daysInMonth;
                 cumProjected[i] = Math.round(tempCum);
             }
 
-            if(lastYearTotalRev === 0) lastYearTotalRev = 50000;
-            const targetTotal = lastYearTotalRev * 1.5; // Stretch goal plan
+            if(prevYearTotalRev === 0) prevYearTotalRev = 50000;
+            const targetTotal = prevYearTotalRev * 1.5;
             let cumPlan = new Array(12).fill(0);
             for(let i=0; i<12; i++) {
                 cumPlan[i] = Math.round((targetTotal / 12) * (i + 1));
@@ -1259,7 +1974,7 @@ window.printReservation = function(id, event) {
                 charts.runRate = new Chart(ctxR.getContext('2d'), {
                     type: 'line',
                     data: {
-                        labels: months,
+                        labels: analyticsMonthShortNames,
                         datasets: [
                             { label: 'Plan', data: cumPlan, borderColor: '#93c5fd', tension: 0.3, fill: false, borderDash: [5, 5] },
                             { label: 'What-if (Projected)', data: cumProjected, borderColor: '#ea580c', tension: 0.3, fill: false, borderDash: [5, 5] },
@@ -1291,6 +2006,7 @@ window.printReservation = function(id, event) {
                 archivedInventory = [];
             }
             renderInventory(); 
+            if (typeof window.renderAdminDashboard === 'function') window.renderAdminDashboard();
             if(!document.getElementById('section-archive').classList.contains('hidden')) switchArchiveTab();
         };
 
@@ -1646,7 +2362,7 @@ function renderInventory() {
         });
 
         // --- VENUES SYSTEM ---
-        let venuesList = [];
+        venuesList = [];
         let venueSelectedImages = [];
 
         function getFallbackVenues() {
@@ -1723,6 +2439,7 @@ function renderInventory() {
                     venuesList = getFallbackVenues();
                     populateVenueSelects();
                     window.renderVenues();
+                    if (typeof window.renderAdminDashboard === 'function') window.renderAdminDashboard();
                     return;
                 }
                 
@@ -1741,11 +2458,13 @@ function renderInventory() {
                 venuesList = data || [];
                 populateVenueSelects();
                 window.renderVenues();
+                if (typeof window.renderAdminDashboard === 'function') window.renderAdminDashboard();
             } catch (err) {
                 console.error("Venues fetch failed:", err);
                 venuesList = getFallbackVenues();
                 populateVenueSelects();
                 window.renderVenues();
+                if (typeof window.renderAdminDashboard === 'function') window.renderAdminDashboard();
             }
         };
 
@@ -2090,3 +2809,8 @@ function renderInventory() {
                 btn.innerText = origText;
             }
         };
+
+        // Initial render of Dashboard on page load
+        if (typeof window.renderAdminDashboard === 'function') {
+            window.renderAdminDashboard();
+        }
