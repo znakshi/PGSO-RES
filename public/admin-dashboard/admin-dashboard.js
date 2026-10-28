@@ -670,227 +670,339 @@ window.printReservation = function(id, event) {
     const res = reservations.find(r => r.id === id);
     if(!res) { showAwesomeAlert("Reservation data not found.", true); return; }
 
-    const printWindow = window.open('', '_blank', 'width=900,height=1100');
+    const printWindow = window.open('', '_blank', 'width=950,height=1100');
     
-    // --- Helper to split equipment into two columns for the form ---
-    const half = Math.ceil((res.equipment?.length || 0) / 2);
-    const equipLeft = res.equipment ? res.equipment.slice(0, 5) : []; // First 5 items
-    const equipRight = res.equipment ? res.equipment.slice(5, 10) : []; // Next 5 items
-    
-    // Helper to generate empty rows if list is short
-    const fillRows = (arr, max) => {
-        let html = '';
-        // Add actual items
-        arr.forEach(e => {
-            html += `<tr><td>${e.name}</td><td class="center">${e.qty}</td><td class="center"></td></tr>`;
-        });
-        // Add blank rows to fill space
-        for(let i=arr.length; i<max; i++) {
-            html += `<tr><td>&nbsp;</td><td></td><td></td></tr>`;
+    // Rental duration hours calculation
+    let hoursNum = res.event?.totalHours;
+    if (!hoursNum && res.event?.startTime && res.event?.endTime) {
+        const [sh, sm] = res.event.startTime.split(':').map(Number);
+        const [eh, em] = res.event.endTime.split(':').map(Number);
+        if (!isNaN(sh) && !isNaN(eh)) {
+            let diff = (eh * 60 + (em || 0)) - (sh * 60 + (sm || 0));
+            if (diff > 0) hoursNum = Math.ceil(diff / 60);
         }
-        return html;
-    };
+    }
+    const hoursStr = hoursNum ? `${hoursNum} hr${hoursNum > 1 ? 's' : ''}` : '';
 
-    // Determine which box to check
-    const isPalispis = res.event.venue.includes("Palispis");
-    const isGym = res.event.venue.includes("Gymnasium");
-    const isPCL = res.event.venue.includes("PCL");
-    
+    // Build the single table rows (venue first, then equipment, then filler rows)
+    let rowsHtml = '';
+    let rowCount = 0;
+
+    // 1. Venue rented
+    const venueName = res.event?.venue || 'Venue Facility';
+    rowsHtml += `<tr>
+        <td style="padding: 4px 8px; font-weight: bold;">${venueName}</td>
+        <td class="center" style="padding: 4px 8px;">1</td>
+        <td class="center" style="padding: 4px 8px;">${hoursStr}</td>
+    </tr>`;
+    rowCount++;
+
+    // 2. Equipment requested
+    if (res.equipment && Array.isArray(res.equipment) && res.equipment.length > 0) {
+        res.equipment.forEach(e => {
+            rowsHtml += `<tr>
+                <td style="padding: 4px 8px;">${e.name}</td>
+                <td class="center" style="padding: 4px 8px;">${e.qty || 1}</td>
+                <td class="center" style="padding: 4px 8px;">${e.hours ? e.hours + ' hrs' : hoursStr}</td>
+            </tr>`;
+            rowCount++;
+        });
+    }
+
+    // 3. Filler blank rows to make the box look complete and uniform
+    const minRows = 6;
+    for(let i = rowCount; i < minRows; i++) {
+        rowsHtml += `<tr>
+            <td style="padding: 4px 8px;">&nbsp;</td>
+            <td class="center" style="padding: 4px 8px;"></td>
+            <td class="center" style="padding: 4px 8px;"></td>
+        </tr>`;
+    }
+
     // Date formatting
     const dateGen = new Date().toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
+    const safeRef = (res.reference_number || res.id || 'PGSO').replace(/[^a-zA-Z0-9_-]/g, '_');
 
     const htmlContent = `
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Rental Form - ${res.contact.fullName}</title>
+            <title>Rental Form - ${res.contact?.fullName || 'Client'}</title>
             <style>
-                @page { size: A4; margin: 10mm; }
-                body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; line-height: 1.3; max-width: 800px; margin: 0 auto; }
+                @page { size: A4 portrait; margin: 8mm 10mm; }
+                * { box-sizing: border-box; }
+                body { 
+                    font-family: 'Times New Roman', Times, serif; 
+                    font-size: 10pt; 
+                    color: #000; 
+                    line-height: 1.25; 
+                    max-width: 800px; 
+                    margin: 0 auto; 
+                    background: #f8fafc;
+                }
+                #rental-form-doc {
+                    background: #ffffff;
+                    padding: 24px 32px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+                    border: 1px solid #e2e8f0;
+                    margin: 16px auto;
+                }
                 
                 /* HEADER */
-                .header { text-align: center; margin-bottom: 20px; position: relative; }
-                .header img { width: 70px; height: 70px; position: absolute; top: 0; }
-                .header img.left { left: 40px; }
-                .header img.right { right: 40px; }
+                .header { text-align: center; margin-bottom: 12px; position: relative; }
+                .header img { width: 68px; height: 68px; position: absolute; top: 0; }
+                .header img.left { left: 20px; }
+                .header img.right { right: 20px; }
                 .header h3 { margin: 0; font-size: 10pt; font-weight: normal; }
-                .header h2 { margin: 0; font-size: 12pt; font-weight: bold; }
-                .form-title { text-align: center; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 5px; margin: 10px 0; font-size: 12pt; }
+                .header h2 { margin: 0; font-size: 12.5pt; font-weight: bold; }
+                .form-title { 
+                    text-align: center; 
+                    font-weight: bold; 
+                    border-top: 1.5px solid #000; 
+                    border-bottom: 1.5px solid #000; 
+                    padding: 4px 0; 
+                    margin: 10px 0; 
+                    font-size: 12pt; 
+                    letter-spacing: 1px;
+                }
                 
                 /* META TOP RIGHT */
-                .meta { text-align: right; font-size: 10pt; margin-bottom: 15px; }
-                .meta div { margin-bottom: 4px; }
+                .meta { text-align: right; font-size: 9.5pt; margin-bottom: 10px; }
+                .meta div { margin-bottom: 2px; }
                 
                 /* ADDRESS BLOCK */
-                .addressee { margin-bottom: 15px; font-weight: bold; }
+                .addressee { margin-bottom: 12px; font-weight: bold; font-size: 9.5pt; line-height: 1.3; }
                 
-                /* BODY TEXT */
-                .body-text { text-align: justify; margin-bottom: 10px; text-indent: 30px; }
-                .inline-input { border-bottom: 1px solid #000; padding: 0 5px; display: inline-block; min-width: 150px; text-align: center; font-weight: bold; }
-                
-                /* CHECKBOXES */
-                .venues { display: flex; justify-content: space-around; margin: 10px 0 20px 0; padding: 0 20px; }
-                .checkbox-item { display: flex; align-items: center; }
-                .box { width: 14px; height: 14px; border: 1px solid #000; display: inline-block; margin-right: 5px; text-align: center; line-height: 12px; font-size: 12px; }
-                
-                /* TABLES */
-                .equip-container { display: flex; gap: 20px; margin-bottom: 5px; }
-                table { width: 100%; border-collapse: collapse; font-size: 10pt; }
-                th, td { border: 1px solid #000; padding: 4px; }
+                /* REQUEST INTRO WITH UNDERLINES & LABELS */
+                .request-intro { text-align: justify; margin-bottom: 10px; font-size: 10pt; }
+                .underline-field { display: inline-flex; flex-direction: column; vertical-align: top; text-align: center; margin: 0 4px; }
+                .underline-line { border-bottom: 1px solid #000; min-height: 16px; font-weight: bold; padding: 0 4px; line-height: 16px; }
+                .underline-sub { font-size: 7.5pt; font-weight: bold; font-style: italic; margin-top: 1px; }
+
+                /* SINGLE TABLE */
+                table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin-bottom: 6px; }
+                th, td { border: 1px solid #000; padding: 4px 6px; }
                 th { text-align: center; font-weight: bold; background: #f0f0f0; }
                 td.center { text-align: center; }
                 
                 /* DETAILS */
-                .details-section { margin-top: 10px; }
-                .detail-row { margin-bottom: 5px; display: flex; }
-                .detail-label { min-width: 130px; }
-                .detail-line { flex-grow: 1; border-bottom: 1px solid #000; padding-left: 10px; font-weight: bold; }
+                .details-section { margin-top: 8px; font-size: 9.5pt; }
+                .detail-row { margin-bottom: 3px; display: flex; }
+                .detail-label { min-width: 140px; }
+                .detail-line { flex-grow: 1; border-bottom: 1px solid #000; padding-left: 8px; font-weight: bold; }
                 
                 /* CLOSING */
-                .closing { margin-top: 20px; text-align: right; }
-                .closing-sig { margin-top: 30px; margin-right: 20px; font-weight: bold; border-top: 1px solid #000; display: inline-block; padding-top: 2px; text-align: center; min-width: 200px; }
+                .closing { margin-top: 14px; text-align: right; font-size: 9.5pt; }
+                .closing-sig { margin-top: 24px; margin-right: 20px; font-weight: bold; border-top: 1px solid #000; display: inline-block; padding-top: 2px; text-align: center; min-width: 200px; }
                 
                 /* APPROVAL BOX */
-                .approval-box { border: 1px solid #000; display: flex; margin-top: 20px; }
-                .app-col { flex: 1; border-right: 1px solid #000; padding: 5px; font-size: 9pt; display: flex; flex-direction: column; justify-content: space-between; min-height: 80px; }
+                .approval-box { border: 1px solid #000; display: flex; margin-top: 14px; }
+                .app-col { flex: 1; border-right: 1px solid #000; padding: 4px 6px; font-size: 8.5pt; display: flex; flex-direction: column; justify-content: space-between; min-height: 75px; }
                 .app-col:last-child { border-right: none; }
-                .sig-center { text-align: center; margin-top: 30px; font-weight: bold; text-decoration: underline; }
-                .sig-title { text-align: center; font-size: 8pt; }
+                .sig-center { text-align: center; margin-top: 24px; font-weight: bold; text-decoration: underline; }
+                .sig-title { text-align: center; font-size: 7.5pt; }
                 
                 /* PROVISIONS */
-                .provisions { font-size: 8pt; margin-top: 10px; text-align: justify; }
-                .provisions ol { padding-left: 20px; margin: 0; }
-                .provisions li { margin-bottom: 2px; }
+                .provisions { font-size: 7.5pt; margin-top: 8px; text-align: justify; line-height: 1.2; }
+                .provisions ol { padding-left: 18px; margin: 2px 0; }
+                .provisions li { margin-bottom: 1.5px; }
                 
-                @media print { .no-print { display: none; } }
+                @media print { 
+                    body { background: #fff; margin: 0; padding: 0; }
+                    #rental-form-doc { border: none; box-shadow: none; padding: 0; margin: 0; }
+                    .no-print { display: none !important; } 
+                }
             </style>
         </head>
         <body>
             
-            <div class="header">
-                <img src="benguet.png" class="left" alt="Logo">
-                <h3>Republic of the Philippines</h3>
-                <h2>PROVINCE OF BENGUET</h2>
-                <h3>Capitol, La Trinidad</h3>
-                <img src="bagong-pilipinas.png" class="right" alt="Logo" onerror="this.style.display='none'">
+            <!-- Sticky Top Action Bar (hidden when printing) -->
+            <div class="no-print" style="position: sticky; top: 0; background: #ffffff; border-bottom: 2px solid #cbd5e1; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; z-index: 10000; box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 13px; font-weight: bold; color: #0f172a;">Rental Form PDF:</span>
+                    <span id="pdf-status" style="font-size: 12px; color: #1d4ed8; background: #dbeafe; padding: 3px 10px; border-radius: 9999px; font-weight: 600;">Converting to PDF...</span>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button id="btn-dl-pdf" onclick="saveAsPdf()" style="padding: 8px 18px; background-color: #1d4ed8; color: #ffffff; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                        Download PDF
+                    </button>
+                    <button onclick="window.print()" style="padding: 8px 18px; background-color: #334155; color: #ffffff; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/><path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/></svg>
+                        Print Form
+                    </button>
+                </div>
             </div>
 
-            <div class="form-title">RENTAL FORM<br><span style="font-size:10pt; font-weight:normal;">(FACILITY)</span></div>
+            <!-- Main Document Container -->
+            <div id="rental-form-doc">
+                <div class="header">
+                    <img src="benguet.png" class="left" alt="Logo">
+                    <h3>Republic of the Philippines</h3>
+                    <h2>PROVINCE OF BENGUET</h2>
+                    <h3>Capitol, La Trinidad</h3>
+                    <img src="bagong-pilipinas.png" class="right" alt="Logo" onerror="this.style.display='none'">
+                </div>
 
-            <div class="meta">
-                <div>No.: ${res.reference_number || '______________'}</div>
-                <div>Date: <u>${dateGen}</u></div>
-            </div>
+                <div class="form-title">RENTAL FORM</div>
 
-            <div class="addressee">
-                HON. MELCHOR D. DICLAS<br>
-                Province of Benguet<br>
-                Capitol, La Trinidad, Benguet
-            </div>
+                <div class="meta">
+                    <div>No.: <strong>${res.reference_number || '______________'}</strong></div>
+                    <div>Date: <u>${dateGen}</u></div>
+                </div>
 
-            <div class="body-text">
-                The <span class="inline-input" style="min-width:250px"></span> of <span class="inline-input" style="min-width:200px"></span>
-                and with contact number <span class="inline-input">${res.contact.contactNumber}</span> respectfully request for the use of the:
-            </div>
+                <div class="addressee">
+                    HON. MELCHOR D. DICLAS<br>
+                    Province of Benguet<br>
+                    Capitol, La Trinidad, Benguet
+                </div>
 
-            <div class="venues">
-                <div class="checkbox-item"><span class="box">${isPalispis ? '✓' : '&nbsp;'}</span> Gov. Ben Palispis Auditorium</div>
-                <div class="checkbox-item"><span class="box">${isGym ? '✓' : '&nbsp;'}</span> Provincial Gymnasium</div>
-                <div class="checkbox-item"><span class="box">${isPCL ? '✓' : '&nbsp;'}</span> PCL Hall</div>
-            </div>
+                <div class="request-intro">
+                    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 4px; row-gap: 8px;">
+                        <span style="white-space: nowrap;">The</span>
+                        <div class="underline-field" style="flex: 1; min-width: 250px;">
+                            <span class="underline-line">${res.contact?.fullName || ''}</span>
+                            <span class="underline-sub">(NAME OF THE ORGANIZATION / REQUESTING PARTY)</span>
+                        </div>
+                        <span style="white-space: nowrap;">of</span>
+                        <div class="underline-field" style="flex: 1; min-width: 210px;">
+                            <span class="underline-line">&nbsp;</span>
+                            <span class="underline-sub">(ADDRESS/OFFICE)</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 8px;">
+                        and with contact number <span style="border-bottom: 1px solid #000; font-weight: bold; padding: 0 8px; display: inline-block; min-width: 120px; text-align: center;">${res.contact?.contactNumber || ''}</span> respectfully request for the use of the:
+                    </div>
+                </div>
 
-            <div style="font-size:10pt; margin-bottom:2px;">Equipment Requested:</div>
-            <div class="equip-container">
+                <div style="font-size: 10pt; font-weight: bold; margin-bottom: 3px; margin-top: 8px;">Equipment Requested:</div>
                 <table>
-                    <thead><tr><th>FACILITY/EQUIPMENT</th><th>QTY</th><th>NO. OF HRS</th></tr></thead>
-                    <tbody>${fillRows(equipLeft, 5)}</tbody>
+                    <thead>
+                        <tr>
+                            <th style="width: 58%;">FACILITY/EQUIPMENT</th>
+                            <th style="width: 20%;">QTY</th>
+                            <th style="width: 22%;">NO. OF HRS</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
                 </table>
-                <table>
-                    <thead><tr><th>FACILITY/EQUIPMENT</th><th>QTY</th><th>NO. OF HRS</th></tr></thead>
-                    <tbody>${fillRows(equipRight, 5)}</tbody>
-                </table>
-            </div>
 
-            <div style="font-size: 10pt; font-weight:bold; margin-bottom: 10px;">
-                NOTE: Plus PHP 3,000.00 security deposit.<br>
-                <div style="display:flex; gap:30px; margin-top:5px; font-weight:normal;">
-                    <div style="display:flex; align-items:center;">
-                        <span style="color:red; font-weight:bold; margin-right:5px;">**</span> 
-                        <span class="box">${res.event.registrationFee === 'With Registration Fee' ? '✓' : ''}</span> With Registration Fee
-                    </div>
-                    <div style="display:flex; align-items:center;">
-                        <span class="box">${res.event.registrationFee === 'Without Registration Fee' ? '✓' : ''}</span> Without Registration Fee
+                <div style="font-size: 9.5pt; font-weight: bold; margin-bottom: 8px;">
+                    NOTE: Plus PHP 3,000.00 security deposit.<br>
+                    <div style="display: flex; gap: 30px; margin-top: 4px; font-weight: normal;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="color: red; font-weight: bold;">**</span> 
+                            <span style="width: 13px; height: 13px; border: 1px solid #000; display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">${res.event?.registrationFee === 'With Registration Fee' ? '✓' : '&nbsp;'}</span> With Registration Fee
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="width: 13px; height: 13px; border: 1px solid #000; display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">${res.event?.registrationFee === 'Without Registration Fee' ? '✓' : '&nbsp;'}</span> Without Registration Fee
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="details-section">
-                <div class="detail-row">
-                    <span class="detail-label">Inclusive date/s of use :</span>
-                    <span class="detail-line">${window.formatReservationDates(res.event.dates)}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Inclusive time of use :</span>
-                    <span class="detail-line">${res.event.startTime} - ${res.event.endTime} (${res.event.totalHours || 0} hours)</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Purpose :</span>
-                    <span class="detail-line">${res.event.eventType}</span>
-                </div>
-            </div>
-
-            <div style="margin-top: 15px;">We shall appreciate your favorable action on this request.</div>
-
-            <div class="closing">
-                Very truly yours,<br><br>
-                <div class="closing-sig">${res.contact.fullName.toUpperCase()}</div><br>
-                <span style="font-size:9pt; margin-right:30px;">Signature over Printed Name and Date</span>
-            </div>
-
-            <div class="approval-box">
-                <div class="app-col">
-                    <div>Venue Available:</div>
-                    <div class="sig-center">JENNIFER G. BAHOD</div>
-                    <div class="sig-title">Provincial General Services Officer</div>
-                </div>
-                <div class="app-col">
-                    <div>Approved by:</div>
-                    <div class="sig-center">MELCHOR D. DICLAS, M.D.</div>
-                    <div class="sig-title">Provincial Governor</div>
-                </div>
-                <div class="app-col">
-                    <div>
-                        Payment: Rent _______ Security _______<br>
-                        Amount: <u>₱${res.pricing.grandTotal.toLocaleString()}</u><br>
-                        OR No.: ____________
+                <div class="details-section">
+                    <div class="detail-row">
+                        <span class="detail-label">Inclusive date/s of use :</span>
+                        <span class="detail-line">${window.formatReservationDates(res.event?.dates)}</span>
                     </div>
-                    <div class="sig-center">______________________</div>
-                    <div class="sig-title">PTO Representative</div>
+                    <div class="detail-row">
+                        <span class="detail-label">Inclusive time of use :</span>
+                        <span class="detail-line">${res.event?.startTime || ''} - ${res.event?.endTime || ''} ${hoursStr ? '(' + hoursStr + ')' : ''}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Purpose :</span>
+                        <span class="detail-line">${res.event?.eventType || ''}</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 12px; font-size: 9.5pt;">We shall appreciate your favorable action on this request.</div>
+
+                <div class="closing">
+                    Very truly yours,<br><br>
+                    <div class="closing-sig">${(res.contact?.fullName || '').toUpperCase()}</div><br>
+                    <span style="font-size: 8.5pt; margin-right: 25px;">Signature over Printed Name and Date</span>
+                </div>
+
+                <div class="approval-box">
+                    <div class="app-col">
+                        <div>Venue Available:</div>
+                        <div class="sig-center">JENNIFER G. BAHOD</div>
+                        <div class="sig-title">Provincial General Services Officer</div>
+                    </div>
+                    <div class="app-col">
+                        <div>Approved by:</div>
+                        <div class="sig-center">MELCHOR D. DICLAS, M.D.</div>
+                        <div class="sig-title">Provincial Governor</div>
+                    </div>
+                    <div class="app-col">
+                        <div>
+                            Payment: Rent _______ Security _______<br>
+                            Amount: <u>₱${(res.pricing?.grandTotal || 0).toLocaleString()}</u><br>
+                            OR No.: ____________
+                        </div>
+                        <div class="sig-center">______________________</div>
+                        <div class="sig-title">PTO Representative</div>
+                    </div>
+                </div>
+
+                <div class="provisions">
+                    <strong>ADMINISTRATIVE PROVISIONS:</strong>
+                    <ol>
+                        <li>The requesting party renting the facility shall provide adequate security to maintain peace and order. It shall maintain the cleanliness of the venue at all times.</li>
+                        <li>Equipment and/or Facility must be clean after use.</li>
+                        <li>Requesting party shall COORDINATE with the PGSO Custodian before their scheduled activity and to present the approved RENTAL FORM for coordination of the activity.</li>
+                        <li>The requesting party shall pay the preparation day and should not exceed the date stated above, unless approved and have paid the corresponding rent.</li>
+                        <li>Priority shall be given to government activities and functions.</li>
+                        <li>Damages or losses of the facilities, equipment, or fixture, shall be the sole responsibility of the requesting party. He shall make necessary repair for damages and replace any equipment destroyed.</li>
+                        <li>Security deposit of ₱3,000.00 will be collected to cover any extensions and/or damages incurred, and to be refunded after clearance from the personnel in charge.</li>
+                        <li>The electricity consumption of any equipment being brought by the requesting party should pay the corresponding amount based on the computation of the electrical engineer.</li>
+                        <li>Event and occasions that require a large audience or general entry are strongly discouraged in order to protect the facility and its equipment.</li>
+                        <li>In case of cancellation, inform the office one week prior. Otherwise, paid rent is non-refundable.</li>
+                        <li>When water & electricity supply is not available due to uncontrollable/unforeseen circumstances, the Benguet Provincial Government is NOT responsible to supply water & electricity.</li>
+                    </ol>
+                    <strong>I have read and understood the administrative provisions</strong>
                 </div>
             </div>
 
-            <div class="provisions">
-                <strong>ADMINISTRATIVE PROVISIONS:</strong>
-                <ol>
-                    <li>The requesting party renting the facility shall provide adequate security to maintain peace and order. It shall maintain the cleanliness of the venue at all times.</li>
-                    <li>Equipment and/or Facility must be clean after use.</li>
-                    <li>Requesting party shall COORDINATE with the PGSO Custodian before their scheduled activity and to present the approved RENTAL FORM for coordination of the activity.</li>
-                    <li>The requesting party shall pay the preparation day and should not exceed the date stated above, unless approved and have paid the corresponding rent.</li>
-                    <li>Priority shall be given to government activities and functions.</li>
-                    <li>Damages or losses of the facilities, equipment, or fixture, shall be the sole responsibility of the requesting party. He shall make necessary repair for damages and replace any equipment destroyed.</li>
-                    <li>Security deposit of ₱3,000.00 will be collected to cover any extensions and/or damages incurred, and to be refunded after clearance from the personnel in charge.</li>
-                    <li>The electricity consumption of any equipment being brought by the requesting party should pay the corresponding amount based on the computation of the electrical engineer.</li>
-                    <li>Event and occasions that require a large audience or general entry are strongly discouraged in order to protect the facility and its equipment.</li>
-                    <li>In case of cancellation, inform the office one week prior. Otherwise, paid rent is non-refundable.</li>
-                    <li>When water & electricity supply is not available due to uncontrollable/unforeseen circumstances, the Benguet Provincial Government is NOT responsible to supply water & electricity.</li>
-                </ol>
-                <strong>I have read and understood the administrative provisions</strong>
-            </div>
+            <!-- PDF Generation Script -->
+            <script src="html2pdf.bundle.min.js"></script>
+            <script>
+                function saveAsPdf() {
+                    const statusEl = document.getElementById('pdf-status');
+                    if (statusEl) {
+                        statusEl.innerText = "Generating PDF...";
+                        statusEl.style.color = "#ea580c";
+                        statusEl.style.background = "#fff7ed";
+                    }
+                    const opt = {
+                        margin: [6, 8, 6, 8],
+                        filename: 'Rental_Form_${safeRef}.pdf',
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true, logging: false },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+                    const target = document.getElementById('rental-form-doc');
+                    html2pdf().set(opt).from(target).save().then(() => {
+                        if (statusEl) {
+                            statusEl.innerText = "PDF Downloaded!";
+                            statusEl.style.color = "#16a34a";
+                            statusEl.style.background = "#f0fdf4";
+                        }
+                    }).catch(err => {
+                        console.error("PDF generation failed:", err);
+                        if (statusEl) {
+                            statusEl.innerText = "Ready to Print";
+                        }
+                    });
+                }
 
-            <div class="no-print" style="text-align: center; margin-top: 20px;">
-                <button onclick="window.print()" style="padding: 10px 20px; background-color: #3c5473; color: white; border: none; cursor: pointer;">Print Page</button>
-            </div>
-
+                // Automatically convert straight to PDF after page render
+                window.addEventListener('load', () => {
+                    setTimeout(() => {
+                        saveAsPdf();
+                    }, 400);
+                });
+            </script>
         </body>
         </html>
     `;
