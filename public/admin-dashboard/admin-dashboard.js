@@ -1,4 +1,15 @@
-import { supabase } from "../supabase-config.js";
+const SUPABASE_URL = "https://vclckkfpydwjqxxqdznd.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_xF1R87snCXRQHc5TBRFPzw_DAlaxoT2";
+
+var supabase = (typeof window !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function')
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+            storage: window.sessionStorage
+        }
+    })
+    : (typeof window !== 'undefined' ? (window.supabaseClient || window.supabase) : null);
+
+console.log('[PGSO] admin-dashboard.js initialized, supabase client ready:', !!supabase);
 
         // --- AUTH CHECK ---
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1170,9 +1181,9 @@ window.printReservation = function(id, event) {
                     const target = document.getElementById('rental-form-doc');
                     html2pdf().set(opt).from(target).save().then(() => {
                         if (btn) {
-                            btn.innerHTML = `<svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg> Downloaded!`;
+                            btn.innerHTML = '<svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg> Downloaded!';
                             setTimeout(() => {
-                                btn.innerHTML = `<svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg> Download PDF`;
+                                btn.innerHTML = '<svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg> Download PDF';
                                 btn.disabled = false;
                             }, 2000);
                         }
@@ -1298,8 +1309,9 @@ window.printReservation = function(id, event) {
 
         // --- SUPABASE LISTENERS ---
         const fetchReservations = async () => {
-            const { data } = await supabase.from('reservations').select('*');
-            if (data) {
+            try {
+                const { data, error } = await supabase.from('reservations').select('*');
+                if (data) {
                 reservations = data.filter(r => !r.is_archived);
                 archivedReservations = data.filter(r => r.is_archived);
             } else {
@@ -1314,6 +1326,9 @@ window.printReservation = function(id, event) {
             if (typeof window.renderAdminDashboard === 'function') window.renderAdminDashboard();
             if(!document.getElementById('section-inventory').classList.contains('hidden')) renderInventory();
             if(!document.getElementById('section-archive').classList.contains('hidden')) switchArchiveTab();
+            } catch (err) {
+                console.error('[ADMIN JS] fetchReservations error:', err);
+            }
         };
 
         supabase.channel('reservations-channel')
