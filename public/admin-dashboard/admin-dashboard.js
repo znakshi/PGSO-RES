@@ -670,7 +670,11 @@ window.printReservation = function(id, event) {
     const res = reservations.find(r => r.id === id);
     if(!res) { showAwesomeAlert("Reservation data not found.", true); return; }
 
-    const printWindow = window.open('', '_blank', 'width=950,height=1100');
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        showAwesomeAlert("Please allow popups to open the PDF printable form.", true);
+        return;
+    }
     
     // Rental duration hours calculation
     let hoursNum = res.event?.totalHours;
@@ -691,9 +695,9 @@ window.printReservation = function(id, event) {
     // 1. Venue rented
     const venueName = res.event?.venue || 'Venue Facility';
     rowsHtml += `<tr>
-        <td style="padding: 4px 8px; font-weight: bold;">${venueName}</td>
-        <td class="center" style="padding: 4px 8px;">1</td>
-        <td class="center" style="padding: 4px 8px;">${hoursStr}</td>
+        <td style="padding: 3px 6px; font-weight: bold;">${venueName}</td>
+        <td class="center" style="padding: 3px 6px;">1</td>
+        <td class="center" style="padding: 3px 6px;">${hoursStr}</td>
     </tr>`;
     rowCount++;
 
@@ -701,182 +705,354 @@ window.printReservation = function(id, event) {
     if (res.equipment && Array.isArray(res.equipment) && res.equipment.length > 0) {
         res.equipment.forEach(e => {
             rowsHtml += `<tr>
-                <td style="padding: 4px 8px;">${e.name}</td>
-                <td class="center" style="padding: 4px 8px;">${e.qty || 1}</td>
-                <td class="center" style="padding: 4px 8px;">${e.hours ? e.hours + ' hrs' : hoursStr}</td>
+                <td style="padding: 3px 6px;">${e.name}</td>
+                <td class="center" style="padding: 3px 6px;">${e.qty || 1}</td>
+                <td class="center" style="padding: 3px 6px;">${e.hours ? e.hours + ' hrs' : hoursStr}</td>
             </tr>`;
             rowCount++;
         });
     }
 
-    // 3. Filler blank rows to make the box look complete and uniform
-    const minRows = 6;
+    // 3. Filler blank rows: exactly 4 body rows total so it is compact, uniform, and fits in 1 page
+    const minRows = 4;
     for(let i = rowCount; i < minRows; i++) {
         rowsHtml += `<tr>
-            <td style="padding: 4px 8px;">&nbsp;</td>
-            <td class="center" style="padding: 4px 8px;"></td>
-            <td class="center" style="padding: 4px 8px;"></td>
+            <td style="padding: 3px 6px;">&nbsp;</td>
+            <td class="center" style="padding: 3px 6px;"></td>
+            <td class="center" style="padding: 3px 6px;"></td>
         </tr>`;
     }
 
-    // Date formatting
+    // Client and date formatting
+    const clientName = res.contact?.fullName || '';
+    const clientAddress = res.contact?.address || res.contact?.office || res.contact?.organization || '';
+    const clientContact = res.contact?.contactNumber || '';
     const dateGen = new Date().toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
     const safeRef = (res.reference_number || res.id || 'PGSO').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const formattedDates = typeof window.formatReservationDates === 'function' ? window.formatReservationDates(res.event?.dates) : (res.event?.dates || '');
+    const isWithFee = res.event?.registrationFee === 'With Registration Fee' || res.event?.registrationFee === true || res.event?.registrationFee === 'yes';
+    const isWithoutFee = res.event?.registrationFee === 'Without Registration Fee' || res.event?.registrationFee === false || res.event?.registrationFee === 'no';
+    const basePath = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
 
     const htmlContent = `
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Rental Form - ${res.contact?.fullName || 'Client'}</title>
+            <meta charset="UTF-8">
+            <title>Rental Form - ${safeRef}</title>
+            <base href="${basePath}">
             <style>
-                @page { size: A4 portrait; margin: 8mm 10mm; }
-                * { box-sizing: border-box; }
-                body { 
-                    font-family: 'Times New Roman', Times, serif; 
-                    font-size: 10pt; 
-                    color: #000; 
-                    line-height: 1.25; 
-                    max-width: 800px; 
-                    margin: 0 auto; 
-                    background: #f8fafc;
+                @page { 
+                    size: A4 portrait; 
+                    margin: 6mm 8mm; 
                 }
-                #rental-form-doc {
+                * { 
+                    box-sizing: border-box; 
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                html, body { 
+                    font-family: 'Times New Roman', Times, serif; 
+                    font-size: 8.5pt; 
+                    color: #000; 
+                    line-height: 1.2; 
+                    margin: 0;
+                    padding: 0;
+                    background: #f1f5f9;
+                }
+                
+                /* Fullscreen Loading Screen */
+                #loading-screen {
+                    position: fixed;
+                    inset: 0;
                     background: #ffffff;
-                    padding: 24px 32px;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-                    border: 1px solid #e2e8f0;
-                    margin: 16px auto;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 99999;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                }
+                .spinner {
+                    width: 42px;
+                    height: 42px;
+                    border: 4px solid #e2e8f0;
+                    border-top-color: #1e3a8a;
+                    border-radius: 50%;
+                    animation: spin 0.8s linear infinite;
+                    margin-bottom: 14px;
+                }
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
+
+                /* Printable Form Document - Calibrated for EXACT 1 A4 Page */
+                #rental-form-doc {
+                    width: 190mm;
+                    max-width: 190mm;
+                    background: #ffffff;
+                    padding: 10px 14px;
+                    margin: 0 auto;
                 }
                 
                 /* HEADER */
-                .header { text-align: center; margin-bottom: 12px; position: relative; }
-                .header img { width: 68px; height: 68px; position: absolute; top: 0; }
-                .header img.left { left: 20px; }
-                .header img.right { right: 20px; }
-                .header h3 { margin: 0; font-size: 10pt; font-weight: normal; }
-                .header h2 { margin: 0; font-size: 12.5pt; font-weight: bold; }
-                .form-title { 
+                .doc-header { 
+                    position: relative; 
+                    text-align: center; 
+                    min-height: 54px; 
+                    margin-bottom: 2px; 
+                }
+                .doc-header .logo-left { 
+                    position: absolute; 
+                    left: 6px; 
+                    top: 0; 
+                    width: 50px; 
+                    height: 50px; 
+                    object-fit: contain; 
+                }
+                .doc-header .logo-right { 
+                    position: absolute; 
+                    right: 6px; 
+                    top: 0; 
+                    width: 50px; 
+                    height: 50px; 
+                    object-fit: contain; 
+                }
+                .doc-header h3 { 
+                    margin: 0; 
+                    font-size: 8.2pt; 
+                    font-weight: normal; 
+                    line-height: 1.15; 
+                }
+                .doc-header h2 { 
+                    margin: 1px 0; 
+                    font-size: 11pt; 
+                    font-weight: bold; 
+                    letter-spacing: 0.5px; 
+                    line-height: 1.15; 
+                }
+
+                /* TITLE */
+                .doc-title { 
                     text-align: center; 
                     font-weight: bold; 
+                    font-size: 10.5pt; 
+                    letter-spacing: 1px; 
                     border-top: 1.5px solid #000; 
                     border-bottom: 1.5px solid #000; 
-                    padding: 4px 0; 
-                    margin: 10px 0; 
-                    font-size: 12pt; 
-                    letter-spacing: 1px;
+                    padding: 2.5px 0; 
+                    margin: 4px 0 6px 0; 
                 }
                 
-                /* META TOP RIGHT */
-                .meta { text-align: right; font-size: 9.5pt; margin-bottom: 10px; }
-                .meta div { margin-bottom: 2px; }
-                
-                /* ADDRESS BLOCK */
-                .addressee { margin-bottom: 12px; font-weight: bold; font-size: 9.5pt; line-height: 1.3; }
-                
-                /* REQUEST INTRO WITH UNDERLINES & LABELS */
-                .request-intro { text-align: justify; margin-bottom: 10px; font-size: 10pt; }
-                .underline-field { display: inline-flex; flex-direction: column; vertical-align: top; text-align: center; margin: 0 4px; }
-                .underline-line { border-bottom: 1px solid #000; min-height: 16px; font-weight: bold; padding: 0 4px; line-height: 16px; }
-                .underline-sub { font-size: 7.5pt; font-weight: bold; font-style: italic; margin-top: 1px; }
+                /* TOP INFO & ADDRESSEE */
+                .top-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 6px;
+                    font-size: 8.5pt;
+                }
+                .top-table td {
+                    border: none;
+                    padding: 0;
+                    vertical-align: top;
+                }
 
-                /* SINGLE TABLE */
-                table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin-bottom: 6px; }
-                th, td { border: 1px solid #000; padding: 4px 6px; }
-                th { text-align: center; font-weight: bold; background: #f0f0f0; }
-                td.center { text-align: center; }
+                /* REQUEST INTRO TABLES */
+                .request-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 4px;
+                    font-size: 8.5pt;
+                }
+                .request-table td {
+                    border: none;
+                    padding: 0;
+                    vertical-align: top;
+                }
+
+                /* SINGLE TABLE FOR VENUE & EQUIPMENT */
+                .equip-table { 
+                    width: 100%; 
+                    border-collapse: collapse; 
+                    font-size: 8pt; 
+                    margin: 3px 0 5px 0; 
+                }
+                .equip-table th, .equip-table td { 
+                    border: 1px solid #000; 
+                    padding: 3px 6px; 
+                }
+                .equip-table th { 
+                    text-align: center; 
+                    font-weight: bold; 
+                    background: #f1f5f9; 
+                    height: 20px; 
+                }
+                .equip-table td.center { 
+                    text-align: center; 
+                }
                 
                 /* DETAILS */
-                .details-section { margin-top: 8px; font-size: 9.5pt; }
-                .detail-row { margin-bottom: 3px; display: flex; }
-                .detail-label { min-width: 140px; }
-                .detail-line { flex-grow: 1; border-bottom: 1px solid #000; padding-left: 8px; font-weight: bold; }
+                .details-table { 
+                    width: 100%; 
+                    border-collapse: collapse; 
+                    font-size: 8.5pt; 
+                    margin-top: 4px; 
+                }
+                .details-table td { 
+                    border: none; 
+                    padding: 1.5px 0; 
+                    vertical-align: top; 
+                }
+                .details-table td.label-col { 
+                    width: 136px; 
+                    white-space: nowrap; 
+                }
+                .details-table td.value-col { 
+                    border-bottom: 1px solid #000; 
+                    padding-left: 6px; 
+                    font-weight: bold; 
+                }
                 
                 /* CLOSING */
-                .closing { margin-top: 14px; text-align: right; font-size: 9.5pt; }
-                .closing-sig { margin-top: 24px; margin-right: 20px; font-weight: bold; border-top: 1px solid #000; display: inline-block; padding-top: 2px; text-align: center; min-width: 200px; }
+                .closing-section { 
+                    margin-top: 4px; 
+                    text-align: right; 
+                    font-size: 8.5pt; 
+                }
+                .closing-sig-wrapper { 
+                    margin-top: 12px; 
+                    display: inline-block; 
+                    text-align: center; 
+                    min-width: 200px; 
+                }
+                .closing-sig-line { 
+                    border-bottom: 1px solid #000; 
+                    font-weight: bold; 
+                    padding-bottom: 2px; 
+                    text-transform: uppercase; 
+                    font-size: 8.5pt; 
+                }
+                .closing-sig-sub { 
+                    font-size: 7pt; 
+                    margin-top: 1px; 
+                }
                 
-                /* APPROVAL BOX */
-                .approval-box { border: 1px solid #000; display: flex; margin-top: 14px; }
-                .app-col { flex: 1; border-right: 1px solid #000; padding: 4px 6px; font-size: 8.5pt; display: flex; flex-direction: column; justify-content: space-between; min-height: 75px; }
-                .app-col:last-child { border-right: none; }
-                .sig-center { text-align: center; margin-top: 24px; font-weight: bold; text-decoration: underline; }
-                .sig-title { text-align: center; font-size: 7.5pt; }
+                /* APPROVAL BOX - ALIGNED SIGNATURE ROWS */
+                .approval-table { 
+                    width: 100%; 
+                    border: 1px solid #000; 
+                    border-collapse: collapse; 
+                    font-size: 7.8pt; 
+                    margin-top: 6px; 
+                }
+                .approval-table td { 
+                    border: 1px solid #000; 
+                    padding: 3px 5px; 
+                }
                 
                 /* PROVISIONS */
-                .provisions { font-size: 7.5pt; margin-top: 8px; text-align: justify; line-height: 1.2; }
-                .provisions ol { padding-left: 18px; margin: 2px 0; }
-                .provisions li { margin-bottom: 1.5px; }
+                .provisions-block { 
+                    font-size: 6.6pt; 
+                    line-height: 1.15; 
+                    margin-top: 5px; 
+                    text-align: justify; 
+                }
+                .provisions-block ol { 
+                    padding-left: 14px; 
+                    margin: 1px 0; 
+                }
+                .provisions-block li { 
+                    margin-bottom: 1px; 
+                }
                 
                 @media print { 
                     body { background: #fff; margin: 0; padding: 0; }
-                    #rental-form-doc { border: none; box-shadow: none; padding: 0; margin: 0; }
-                    .no-print { display: none !important; } 
+                    #loading-screen { display: none !important; }
+                    #rental-form-doc { border: none; box-shadow: none; padding: 0; margin: 0; width: 100%; max-width: 100%; }
                 }
             </style>
         </head>
         <body>
-            
-            <!-- Sticky Top Action Bar (hidden when printing) -->
-            <div class="no-print" style="position: sticky; top: 0; background: #ffffff; border-bottom: 2px solid #cbd5e1; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; z-index: 10000; box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 13px; font-weight: bold; color: #0f172a;">Rental Form PDF:</span>
-                    <span id="pdf-status" style="font-size: 12px; color: #1d4ed8; background: #dbeafe; padding: 3px 10px; border-radius: 9999px; font-weight: 600;">Converting to PDF...</span>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                    <button id="btn-dl-pdf" onclick="saveAsPdf()" style="padding: 8px 18px; background-color: #1d4ed8; color: #ffffff; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
-                        Download PDF
-                    </button>
-                    <button onclick="window.print()" style="padding: 8px 18px; background-color: #334155; color: #ffffff; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/><path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/></svg>
-                        Print Form
-                    </button>
-                </div>
+            <!-- Loading Indicator shown while generating PDF -->
+            <div id="loading-screen">
+                <div class="spinner"></div>
+                <div style="font-size: 15px; font-weight: bold; color: #1e293b; margin-bottom: 4px;">Opening Rental Form PDF...</div>
+                <div style="font-size: 12px; color: #64748b;">Ref: ${safeRef}</div>
             </div>
 
-            <!-- Main Document Container -->
+            <!-- Single-Page Form Document -->
             <div id="rental-form-doc">
-                <div class="header">
-                    <img src="benguet.png" class="left" alt="Logo">
+                <div class="doc-header">
+                    <img src="benguet.png" class="logo-left" alt="Benguet Logo">
                     <h3>Republic of the Philippines</h3>
                     <h2>PROVINCE OF BENGUET</h2>
                     <h3>Capitol, La Trinidad</h3>
-                    <img src="bagong-pilipinas.png" class="right" alt="Logo" onerror="this.style.display='none'">
+                    <img src="bagong-pilipinas.png" class="logo-right" alt="Bagong Pilipinas Logo" onerror="this.style.display='none'">
                 </div>
 
-                <div class="form-title">RENTAL FORM</div>
+                <div class="doc-title">RENTAL FORM</div>
 
-                <div class="meta">
-                    <div>No.: <strong>${res.reference_number || '______________'}</strong></div>
-                    <div>Date: <u>${dateGen}</u></div>
-                </div>
+                <table class="top-table">
+                    <tr>
+                        <td style="width: 58%; line-height: 1.25; font-weight: bold;">
+                            HON. MELCHOR D. DICLAS<br>
+                            Province of Benguet<br>
+                            Capitol, La Trinidad, Benguet
+                        </td>
+                        <td style="width: 42%; text-align: right; line-height: 1.35;">
+                            <div>No.: <strong>${res.reference_number || '______________'}</strong></div>
+                            <div>Date: <span style="text-decoration: underline;">${dateGen}</span></div>
+                        </td>
+                    </tr>
+                </table>
 
-                <div class="addressee">
-                    HON. MELCHOR D. DICLAS<br>
-                    Province of Benguet<br>
-                    Capitol, La Trinidad, Benguet
-                </div>
+                <!-- Intro line 1: The [NAME] of [ADDRESS] -->
+                <table class="request-table">
+                    <tr>
+                        <td style="width: 28px; line-height: 18px; white-space: nowrap; padding-right: 4px;">The</td>
+                        <td style="width: 52%;">
+                            <div style="border-bottom: 1px solid #000; text-align: center; font-weight: bold; height: 18px; line-height: 18px; padding: 0 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+                                ${clientName || '&nbsp;'}
+                            </div>
+                            <div style="font-size: 6.8pt; font-weight: bold; font-style: italic; text-align: center; margin-top: 1px; line-height: 1;">
+                                (NAME OF THE ORGANIZATION / REQUESTING PARTY)
+                            </div>
+                        </td>
+                        <td style="width: 24px; line-height: 18px; text-align: center; white-space: nowrap; padding: 0 4px;">of</td>
+                        <td style="width: 44%;">
+                            <div style="border-bottom: 1px solid #000; text-align: center; font-weight: bold; height: 18px; line-height: 18px; padding: 0 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+                                ${clientAddress || '&nbsp;'}
+                            </div>
+                            <div style="font-size: 6.8pt; font-weight: bold; font-style: italic; text-align: center; margin-top: 1px; line-height: 1;">
+                                (ADDRESS/OFFICE)
+                            </div>
+                        </td>
+                    </tr>
+                </table>
 
-                <div class="request-intro">
-                    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 4px; row-gap: 8px;">
-                        <span style="white-space: nowrap;">The</span>
-                        <div class="underline-field" style="flex: 1; min-width: 250px;">
-                            <span class="underline-line">${res.contact?.fullName || ''}</span>
-                            <span class="underline-sub">(NAME OF THE ORGANIZATION / REQUESTING PARTY)</span>
-                        </div>
-                        <span style="white-space: nowrap;">of</span>
-                        <div class="underline-field" style="flex: 1; min-width: 210px;">
-                            <span class="underline-line">&nbsp;</span>
-                            <span class="underline-sub">(ADDRESS/OFFICE)</span>
-                        </div>
-                    </div>
-                    <div style="margin-top: 8px;">
-                        and with contact number <span style="border-bottom: 1px solid #000; font-weight: bold; padding: 0 8px; display: inline-block; min-width: 120px; text-align: center;">${res.contact?.contactNumber || ''}</span> respectfully request for the use of the:
-                    </div>
-                </div>
+                <!-- Intro line 2: and with contact number [CONTACT NUMBER] respectfully request for the use of the: -->
+                <table class="request-table" style="margin-bottom: 6px;">
+                    <tr>
+                        <td style="line-height: 18px; white-space: nowrap; padding-right: 4px; width: 140px;">
+                            and with contact number
+                        </td>
+                        <td style="width: 175px;">
+                            <div style="border-bottom: 1px solid #000; text-align: center; font-weight: bold; height: 18px; line-height: 18px; padding: 0 4px;">
+                                ${clientContact || '&nbsp;'}
+                            </div>
+                            <div style="font-size: 6.8pt; font-weight: bold; font-style: italic; text-align: center; margin-top: 1px; line-height: 1;">
+                                (CONTACT NUMBER)
+                            </div>
+                        </td>
+                        <td style="line-height: 18px; white-space: nowrap; padding-left: 8px;">
+                            respectfully request for the use of the:
+                        </td>
+                    </tr>
+                </table>
 
-                <div style="font-size: 10pt; font-weight: bold; margin-bottom: 3px; margin-top: 8px;">Equipment Requested:</div>
-                <table>
+                <!-- Facility & Equipment Table -->
+                <div style="font-size: 8.5pt; font-weight: bold; margin-bottom: 2px;">Equipment Requested:</div>
+                <table class="equip-table">
                     <thead>
                         <tr>
                             <th style="width: 58%;">FACILITY/EQUIPMENT</th>
@@ -887,66 +1063,81 @@ window.printReservation = function(id, event) {
                     <tbody>${rowsHtml}</tbody>
                 </table>
 
-                <div style="font-size: 9.5pt; font-weight: bold; margin-bottom: 8px;">
-                    NOTE: Plus PHP 3,000.00 security deposit.<br>
-                    <div style="display: flex; gap: 30px; margin-top: 4px; font-weight: normal;">
-                        <div style="display: flex; align-items: center; gap: 6px;">
+                <!-- Security Deposit & Registration Fee -->
+                <div style="font-size: 8pt; font-weight: bold; margin: 3px 0 5px 0;">
+                    NOTE: Plus PHP 3,000.00 security deposit.
+                    <div style="display: flex; gap: 20px; margin-top: 2px; font-weight: normal; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 4px;">
                             <span style="color: red; font-weight: bold;">**</span> 
-                            <span style="width: 13px; height: 13px; border: 1px solid #000; display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">${res.event?.registrationFee === 'With Registration Fee' ? '✓' : '&nbsp;'}</span> With Registration Fee
+                            <span style="width: 12px; height: 12px; border: 1px solid #000; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; line-height: 12px;">${isWithFee ? '✓' : '&nbsp;'}</span> With Registration Fee
                         </div>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <span style="width: 13px; height: 13px; border: 1px solid #000; display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">${res.event?.registrationFee === 'Without Registration Fee' ? '✓' : '&nbsp;'}</span> Without Registration Fee
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="width: 12px; height: 12px; border: 1px solid #000; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; line-height: 12px;">${isWithoutFee ? '✓' : '&nbsp;'}</span> Without Registration Fee
                         </div>
                     </div>
                 </div>
 
-                <div class="details-section">
-                    <div class="detail-row">
-                        <span class="detail-label">Inclusive date/s of use :</span>
-                        <span class="detail-line">${window.formatReservationDates(res.event?.dates)}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Inclusive time of use :</span>
-                        <span class="detail-line">${res.event?.startTime || ''} - ${res.event?.endTime || ''} ${hoursStr ? '(' + hoursStr + ')' : ''}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Purpose :</span>
-                        <span class="detail-line">${res.event?.eventType || ''}</span>
+                <!-- Event Details -->
+                <table class="details-table">
+                    <tr>
+                        <td class="label-col">Inclusive date/s of use :</td>
+                        <td class="value-col">${formattedDates}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Inclusive time of use :</td>
+                        <td class="value-col">${res.event?.startTime || ''} - ${res.event?.endTime || ''} ${hoursStr ? '(' + hoursStr + ')' : ''}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Purpose :</td>
+                        <td class="value-col">${res.event?.eventType || ''}</td>
+                    </tr>
+                </table>
+
+                <div style="margin-top: 4px; font-size: 8.5pt;">We shall appreciate your favorable action on this request.</div>
+
+                <!-- Closing -->
+                <div class="closing-section">
+                    <div>Very truly yours,</div>
+                    <div class="closing-sig-wrapper">
+                        <div class="closing-sig-line">${clientName.toUpperCase()}</div>
+                        <div class="closing-sig-sub">Signature over Printed Name and Date</div>
                     </div>
                 </div>
 
-                <div style="margin-top: 12px; font-size: 9.5pt;">We shall appreciate your favorable action on this request.</div>
-
-                <div class="closing">
-                    Very truly yours,<br><br>
-                    <div class="closing-sig">${(res.contact?.fullName || '').toUpperCase()}</div><br>
-                    <span style="font-size: 8.5pt; margin-right: 25px;">Signature over Printed Name and Date</span>
-                </div>
-
-                <div class="approval-box">
-                    <div class="app-col">
-                        <div>Venue Available:</div>
-                        <div class="sig-center">JENNIFER G. BAHOD</div>
-                        <div class="sig-title">Provincial General Services Officer</div>
-                    </div>
-                    <div class="app-col">
-                        <div>Approved by:</div>
-                        <div class="sig-center">MELCHOR D. DICLAS, M.D.</div>
-                        <div class="sig-title">Provincial Governor</div>
-                    </div>
-                    <div class="app-col">
-                        <div>
+                <!-- Approval Box (2 rows to ensure perfectly level signatures across columns) -->
+                <table class="approval-table">
+                    <tr>
+                        <td style="width: 33.33%; vertical-align: top; height: 36px; padding: 3px 5px;">
+                            Venue Available:
+                        </td>
+                        <td style="width: 33.33%; vertical-align: top; height: 36px; padding: 3px 5px;">
+                            Approved by:
+                        </td>
+                        <td style="width: 33.34%; vertical-align: top; height: 36px; padding: 3px 5px; line-height: 1.2;">
                             Payment: Rent _______ Security _______<br>
                             Amount: <u>₱${(res.pricing?.grandTotal || 0).toLocaleString()}</u><br>
                             OR No.: ____________
-                        </div>
-                        <div class="sig-center">______________________</div>
-                        <div class="sig-title">PTO Representative</div>
-                    </div>
-                </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="border-top: none; padding: 4px 2px 3px 2px; text-align: center; vertical-align: bottom;">
+                            <div style="font-weight: bold; text-decoration: underline; font-size: 8.2pt;">JENNIFER G. BAHOD</div>
+                            <div style="font-size: 6.8pt; margin-top: 1px;">Provincial General Services Officer</div>
+                        </td>
+                        <td style="border-top: none; padding: 4px 2px 3px 2px; text-align: center; vertical-align: bottom;">
+                            <div style="font-weight: bold; text-decoration: underline; font-size: 8.2pt;">MELCHOR D. DICLAS, M.D.</div>
+                            <div style="font-size: 6.8pt; margin-top: 1px;">Provincial Governor</div>
+                        </td>
+                        <td style="border-top: none; padding: 4px 2px 3px 2px; text-align: center; vertical-align: bottom;">
+                            <div style="font-weight: bold; text-decoration: underline; font-size: 8.2pt;">______________________</div>
+                            <div style="font-size: 6.8pt; margin-top: 1px;">PTO Representative</div>
+                        </td>
+                    </tr>
+                </table>
 
-                <div class="provisions">
-                    <strong>ADMINISTRATIVE PROVISIONS:</strong>
+                <!-- Administrative Provisions -->
+                <div class="provisions-block">
+                    <div style="font-weight: bold; font-size: 7pt; margin-bottom: 1px;">ADMINISTRATIVE PROVISIONS:</div>
                     <ol>
                         <li>The requesting party renting the facility shall provide adequate security to maintain peace and order. It shall maintain the cleanliness of the venue at all times.</li>
                         <li>Equipment and/or Facility must be clean after use.</li>
@@ -960,47 +1151,49 @@ window.printReservation = function(id, event) {
                         <li>In case of cancellation, inform the office one week prior. Otherwise, paid rent is non-refundable.</li>
                         <li>When water & electricity supply is not available due to uncontrollable/unforeseen circumstances, the Benguet Provincial Government is NOT responsible to supply water & electricity.</li>
                     </ol>
-                    <strong>I have read and understood the administrative provisions</strong>
+                    <div style="font-weight: bold; font-size: 6.8pt; margin-top: 2px; text-align: center;">
+                        I have read and understood the administrative provisions
+                    </div>
                 </div>
             </div>
 
-            <!-- PDF Generation Script -->
+            <!-- PDF Conversion Script: Opens directly in PDF viewer tab without downloading -->
             <script src="html2pdf.bundle.min.js"></script>
             <script>
-                function saveAsPdf() {
-                    const statusEl = document.getElementById('pdf-status');
-                    if (statusEl) {
-                        statusEl.innerText = "Generating PDF...";
-                        statusEl.style.color = "#ea580c";
-                        statusEl.style.background = "#fff7ed";
-                    }
-                    const opt = {
-                        margin: [6, 8, 6, 8],
-                        filename: 'Rental_Form_${safeRef}.pdf',
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2, useCORS: true, logging: false },
-                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                    };
-                    const target = document.getElementById('rental-form-doc');
-                    html2pdf().set(opt).from(target).save().then(() => {
-                        if (statusEl) {
-                            statusEl.innerText = "PDF Downloaded!";
-                            statusEl.style.color = "#16a34a";
-                            statusEl.style.background = "#f0fdf4";
-                        }
-                    }).catch(err => {
-                        console.error("PDF generation failed:", err);
-                        if (statusEl) {
-                            statusEl.innerText = "Ready to Print";
-                        }
-                    });
-                }
-
-                // Automatically convert straight to PDF after page render
                 window.addEventListener('load', () => {
                     setTimeout(() => {
-                        saveAsPdf();
-                    }, 400);
+                        const target = document.getElementById('rental-form-doc');
+                        const opt = {
+                            margin: [6, 8, 6, 8],
+                            filename: 'Rental_Form_${safeRef}.pdf',
+                            image: { type: 'jpeg', quality: 0.98 },
+                            html2canvas: { scale: 2, useCORS: true, logging: false },
+                            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                        };
+
+                        html2pdf().set(opt).from(target).toPdf().get('pdf').then((pdf) => {
+                            const blob = pdf.output('blob');
+                            const blobUrl = URL.createObjectURL(blob);
+                            
+                            // Navigate tab to PDF blob URL so it opens directly in browser's PDF viewer tab
+                            // and does NOT download to local disk
+                            try {
+                                window.location.replace(blobUrl);
+                            } catch (e) {
+                                document.body.innerHTML = '<iframe src="' + blobUrl + '" style="position:fixed;top:0;left:0;width:100vw;height:100vh;border:none;margin:0;padding:0;background:#525659;z-index:999999;"></iframe>';
+                            }
+                            // Safety fallback if top-level replace was ignored by browser
+                            setTimeout(() => {
+                                if (window.location.href.indexOf('blob:') === -1) {
+                                    document.body.innerHTML = '<iframe src="' + blobUrl + '" style="position:fixed;top:0;left:0;width:100vw;height:100vh;border:none;margin:0;padding:0;background:#525659;z-index:999999;"></iframe>';
+                                }
+                            }, 800);
+                        }).catch(err => {
+                            console.error("PDF generation failed:", err);
+                            const loader = document.getElementById('loading-screen');
+                            if (loader) loader.style.display = 'none';
+                        });
+                    }, 350);
                 });
             </script>
         </body>
