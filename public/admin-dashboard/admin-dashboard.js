@@ -695,9 +695,9 @@ window.printReservation = function(id, event) {
     // 1. Venue rented
     const venueName = res.event?.venue || 'Venue Facility';
     rowsHtml += `<tr>
-        <td style="padding: 3px 6px; font-weight: bold;">${venueName}</td>
-        <td class="center" style="padding: 3px 6px;">1</td>
-        <td class="center" style="padding: 3px 6px;">${hoursStr}</td>
+        <td style="padding: 5px 8px; font-weight: bold; font-size: 10.5pt;">${venueName}</td>
+        <td class="center" style="padding: 5px 8px; font-size: 10.5pt;">1</td>
+        <td class="center" style="padding: 5px 8px; font-size: 10.5pt;">${hoursStr}</td>
     </tr>`;
     rowCount++;
 
@@ -705,9 +705,9 @@ window.printReservation = function(id, event) {
     if (res.equipment && Array.isArray(res.equipment) && res.equipment.length > 0) {
         res.equipment.forEach(e => {
             rowsHtml += `<tr>
-                <td style="padding: 3px 6px;">${e.name}</td>
-                <td class="center" style="padding: 3px 6px;">${e.qty || 1}</td>
-                <td class="center" style="padding: 3px 6px;">${e.hours ? e.hours + ' hrs' : hoursStr}</td>
+                <td style="padding: 5px 8px; font-size: 10pt;">${e.name}</td>
+                <td class="center" style="padding: 5px 8px; font-size: 10pt;">${e.qty || 1}</td>
+                <td class="center" style="padding: 5px 8px; font-size: 10pt;">${e.hours ? e.hours + ' hrs' : hoursStr}</td>
             </tr>`;
             rowCount++;
         });
@@ -717,9 +717,9 @@ window.printReservation = function(id, event) {
     const minRows = 4;
     for(let i = rowCount; i < minRows; i++) {
         rowsHtml += `<tr>
-            <td style="padding: 3px 6px;">&nbsp;</td>
-            <td class="center" style="padding: 3px 6px;"></td>
-            <td class="center" style="padding: 3px 6px;"></td>
+            <td style="padding: 5px 8px;">&nbsp;</td>
+            <td class="center" style="padding: 5px 8px;"></td>
+            <td class="center" style="padding: 5px 8px;"></td>
         </tr>`;
     }
 
@@ -744,7 +744,7 @@ window.printReservation = function(id, event) {
             <style>
                 @page { 
                     size: A4 portrait; 
-                    margin: 6mm 8mm; 
+                    margin: 8mm 10mm; 
                 }
                 * { 
                     box-sizing: border-box; 
@@ -753,21 +753,21 @@ window.printReservation = function(id, event) {
                 }
                 html, body { 
                     font-family: 'Times New Roman', Times, serif; 
-                    font-size: 8.5pt; 
+                    font-size: 11pt; 
                     color: #000; 
-                    line-height: 1.2; 
+                    line-height: 1.35; 
                     margin: 0;
                     padding: 0;
                     background: #f1f5f9;
                 }
 
-                /* Printable Form Document - Calibrated for EXACT 1 A4 Page */
+                /* Printable Form Document - Calibrated to gracefully fill A4 Page */
                 #rental-form-doc {
-                    width: 190mm;
-                    max-width: 190mm;
+                    width: 195mm;
+                    max-width: 195mm;
                     background: #ffffff;
-                    padding: 10px 14px;
-                    margin: 14px auto;
+                    padding: 16px 20px;
+                    margin: 16px auto;
                     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
                     border: 1px solid #e2e8f0;
                 }
@@ -776,57 +776,57 @@ window.printReservation = function(id, event) {
                 .doc-header { 
                     position: relative; 
                     text-align: center; 
-                    min-height: 54px; 
-                    margin-bottom: 2px; 
+                    min-height: 68px; 
+                    margin-bottom: 4px; 
                 }
                 .doc-header .logo-left { 
                     position: absolute; 
-                    left: 6px; 
+                    left: 10px; 
                     top: 0; 
-                    width: 50px; 
-                    height: 50px; 
+                    width: 65px; 
+                    height: 65px; 
                     object-fit: contain; 
                 }
                 .doc-header .logo-right { 
                     position: absolute; 
-                    right: 6px; 
+                    right: 10px; 
                     top: 0; 
-                    width: 50px; 
-                    height: 50px; 
+                    width: 65px; 
+                    height: 65px; 
                     object-fit: contain; 
                 }
                 .doc-header h3 { 
                     margin: 0; 
-                    font-size: 8.2pt; 
+                    font-size: 10.5pt; 
                     font-weight: normal; 
-                    line-height: 1.15; 
+                    line-height: 1.25; 
                 }
                 .doc-header h2 { 
-                    margin: 1px 0; 
-                    font-size: 11pt; 
+                    margin: 2px 0; 
+                    font-size: 14.5pt; 
                     font-weight: bold; 
                     letter-spacing: 0.5px; 
-                    line-height: 1.15; 
+                    line-height: 1.25; 
                 }
 
                 /* TITLE */
                 .doc-title { 
                     text-align: center; 
                     font-weight: bold; 
-                    font-size: 10.5pt; 
-                    letter-spacing: 1px; 
-                    border-top: 1.5px solid #000; 
-                    border-bottom: 1.5px solid #000; 
-                    padding: 2.5px 0; 
-                    margin: 4px 0 6px 0; 
+                    font-size: 13.5pt; 
+                    letter-spacing: 2px; 
+                    border-top: 2px solid #000; 
+                    border-bottom: 2px solid #000; 
+                    padding: 4px 0; 
+                    margin: 8px 0 12px 0; 
                 }
                 
                 /* TOP INFO & ADDRESSEE */
                 .top-table {
                     width: 100%;
                     border-collapse: collapse;
-                    margin-bottom: 6px;
-                    font-size: 8.5pt;
+                    margin-bottom: 10px;
+                    font-size: 10.5pt;
                 }
                 .top-table td {
                     border: none;
@@ -838,8 +838,8 @@ window.printReservation = function(id, event) {
                 .request-table {
                     width: 100%;
                     border-collapse: collapse;
-                    margin-bottom: 4px;
-                    font-size: 8.5pt;
+                    margin-bottom: 6px;
+                    font-size: 11pt;
                 }
                 .request-table td {
                     border: none;
@@ -851,18 +851,19 @@ window.printReservation = function(id, event) {
                 .equip-table { 
                     width: 100%; 
                     border-collapse: collapse; 
-                    font-size: 8pt; 
-                    margin: 3px 0 5px 0; 
+                    font-size: 10pt; 
+                    margin: 4px 0 8px 0; 
                 }
                 .equip-table th, .equip-table td { 
                     border: 1px solid #000; 
-                    padding: 3px 6px; 
+                    padding: 5px 8px; 
                 }
                 .equip-table th { 
                     text-align: center; 
                     font-weight: bold; 
-                    background: #f1f5f9; 
-                    height: 20px; 
+                    background: #f8fafc; 
+                    height: 26px; 
+                    font-size: 10pt;
                 }
                 .equip-table td.center { 
                     text-align: center; 
@@ -872,74 +873,74 @@ window.printReservation = function(id, event) {
                 .details-table { 
                     width: 100%; 
                     border-collapse: collapse; 
-                    font-size: 8.5pt; 
-                    margin-top: 4px; 
+                    font-size: 10.5pt; 
+                    margin-top: 6px; 
                 }
                 .details-table td { 
                     border: none; 
-                    padding: 1.5px 0; 
+                    padding: 2.5px 0; 
                     vertical-align: top; 
                 }
                 .details-table td.label-col { 
-                    width: 136px; 
+                    width: 165px; 
                     white-space: nowrap; 
                 }
                 .details-table td.value-col { 
-                    border-bottom: 1px solid #000; 
-                    padding-left: 6px; 
+                    border-bottom: 1.5px solid #000; 
+                    padding-left: 8px; 
                     font-weight: bold; 
                 }
                 
                 /* CLOSING */
                 .closing-section { 
-                    margin-top: 4px; 
+                    margin-top: 8px; 
                     text-align: right; 
-                    font-size: 8.5pt; 
+                    font-size: 10.5pt; 
                 }
                 .closing-sig-wrapper { 
-                    margin-top: 12px; 
+                    margin-top: 18px; 
                     display: inline-block; 
                     text-align: center; 
-                    min-width: 200px; 
+                    min-width: 240px; 
                 }
                 .closing-sig-line { 
-                    border-bottom: 1px solid #000; 
+                    border-bottom: 1.5px solid #000; 
                     font-weight: bold; 
-                    padding-bottom: 2px; 
+                    padding-bottom: 3px; 
                     text-transform: uppercase; 
-                    font-size: 8.5pt; 
+                    font-size: 11pt; 
                 }
                 .closing-sig-sub { 
-                    font-size: 7pt; 
-                    margin-top: 1px; 
+                    font-size: 8.5pt; 
+                    margin-top: 2px; 
                 }
                 
                 /* APPROVAL BOX - ALIGNED SIGNATURE ROWS */
                 .approval-table { 
                     width: 100%; 
-                    border: 1px solid #000; 
+                    border: 1.5px solid #000; 
                     border-collapse: collapse; 
-                    font-size: 7.8pt; 
-                    margin-top: 6px; 
+                    font-size: 9.5pt; 
+                    margin-top: 10px; 
                 }
                 .approval-table td { 
                     border: 1px solid #000; 
-                    padding: 3px 5px; 
+                    padding: 4px 6px; 
                 }
                 
                 /* PROVISIONS */
                 .provisions-block { 
-                    font-size: 6.6pt; 
-                    line-height: 1.15; 
-                    margin-top: 5px; 
-                    text-align: justify; 
+                    font-size: 7.5pt; 
+                    line-height: 1.28; 
+                    margin-top: 8px; 
+                    text-align: left; 
                 }
                 .provisions-block ol { 
-                    padding-left: 14px; 
-                    margin: 1px 0; 
+                    padding-left: 18px; 
+                    margin: 2px 0; 
                 }
                 .provisions-block li { 
-                    margin-bottom: 1px; 
+                    margin-bottom: 1.5px; 
                 }
                 
                 @media print { 
@@ -985,12 +986,12 @@ window.printReservation = function(id, event) {
 
                 <table class="top-table">
                     <tr>
-                        <td style="width: 58%; line-height: 1.25; font-weight: bold;">
+                        <td style="width: 58%; line-height: 1.4; font-weight: bold; font-size: 10.5pt;">
                             HON. MELCHOR D. DICLAS<br>
                             Province of Benguet<br>
                             Capitol, La Trinidad, Benguet
                         </td>
-                        <td style="width: 42%; text-align: right; line-height: 1.35;">
+                        <td style="width: 42%; text-align: right; line-height: 1.5; font-size: 10.5pt;">
                             <div>No.: <strong>${res.reference_number || '______________'}</strong></div>
                             <div>Date: <span style="text-decoration: underline;">${dateGen}</span></div>
                         </td>
@@ -1000,21 +1001,21 @@ window.printReservation = function(id, event) {
                 <!-- Intro line 1: The [NAME] of [ADDRESS] -->
                 <table class="request-table">
                     <tr>
-                        <td style="width: 28px; line-height: 18px; white-space: nowrap; padding-right: 4px;">The</td>
+                        <td style="width: 32px; line-height: 22px; white-space: nowrap; padding-right: 6px;">The</td>
                         <td style="width: 52%;">
-                            <div style="border-bottom: 1px solid #000; text-align: center; font-weight: bold; height: 18px; line-height: 18px; padding: 0 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+                            <div style="border-bottom: 1.5px solid #000; text-align: center; font-weight: bold; height: 22px; line-height: 22px; padding: 0 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11pt;">
                                 ${clientName || '&nbsp;'}
                             </div>
-                            <div style="font-size: 6.8pt; font-weight: bold; font-style: italic; text-align: center; margin-top: 1px; line-height: 1;">
+                            <div style="font-size: 7.5pt; font-weight: bold; font-style: italic; text-align: center; margin-top: 2px; line-height: 1;">
                                 (NAME OF THE ORGANIZATION / REQUESTING PARTY)
                             </div>
                         </td>
-                        <td style="width: 24px; line-height: 18px; text-align: center; white-space: nowrap; padding: 0 4px;">of</td>
+                        <td style="width: 26px; line-height: 22px; text-align: center; white-space: nowrap; padding: 0 6px;">of</td>
                         <td style="width: 44%;">
-                            <div style="border-bottom: 1px solid #000; text-align: center; font-weight: bold; height: 18px; line-height: 18px; padding: 0 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+                            <div style="border-bottom: 1.5px solid #000; text-align: center; font-weight: bold; height: 22px; line-height: 22px; padding: 0 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11pt;">
                                 ${clientAddress || '&nbsp;'}
                             </div>
-                            <div style="font-size: 6.8pt; font-weight: bold; font-style: italic; text-align: center; margin-top: 1px; line-height: 1;">
+                            <div style="font-size: 7.5pt; font-weight: bold; font-style: italic; text-align: center; margin-top: 2px; line-height: 1;">
                                 (ADDRESS/OFFICE)
                             </div>
                         </td>
@@ -1022,27 +1023,27 @@ window.printReservation = function(id, event) {
                 </table>
 
                 <!-- Intro line 2: and with contact number [CONTACT NUMBER] respectfully request for the use of the: -->
-                <table class="request-table" style="margin-bottom: 6px;">
+                <table class="request-table" style="margin-bottom: 8px;">
                     <tr>
-                        <td style="line-height: 18px; white-space: nowrap; padding-right: 4px; width: 140px;">
+                        <td style="line-height: 22px; white-space: nowrap; padding-right: 6px; width: 165px;">
                             and with contact number
                         </td>
-                        <td style="width: 175px;">
-                            <div style="border-bottom: 1px solid #000; text-align: center; font-weight: bold; height: 18px; line-height: 18px; padding: 0 4px;">
+                        <td style="width: 190px;">
+                            <div style="border-bottom: 1.5px solid #000; text-align: center; font-weight: bold; height: 22px; line-height: 22px; padding: 0 4px; font-size: 11pt;">
                                 ${clientContact || '&nbsp;'}
                             </div>
-                            <div style="font-size: 6.8pt; font-weight: bold; font-style: italic; text-align: center; margin-top: 1px; line-height: 1;">
+                            <div style="font-size: 7.5pt; font-weight: bold; font-style: italic; text-align: center; margin-top: 2px; line-height: 1;">
                                 (CONTACT NUMBER)
                             </div>
                         </td>
-                        <td style="line-height: 18px; white-space: nowrap; padding-left: 8px;">
+                        <td style="line-height: 22px; white-space: nowrap; padding-left: 10px;">
                             respectfully request for the use of the:
                         </td>
                     </tr>
                 </table>
 
                 <!-- Facility & Equipment Table -->
-                <div style="font-size: 8.5pt; font-weight: bold; margin-bottom: 2px;">Equipment Requested:</div>
+                <div style="font-size: 10.5pt; font-weight: bold; margin-bottom: 4px; margin-top: 6px;">Equipment Requested:</div>
                 <table class="equip-table">
                     <thead>
                         <tr>
@@ -1055,15 +1056,15 @@ window.printReservation = function(id, event) {
                 </table>
 
                 <!-- Security Deposit & Registration Fee -->
-                <div style="font-size: 8pt; font-weight: bold; margin: 3px 0 5px 0;">
+                <div style="font-size: 10pt; font-weight: bold; margin: 6px 0 8px 0;">
                     NOTE: Plus PHP 3,000.00 security deposit.
-                    <div style="display: flex; gap: 20px; margin-top: 2px; font-weight: normal; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 4px;">
+                    <div style="display: flex; gap: 32px; margin-top: 4px; font-weight: normal; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
                             <span style="color: red; font-weight: bold;">**</span> 
-                            <span style="width: 12px; height: 12px; border: 1px solid #000; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; line-height: 12px;">${isWithFee ? '✓' : '&nbsp;'}</span> With Registration Fee
+                            <span style="width: 14px; height: 14px; border: 1.5px solid #000; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; line-height: 14px;">${isWithFee ? '✓' : '&nbsp;'}</span> With Registration Fee
                         </div>
-                        <div style="display: flex; align-items: center; gap: 4px;">
-                            <span style="width: 12px; height: 12px; border: 1px solid #000; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; line-height: 12px;">${isWithoutFee ? '✓' : '&nbsp;'}</span> Without Registration Fee
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="width: 14px; height: 14px; border: 1.5px solid #000; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; line-height: 14px;">${isWithoutFee ? '✓' : '&nbsp;'}</span> Without Registration Fee
                         </div>
                     </div>
                 </div>
@@ -1084,7 +1085,7 @@ window.printReservation = function(id, event) {
                     </tr>
                 </table>
 
-                <div style="margin-top: 4px; font-size: 8.5pt;">We shall appreciate your favorable action on this request.</div>
+                <div style="margin-top: 6px; font-size: 10.5pt;">We shall appreciate your favorable action on this request.</div>
 
                 <!-- Closing -->
                 <div class="closing-section">
@@ -1098,37 +1099,37 @@ window.printReservation = function(id, event) {
                 <!-- Approval Box (2 rows to ensure perfectly level signatures across columns) -->
                 <table class="approval-table">
                     <tr>
-                        <td style="width: 33.33%; vertical-align: top; height: 36px; padding: 3px 5px;">
+                        <td style="width: 33.33%; vertical-align: top; height: 44px; padding: 5px 6px;">
                             Venue Available:
                         </td>
-                        <td style="width: 33.33%; vertical-align: top; height: 36px; padding: 3px 5px;">
+                        <td style="width: 33.33%; vertical-align: top; height: 44px; padding: 5px 6px;">
                             Approved by:
                         </td>
-                        <td style="width: 33.34%; vertical-align: top; height: 36px; padding: 3px 5px; line-height: 1.2;">
+                        <td style="width: 33.34%; vertical-align: top; height: 44px; padding: 5px 6px; line-height: 1.35;">
                             Payment: Rent _______ Security _______<br>
                             Amount: <u>₱${(res.pricing?.grandTotal || 0).toLocaleString()}</u><br>
                             OR No.: ____________
                         </td>
                     </tr>
                     <tr>
-                        <td style="border-top: none; padding: 4px 2px 3px 2px; text-align: center; vertical-align: bottom;">
-                            <div style="font-weight: bold; text-decoration: underline; font-size: 8.2pt;">JENNIFER G. BAHOD</div>
-                            <div style="font-size: 6.8pt; margin-top: 1px;">Provincial General Services Officer</div>
+                        <td style="border-top: none; padding: 6px 4px 6px 4px; text-align: center; vertical-align: bottom;">
+                            <div style="font-weight: bold; text-decoration: underline; font-size: 9.5pt;">JENNIFER G. BAHOD</div>
+                            <div style="font-size: 8pt; margin-top: 2px;">Provincial General Services Officer</div>
                         </td>
-                        <td style="border-top: none; padding: 4px 2px 3px 2px; text-align: center; vertical-align: bottom;">
-                            <div style="font-weight: bold; text-decoration: underline; font-size: 8.2pt;">MELCHOR D. DICLAS, M.D.</div>
-                            <div style="font-size: 6.8pt; margin-top: 1px;">Provincial Governor</div>
+                        <td style="border-top: none; padding: 6px 4px 6px 4px; text-align: center; vertical-align: bottom;">
+                            <div style="font-weight: bold; text-decoration: underline; font-size: 9.5pt;">MELCHOR D. DICLAS, M.D.</div>
+                            <div style="font-size: 8pt; margin-top: 2px;">Provincial Governor</div>
                         </td>
-                        <td style="border-top: none; padding: 4px 2px 3px 2px; text-align: center; vertical-align: bottom;">
-                            <div style="font-weight: bold; text-decoration: underline; font-size: 8.2pt;">______________________</div>
-                            <div style="font-size: 6.8pt; margin-top: 1px;">PTO Representative</div>
+                        <td style="border-top: none; padding: 6px 4px 6px 4px; text-align: center; vertical-align: bottom;">
+                            <div style="font-weight: bold; text-decoration: underline; font-size: 9.5pt;">______________________</div>
+                            <div style="font-size: 8pt; margin-top: 2px;">PTO Representative</div>
                         </td>
                     </tr>
                 </table>
 
                 <!-- Administrative Provisions -->
                 <div class="provisions-block">
-                    <div style="font-weight: bold; font-size: 7pt; margin-bottom: 1px;">ADMINISTRATIVE PROVISIONS:</div>
+                    <div style="font-weight: bold; font-size: 8.5pt; margin-bottom: 2px;">ADMINISTRATIVE PROVISIONS:</div>
                     <ol>
                         <li>The requesting party renting the facility shall provide adequate security to maintain peace and order. It shall maintain the cleanliness of the venue at all times.</li>
                         <li>Equipment and/or Facility must be clean after use.</li>
@@ -1142,8 +1143,8 @@ window.printReservation = function(id, event) {
                         <li>In case of cancellation, inform the office one week prior. Otherwise, paid rent is non-refundable.</li>
                         <li>When water & electricity supply is not available due to uncontrollable/unforeseen circumstances, the Benguet Provincial Government is NOT responsible to supply water & electricity.</li>
                     </ol>
-                    <div style="text-align: right; margin-top: 8px; padding-right: 4px;">
-                        <span style="font-weight: bold; font-size: 7.2pt; border-bottom: 1px solid #000; padding-bottom: 1.5px; display: inline-block;">
+                    <div style="text-align: right; margin-top: 10px; padding-right: 6px;">
+                        <span style="font-weight: bold; font-size: 8.5pt; border-bottom: 1.5px solid #000; padding-bottom: 2px; display: inline-block;">
                             <u>I have read and understood the administrative provisions</u>
                         </span>
                     </div>
