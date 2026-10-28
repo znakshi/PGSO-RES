@@ -760,31 +760,6 @@ window.printReservation = function(id, event) {
                     padding: 0;
                     background: #f1f5f9;
                 }
-                
-                /* Fullscreen Loading Screen */
-                #loading-screen {
-                    position: fixed;
-                    inset: 0;
-                    background: #ffffff;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 99999;
-                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                }
-                .spinner {
-                    width: 42px;
-                    height: 42px;
-                    border: 4px solid #e2e8f0;
-                    border-top-color: #1e3a8a;
-                    border-radius: 50%;
-                    animation: spin 0.8s linear infinite;
-                    margin-bottom: 14px;
-                }
-                @keyframes spin {
-                    to { transform: rotate(360deg); }
-                }
 
                 /* Printable Form Document - Calibrated for EXACT 1 A4 Page */
                 #rental-form-doc {
@@ -792,7 +767,9 @@ window.printReservation = function(id, event) {
                     max-width: 190mm;
                     background: #ffffff;
                     padding: 10px 14px;
-                    margin: 0 auto;
+                    margin: 14px auto;
+                    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+                    border: 1px solid #e2e8f0;
                 }
                 
                 /* HEADER */
@@ -967,17 +944,31 @@ window.printReservation = function(id, event) {
                 
                 @media print { 
                     body { background: #fff; margin: 0; padding: 0; }
-                    #loading-screen { display: none !important; }
+                    .no-print { display: none !important; }
                     #rental-form-doc { border: none; box-shadow: none; padding: 0; margin: 0; width: 100%; max-width: 100%; }
                 }
             </style>
         </head>
         <body>
-            <!-- Loading Indicator shown while generating PDF -->
-            <div id="loading-screen">
-                <div class="spinner"></div>
-                <div style="font-size: 15px; font-weight: bold; color: #1e293b; margin-bottom: 4px;">Opening Rental Form PDF...</div>
-                <div style="font-size: 12px; color: #64748b;">Ref: ${safeRef}</div>
+            <!-- Action Toolbar (hidden when printing) -->
+            <div class="no-print" style="position: sticky; top: 0; background: #ffffff; border-bottom: 2px solid #cbd5e1; padding: 10px 24px; display: flex; align-items: center; justify-content: space-between; z-index: 10000; box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 14px; font-weight: bold; color: #0f172a;">Rental Form:</span>
+                    <span style="font-size: 12px; color: #1e40af; background: #dbeafe; padding: 3px 10px; border-radius: 9999px; font-weight: 600;">${safeRef}</span>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="window.print()" style="padding: 8px 20px; background-color: #1e3a8a; color: #ffffff; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.12);">
+                        <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16"><path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/><path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/></svg>
+                        Print Form
+                    </button>
+                    <button id="btn-dl-pdf" onclick="saveAsPdf()" style="padding: 8px 18px; background-color: #475569; color: #ffffff; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                        Download PDF
+                    </button>
+                    <button onclick="window.close()" style="padding: 8px 16px; background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer;">
+                        Close
+                    </button>
+                </div>
             </div>
 
             <!-- Single-Page Form Document -->
@@ -1151,50 +1142,47 @@ window.printReservation = function(id, event) {
                         <li>In case of cancellation, inform the office one week prior. Otherwise, paid rent is non-refundable.</li>
                         <li>When water & electricity supply is not available due to uncontrollable/unforeseen circumstances, the Benguet Provincial Government is NOT responsible to supply water & electricity.</li>
                     </ol>
-                    <div style="font-weight: bold; font-size: 6.8pt; margin-top: 2px; text-align: center;">
-                        I have read and understood the administrative provisions
+                    <div style="text-align: right; margin-top: 8px; padding-right: 4px;">
+                        <span style="font-weight: bold; font-size: 7.2pt; border-bottom: 1px solid #000; padding-bottom: 1.5px; display: inline-block;">
+                            <u>I have read and understood the administrative provisions</u>
+                        </span>
                     </div>
                 </div>
             </div>
 
-            <!-- PDF Conversion Script: Opens directly in PDF viewer tab without downloading -->
+            <!-- PDF Script (Only downloads if user clicks the Download PDF button) -->
             <script src="html2pdf.bundle.min.js"></script>
             <script>
-                window.addEventListener('load', () => {
-                    setTimeout(() => {
-                        const target = document.getElementById('rental-form-doc');
-                        const opt = {
-                            margin: [6, 8, 6, 8],
-                            filename: 'Rental_Form_${safeRef}.pdf',
-                            image: { type: 'jpeg', quality: 0.98 },
-                            html2canvas: { scale: 2, useCORS: true, logging: false },
-                            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                        };
-
-                        html2pdf().set(opt).from(target).toPdf().get('pdf').then((pdf) => {
-                            const blob = pdf.output('blob');
-                            const blobUrl = URL.createObjectURL(blob);
-                            
-                            // Navigate tab to PDF blob URL so it opens directly in browser's PDF viewer tab
-                            // and does NOT download to local disk
-                            try {
-                                window.location.replace(blobUrl);
-                            } catch (e) {
-                                document.body.innerHTML = '<iframe src="' + blobUrl + '" style="position:fixed;top:0;left:0;width:100vw;height:100vh;border:none;margin:0;padding:0;background:#525659;z-index:999999;"></iframe>';
-                            }
-                            // Safety fallback if top-level replace was ignored by browser
+                function saveAsPdf() {
+                    const btn = document.getElementById('btn-dl-pdf');
+                    if (btn) {
+                        btn.innerText = "Generating PDF...";
+                        btn.disabled = true;
+                    }
+                    const opt = {
+                        margin: [6, 8, 6, 8],
+                        filename: 'Rental_Form_${safeRef}.pdf',
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true, logging: false },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+                    const target = document.getElementById('rental-form-doc');
+                    html2pdf().set(opt).from(target).save().then(() => {
+                        if (btn) {
+                            btn.innerHTML = `<svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg> Downloaded!`;
                             setTimeout(() => {
-                                if (window.location.href.indexOf('blob:') === -1) {
-                                    document.body.innerHTML = '<iframe src="' + blobUrl + '" style="position:fixed;top:0;left:0;width:100vw;height:100vh;border:none;margin:0;padding:0;background:#525659;z-index:999999;"></iframe>';
-                                }
-                            }, 800);
-                        }).catch(err => {
-                            console.error("PDF generation failed:", err);
-                            const loader = document.getElementById('loading-screen');
-                            if (loader) loader.style.display = 'none';
-                        });
-                    }, 350);
-                });
+                                btn.innerHTML = `<svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg> Download PDF`;
+                                btn.disabled = false;
+                            }, 2000);
+                        }
+                    }).catch(err => {
+                        console.error("PDF generation failed:", err);
+                        if (btn) {
+                            btn.innerText = "Download PDF";
+                            btn.disabled = false;
+                        }
+                    });
+                }
             </script>
         </body>
         </html>
