@@ -7,16 +7,55 @@
         
         /* Calendar Specifics */
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; text-align: center; }
-        .cal-cell { height: 40px; width: 40px; display: flex; align-items: center; justify-content: center; margin: 0 auto; border-radius: 50%; cursor: pointer; transition: all 0.2s; position: relative; }
+        .cal-cell { 
+            height: 40px; 
+            width: 40px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            margin: 0 auto; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            position: relative; 
+        }
         .cal-cell:hover:not(.empty) { background-color: #f3f4f6; }
         
-        .has-event::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; }
-        .status-pending::after { background-color: #eab308; } 
-        .status-confirmed::after { background-color: #22c55e; } 
-        .status-declined::after { background-color: #ef4444; } 
-        .status-blocked::after { background-color: #64748b; } 
+        .cal-day-num {
+            font-size: 0.95rem;
+            line-height: 1;
+        }
+
+        /* Event status dot indicators */
+        .cal-dots {
+            position: absolute;
+            bottom: 3.5px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2.5px;
+            pointer-events: none;
+            z-index: 2;
+            white-space: nowrap;
+        }
+
+        .cal-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.15);
+        }
+
+        .cal-dot-pending { background-color: #eab308; } 
+        .cal-dot-confirmed { background-color: #22c55e; } 
+        .cal-dot-cancelled { background-color: #ef4444; } 
+        .cal-dot-blocked { background-color: #64748b; } 
         
         .cal-selected { background-color: #3c5473 !important; color: white !important; font-weight: bold; }
+        .cal-selected .cal-day-num { color: white !important; font-weight: 700; }
         .cal-today { border: 2px solid #3c5473; }
         
         .modal-input { background-color: #f9fafb; border: 1px solid #e5e7eb; outline: none; transition: border 0.2s; }

@@ -1435,17 +1435,57 @@ window.printReservation = function(id, event) {
             for(let i=1; i<=daysInMonth; i++) {
                 const cell = document.createElement('div');
                 cell.className = "cal-cell";
-                cell.innerText = i;
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-                const events = reservations.filter(r => r.event.dates && r.event.dates.includes(dateStr));
-                if(events.length > 0) {
-                    cell.classList.add('has-event');
-                    if (events.every(e => e.event.eventType && e.event.eventType.startsWith('Blocked:'))) {
-                        cell.classList.add('status-blocked'); // use slate/gray style for blocked
+                cell.dataset.date = dateStr;
+                cell.innerHTML = `<span class="cal-day-num select-none">${i}</span>`;
+
+                if (window.currentSelectedDateStr === dateStr) {
+                    cell.classList.add('cal-selected');
+                }
+
+                const events = reservations.filter(r => {
+                    if (!r.event?.dates) return false;
+                    const datesArr = r.event.dates.split(',').map(d => d.trim()).filter(Boolean);
+                    return datesArr.includes(dateStr);
+                });
+
+                if (events.length > 0) {
+                    const hasConfirmed = events.some(e => (!e.event?.eventType || !e.event.eventType.startsWith('Blocked:')) && (e.status === 'confirmed' || e.status === 'approved' || e.status === 'accepted'));
+                    const hasPending = events.some(e => (!e.event?.eventType || !e.event.eventType.startsWith('Blocked:')) && e.status === 'pending');
+                    const hasCancelled = events.some(e => (!e.event?.eventType || !e.event.eventType.startsWith('Blocked:')) && (e.status === 'cancelled' || e.status === 'declined' || e.status === 'rejected'));
+                    const hasBlocked = events.some(e => e.event?.eventType && e.event.eventType.startsWith('Blocked:'));
+
+                    const dotsContainer = document.createElement('div');
+                    dotsContainer.className = "cal-dots";
+
+                    if (hasConfirmed) {
+                        const dot = document.createElement('span');
+                        dot.className = "cal-dot cal-dot-confirmed";
+                        dot.title = "Confirmed";
+                        dotsContainer.appendChild(dot);
                     }
-                    else if(events.some(e => e.status === 'declined')) cell.classList.add('status-declined');
-                    else if(events.some(e => e.status === 'pending')) cell.classList.add('status-pending');
-                    else cell.classList.add('status-confirmed');
+                    if (hasPending) {
+                        const dot = document.createElement('span');
+                        dot.className = "cal-dot cal-dot-pending";
+                        dot.title = "Pending";
+                        dotsContainer.appendChild(dot);
+                    }
+                    if (hasCancelled) {
+                        const dot = document.createElement('span');
+                        dot.className = "cal-dot cal-dot-cancelled";
+                        dot.title = "Cancelled";
+                        dotsContainer.appendChild(dot);
+                    }
+                    if (hasBlocked) {
+                        const dot = document.createElement('span');
+                        dot.className = "cal-dot cal-dot-blocked";
+                        dot.title = "Blocked";
+                        dotsContainer.appendChild(dot);
+                    }
+
+                    if (dotsContainer.children.length > 0) {
+                        cell.appendChild(dotsContainer);
+                    }
                 }
                 if (window.isBlockingMode && window.blockingSelectedDates && window.blockingSelectedDates.includes(dateStr)) {
                     cell.classList.add('bg-slate-600', 'text-white');
@@ -1480,7 +1520,11 @@ window.printReservation = function(id, event) {
             const displayDate = new Date(dateStr);
             if (!isNaN(displayDate)) { document.getElementById('selected-date-display').innerText = displayDate.toLocaleDateString('en-US', {weekday:'short', month:'long', day:'numeric'}); }
             list.innerHTML = "";
-            const matches = reservations.filter(r => r.event.dates && r.event.dates.includes(dateStr));
+            const matches = reservations.filter(r => {
+                if (!r.event?.dates) return false;
+                const datesArr = r.event.dates.split(',').map(d => d.trim()).filter(Boolean);
+                return datesArr.includes(dateStr);
+            });
             if(matches.length === 0) { list.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-gray-400"><p>No reservations.</p></div>`; return; }
             matches.forEach(res => {
                 const card = document.createElement('div');
