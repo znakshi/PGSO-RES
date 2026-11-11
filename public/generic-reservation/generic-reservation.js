@@ -690,6 +690,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (!nameInput.value && session.user.user_metadata?.full_name) {
                 nameInput.value = session.user.user_metadata.full_name;
             }
+            if (!contactInput.value && session.user.user_metadata?.contact_number) {
+                const rawContact = session.user.user_metadata.contact_number;
+                contactInput.value = rawContact.startsWith('09') ? rawContact.substring(2) : rawContact;
+            }
 
             const sidebar = document.getElementById('profile-sidebar');
             const backdrop = document.getElementById('sidebar-backdrop');
