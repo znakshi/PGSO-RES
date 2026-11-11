@@ -1573,7 +1573,7 @@ window.printReservation = function(id, event) {
                 lastAllReservationsVenueFilter = venueFilter;
             }
             
-            let filtered = reservations.filter(r => r.status === 'pending' || r.status === 'confirmed' || r.status === 'declined');
+            let filtered = reservations.filter(r => r.status === 'pending' || r.status === 'confirmed' || r.status === 'declined' || r.status === 'cancelled');
             
             if (venueFilter !== 'all') {
                 filtered = filtered.filter(r => r.event && r.event.venue === venueFilter);
@@ -1582,6 +1582,8 @@ window.printReservation = function(id, event) {
             if (filter !== 'all') {
                 if (filter === 'blocked') {
                     filtered = filtered.filter(r => r.event && r.event.eventType && r.event.eventType.startsWith('Blocked:'));
+                } else if (filter === 'declined' || filter === 'cancelled') {
+                    filtered = filtered.filter(r => (r.status === 'declined' || r.status === 'cancelled' || r.status === 'rejected') && !(r.event && r.event.eventType && r.event.eventType.startsWith('Blocked:')));
                 } else {
                     filtered = filtered.filter(r => r.status === filter && !(r.event && r.event.eventType && r.event.eventType.startsWith('Blocked:')));
                 }
@@ -1645,7 +1647,7 @@ window.printReservation = function(id, event) {
                 actionsStr += `</div>`;
 
                 let reasonHtml = '';
-                if(res.status === 'cancelled' && res.notes) {
+                if((res.status === 'cancelled' || res.status === 'declined') && res.notes) {
                     reasonHtml = `<div class="mt-2 text-[10px] text-red-600 leading-tight bg-red-50 p-1.5 rounded border border-red-100 text-left"><strong class="uppercase text-[8px] tracking-wider text-red-500 mb-0.5 block">Reason</strong>${res.notes}</div>`;
                 }
 
