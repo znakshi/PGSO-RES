@@ -75,6 +75,18 @@ document.addEventListener('DOMContentLoaded', async function () {
             document.getElementById('venue-category-badge').innerText = venueDetails.category;
             depositDisplay.innerText = `₱${parseFloat(venueDetails.security_deposit || 3000).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
             
+            // Equipment Inventory badge (required asterisk for standalone equipment, optional for venues)
+            const equipBadge = document.getElementById('equipment-optional-badge');
+            if (equipBadge) {
+                if (targetVenueName === 'Equipment Only') {
+                    equipBadge.className = 'required-star';
+                    equipBadge.textContent = '*';
+                } else {
+                    equipBadge.className = 'text-[10px] text-slate-400 lowercase normal-case';
+                    equipBadge.textContent = '(Optional)';
+                }
+            }
+
             if (venueDetails.has_registration_fee) {
                 document.getElementById('registration-fee-container').classList.remove('hidden');
             }
@@ -566,19 +578,26 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (cb && cb.checked) {
                 const price = parseFloat(row.dataset.price);
                 const qty = parseInt(qtyInput.value) || 0;
-                const days = calc.totalDays || 1;
-                let sub = row.dataset.unit.includes('hour') ? price * qty * (Math.ceil(calc.hoursDuration) || 1) * days : price * qty * days;
-                
-                equipmentList.push({
-                    id: row.dataset.id,
-                    name: row.dataset.name,
-                    unit: row.dataset.unit,
-                    qty: qty,
-                    price: price,
-                    subtotal: sub
-                });
+                if (qty > 0) {
+                    const days = calc.totalDays || 1;
+                    let sub = row.dataset.unit.includes('hour') ? price * qty * (Math.ceil(calc.hoursDuration) || 1) * days : price * qty * days;
+                    
+                    equipmentList.push({
+                        id: row.dataset.id,
+                        name: row.dataset.name,
+                        unit: row.dataset.unit,
+                        qty: qty,
+                        price: price,
+                        subtotal: sub
+                    });
+                }
             }
         });
+
+        if (targetVenueName === 'Equipment Only' && equipmentList.length === 0) {
+            alert("Please select at least one equipment item to reserve.");
+            return;
+        }
 
         const contactNoBase = contactInput.value.trim();
         const fullContactNo = "09" + contactNoBase;
@@ -659,14 +678,115 @@ document.addEventListener('DOMContentLoaded', async function () {
         calculateTotal();
     }
 
-    // Initialize Page
-    await loadVenueDetails();
+    // --- 11. PROFILE SIDEBAR & CLIENT AUTH SETUP ---
+    async function setupProfileSidebar() {
+        const authContainer = document.getElementById('auth-container');
+        const { data: { session } } = await supabase.auth.getSession();
 
-    // Pull client email if logged in
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session && session.user && session.user.email) {
-        if (!emailInput.value) {
-            emailInput.value = session.user.email;
+        if (session && session.user) {
+            if (!emailInput.value && session.user.email) {
+                emailInput.value = session.user.email;
+            }
+            if (!nameInput.value && session.user.user_metadata?.full_name) {
+                nameInput.value = session.user.user_metadata.full_name;
+            }
+
+            const sidebar = document.getElementById('profile-sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const closeBtn = document.getElementById('close-sidebar');
+            const logoutBtn = document.getElementById('sidebar-logout');
+
+            const fullName = session.user.user_metadata?.full_name || "Client";
+            const initial = fullName.charAt(0).toUpperCase();
+            const currentAvatar = session.user.user_metadata?.avatar_url;
+
+            let authBtnContent = currentAvatar
+                ? `<div class="w-full h-full rounded-full bg-cover bg-center" style="background-image: url(${currentAvatar})"></div>`
+                : initial;
+
+            if (authContainer) {
+                authContainer.innerHTML = `
+                    <button id="open-sidebar-btn" type="button" class="w-10 h-10 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold text-lg hover:bg-blue-800 transition shadow-md border-2 border-white cursor-pointer relative group overflow-hidden">
+                        ${authBtnContent}
+                        <span class="absolute right-0 top-12 w-max bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Profile</span>
+                    </button>
+                `;
+            }
+
+            const sidebarName = document.getElementById('sidebar-name');
+            if (sidebarName) sidebarName.innerText = fullName;
+
+            const sidebarEmail = document.getElementById('sidebar-email');
+            if (sidebarEmail) sidebarEmail.innerText = session.user.email;
+
+            const sidebarAvatar = document.getElementById('sidebar-avatar');
+            if (sidebarAvatar) {
+                if (currentAvatar) {
+                    sidebarAvatar.innerHTML = '';
+                    sidebarAvatar.style.backgroundImage = `url(${currentAvatar})`;
+                    sidebarAvatar.style.backgroundSize = 'cover';
+                    sidebarAvatar.style.backgroundPosition = 'center';
+                } else {
+                    sidebarAvatar.innerHTML = `<span class="font-bold font-sans">${initial}</span>`;
+                }
+            }
+
+            const toggleSidebar = (show) => {
+                if (show) {
+                    if (backdrop) {
+                        backdrop.classList.remove('hidden');
+                        void backdrop.offsetWidth;
+                        backdrop.classList.remove('opacity-0');
+                    }
+                    if (sidebar) sidebar.classList.remove('translate-x-full');
+                } else {
+                    if (backdrop) {
+                        backdrop.classList.add('opacity-0');
+                        setTimeout(() => backdrop.classList.add('hidden'), 300);
+                    }
+                    if (sidebar) sidebar.classList.add('translate-x-full');
+                }
+            };
+
+            const openSidebarBtn = document.getElementById('open-sidebar-btn');
+            if (openSidebarBtn) openSidebarBtn.addEventListener('click', () => toggleSidebar(true));
+            if (closeBtn) closeBtn.addEventListener('click', () => toggleSidebar(false));
+            if (backdrop) backdrop.addEventListener('click', () => toggleSidebar(false));
+
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    logoutBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Logging out...';
+                    await supabase.auth.signOut();
+                    window.location.replace('../index.html');
+                });
+            }
+        } else {
+            if (authContainer) {
+                authContainer.innerHTML = `
+                    <button type="button" class="open-client-login bg-transparent border-2 border-blue-700 text-blue-700 hover:bg-blue-700 hover:text-white font-bold py-1.5 sm:py-2 px-4 sm:px-6 rounded-sm text-[11px] sm:text-[13px] uppercase tracking-widest transition-colors w-full h-full">
+                        <span id="user-display">Client Login</span>
+                    </button>
+                `;
+            }
         }
     }
+
+    document.addEventListener('click', (e) => {
+        const loginBtn = e.target.closest('.open-client-login');
+        if (loginBtn) {
+            const modal = document.getElementById('client-login-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                void modal.offsetWidth;
+                modal.classList.remove('opacity-0');
+            }
+        }
+    });
+
+    // Initialize Page
+    await Promise.all([
+        loadVenueDetails(),
+        setupProfileSidebar()
+    ]);
 });
