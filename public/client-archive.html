@@ -296,7 +296,7 @@
                     const myReservations = allRes.filter(r => {
                         const isUser = r.contact && r.contact.email && r.contact.email.toLowerCase() === userEmail;
                         const status = r.status ? r.status.toLowerCase() : '';
-                        return isUser && (status === 'cancelled' || status === 'declined' || status === 'rejected');
+                        return isUser && (r.is_archived || status === 'cancelled' || status === 'declined' || status === 'rejected');
                     });
 
                     document.getElementById('loading-spinner').classList.add('hidden');
@@ -312,7 +312,7 @@
                         
                         myReservations.forEach(res => {
                             const isPending = res.status.toLowerCase() === 'pending';
-                            const isApproved = res.status.toLowerCase() === 'approved' || res.status.toLowerCase() === 'accepted';
+                            const isApproved = res.status.toLowerCase() === 'confirmed' || res.status.toLowerCase() === 'approved' || res.status.toLowerCase() === 'accepted';
                             const isCancelled = res.status.toLowerCase() === 'cancelled' || res.status.toLowerCase() === 'declined' || res.status.toLowerCase() === 'rejected';
                             
                             let statusColor = "bg-yellow-100 text-yellow-800 border-yellow-200";
@@ -347,20 +347,19 @@
                                         <p><i class="fa-solid fa-peso-sign w-5 text-gray-400"></i> <strong class="text-slate-700">Total:</strong> ${grandTotal}</p>
                                     </div>
                                 </div>
-                                <div class="flex md:flex-col gap-3 w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-gray-100 md:pl-6 justify-center">
-                                    <p class="text-[11px] text-slate-400 text-center max-w-[120px] font-bold uppercase tracking-widest leading-relaxed">Archived Record</p>
+                                <div class="flex md:flex-col gap-3 w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-gray-100 md:pl-6 justify-center items-center">
+                                    <button class="view-btn w-full justify-center bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition" data-id="${res.id}">
+                                        <i class="fa-solid fa-eye"></i> View
+                                    </button>
+                                    <p class="text-[11px] text-slate-400 text-center font-bold uppercase tracking-wider leading-relaxed flex items-center gap-1">
+                                        <i class="fa-solid fa-box-archive text-slate-400"></i> Archived
+                                    </p>
                                 </div>
                             `;
                             container.appendChild(card);
                             
-                            // Attach Event Listeners if pending
-                            if (isPending) {
-                                const editBtn = card.querySelector('.edit-btn');
-                                const cancelBtn = card.querySelector('.cancel-btn');
-                                
-                                editBtn.addEventListener('click', () => handleEdit(res));
-                                cancelBtn.addEventListener('click', () => handleCancel(res.id));
-                            }
+                            const viewBtn = card.querySelector('.view-btn');
+                            if(viewBtn) viewBtn.addEventListener('click', () => handleView(res));
                         });
                     }
                 } catch (err) {
@@ -369,16 +368,64 @@
                 }
             };
 
+            const handleView = (res) => {
+                const existing = document.getElementById('view-modal');
+                if(existing) existing.remove();
+
+                const grandTotal = formatCurrency(res.pricing?.grandTotal || 0);
+                let equipText = "None";
+                if(res.equipment && res.equipment.length > 0) {
+                    equipText = res.equipment.map(e => `${e.qty}x ${e.name}`).join('<br>');
+                }
+
+                const modalHTML = `
+                <div id="view-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 p-2 sm:p-4">
+                    <div class="bg-white rounded-2xl shadow-2xl flex flex-col w-full max-w-lg max-h-[90vh] overflow-hidden transform transition-transform duration-300">
+                        <div class="bg-blue-700 text-white p-4 sm:p-6 flex justify-between items-center">
+                            <h2 class="text-lg sm:text-xl font-bold tracking-wide">Reservation Details</h2>
+                            <button id="btn-close-view" class="text-white/80 hover:text-white transition p-1"><i class="fa-solid fa-xmark text-xl"></i></button>
+                        </div>
+                        <div class="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-80px)] space-y-4">
+                            <div>
+                                <h3 class="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1 flex items-center gap-2"><i class="fa-solid fa-location-dot text-blue-500"></i> Event</h3>
+                                <p class="text-slate-800 text-sm mb-1"><span class="font-bold text-slate-600">Venue:</span> ${res.event?.venue}</p>
+                                <p class="text-slate-800 text-sm mb-1"><span class="font-bold text-slate-600">Type:</span> ${res.event?.eventType}</p>
+                                <p class="text-slate-800 text-sm mb-1"><span class="font-bold text-slate-600">Date(s):</span> ${formatReservationDates(res.event?.dates)}</p>
+                                <p class="text-slate-800 text-sm mb-1"><span class="font-bold text-slate-600">Time:</span> ${res.event?.startTime} - ${res.event?.endTime}</p>
+                            </div>
+                            <div>
+                                <h3 class="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1 flex items-center gap-2"><i class="fa-solid fa-user text-blue-500"></i> Contact</h3>
+                                <p class="text-slate-800 text-sm mb-1"><span class="font-bold text-slate-600">Name:</span> ${res.contact?.fullName}</p>
+                                <p class="text-slate-800 text-sm mb-1"><span class="font-bold text-slate-600">Phone:</span> ${res.contact?.contactNumber}</p>
+                            </div>
+                            <div>
+                                <h3 class="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1 flex items-center gap-2"><i class="fa-solid fa-box-open text-blue-500"></i> Equipment</h3>
+                                <p class="text-slate-800 text-sm leading-relaxed">${equipText}</p>
+                            </div>
+                            <div class="bg-blue-50 p-3 sm:p-4 rounded-xl border border-blue-100 mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 sm:gap-4">
+                                <p class="text-blue-800 font-bold uppercase tracking-wider text-xs">Total Estimated Cost</p>
+                                <p class="text-xl sm:text-2xl font-black text-blue-700">${grandTotal}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+                const modal = document.getElementById('view-modal');
+                document.getElementById('btn-close-view').addEventListener('click', () => {
+                    modal.classList.add('opacity-0');
+                    setTimeout(() => modal.remove(), 300);
+                });
+            };
+
             const handleEdit = (res) => {
                 // Save back to localStorage
                 localStorage.setItem('pgsoReservationData', JSON.stringify(res));
                 
                 // Redirect to exact venue form
-                const venueName = res.event.venue;
-                let url = "venues.html";
-                if (venueName.includes("Palispis")) url = "palispis-reservation/palispis-reservation.html";
-                else if (venueName.includes("PCL")) url = "pcl-reservation/pcl-reservation.html";
-                else if (venueName.includes("Gymnasium")) url = "gym-reservation/gym-reservation.html";
+                const venueName = res.event?.venue || '';
+                let url = venueName ? `generic-reservation/generic-reservation.html?venue=${encodeURIComponent(venueName)}` : "venues.html";
                 
                 window.location.href = url;
             };
@@ -389,23 +436,68 @@
                 if(existing) existing.remove();
 
                 const modalHTML = `
-                <div id="cancel-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 p-3 sm:p-4">
-                    <div class="bg-white rounded-xl shadow-2xl flex flex-col w-full max-w-sm max-h-[90vh] overflow-y-auto transform transition-transform duration-300 relative mt-8">
-                        <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm z-10 border border-gray-100">
-                            <div class="w-12 h-12 bg-[#2b6cb0] rounded-full flex items-center justify-center shadow-inner">
-                                <img src="pgso.png" alt="PGSO" class="w-8 h-8 opacity-90 brightness-0 invert">
+                <div id="cancel-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 p-3 sm:p-4 overflow-y-auto">
+                    <div class="bg-white rounded-2xl shadow-2xl flex flex-col w-full max-w-md relative my-8 overflow-visible">
+                        <!-- Floating circular icon (Unclipped) -->
+                        <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md z-20 border-4 border-white">
+                            <div class="w-12 h-12 bg-[#185adb] rounded-full flex items-center justify-center shadow-inner text-white">
+                                <i class="fa-solid fa-calendar-xmark text-xl"></i>
                             </div>
                         </div>
-                        <div class="p-5 sm:p-8 pt-10 sm:pt-12 text-center flex flex-col items-center">
-                            <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-2 sm:mb-3 tracking-wide">Cancel Reservation?</h2>
-                            <p class="text-gray-500 mb-6 sm:mb-8 text-xs sm:text-sm leading-relaxed">
-                                Are you sure you want to cancel this reservation? It will be moved to the archive and this action cannot be undone.
-                            </p>
-                            <div class="flex flex-col gap-3 w-full">
-                                <button id="btn-confirm-cancel" class="w-full bg-[#185adb] hover:bg-[#0f44ad] text-white font-bold py-3 sm:py-3.5 rounded-full transition shadow-md text-sm">
+
+                        <div class="p-6 sm:p-8 pt-11 sm:pt-12 flex flex-col">
+                            <div class="text-center mb-4">
+                                <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-1.5 tracking-wide">Cancel Reservation?</h2>
+                                <p class="text-gray-500 text-xs sm:text-sm leading-relaxed">
+                                    Are you sure you want to cancel this reservation? It will be moved to the archive and this action cannot be undone.
+                                </p>
+                            </div>
+
+                            <!-- Reason Checkboxes -->
+                            <div class="w-full text-left mb-5">
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Reason for Cancellation <span class="text-red-500">*</span></label>
+                                
+                                <div class="space-y-2.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs sm:text-sm" id="cancel-reasons-group">
+                                    <label class="flex items-start gap-2.5 cursor-pointer hover:text-blue-700 transition select-none">
+                                        <input type="checkbox" name="cancel_reason" value="Change of event schedule / Postponed" class="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                        <span class="text-slate-700 font-medium leading-tight">Change of event schedule / Postponed</span>
+                                    </label>
+                                    <label class="flex items-start gap-2.5 cursor-pointer hover:text-blue-700 transition select-none">
+                                        <input type="checkbox" name="cancel_reason" value="Organizer or key participants unavailable" class="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                        <span class="text-slate-700 font-medium leading-tight">Organizer or key participants unavailable</span>
+                                    </label>
+                                    <label class="flex items-start gap-2.5 cursor-pointer hover:text-blue-700 transition select-none">
+                                        <input type="checkbox" name="cancel_reason" value="Found alternative venue or location" class="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                        <span class="text-slate-700 font-medium leading-tight">Found alternative venue or location</span>
+                                    </label>
+                                    <label class="flex items-start gap-2.5 cursor-pointer hover:text-blue-700 transition select-none">
+                                        <input type="checkbox" name="cancel_reason" value="Inclement weather or emergency circumstance" class="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                        <span class="text-slate-700 font-medium leading-tight">Inclement weather or emergency circumstance</span>
+                                    </label>
+                                    <label class="flex items-start gap-2.5 cursor-pointer hover:text-blue-700 transition select-none">
+                                        <input type="checkbox" name="cancel_reason" value="Budget or funding constraints" class="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                        <span class="text-slate-700 font-medium leading-tight">Budget or funding constraints</span>
+                                    </label>
+                                    <label class="flex items-start gap-2.5 cursor-pointer hover:text-blue-700 transition select-none">
+                                        <input type="checkbox" id="reason-other-checkbox" name="cancel_reason" value="Other" class="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                        <span class="text-slate-700 font-bold leading-tight">Other</span>
+                                    </label>
+
+                                    <!-- Other reason text area -->
+                                    <div id="other-reason-container" class="hidden pt-1 pl-6">
+                                        <textarea id="cancel-reason-other-text" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs sm:text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none h-20 transition" placeholder="Please specify your reason for cancellation..."></textarea>
+                                    </div>
+                                </div>
+                                <p id="cancel-validation-msg" class="hidden text-xs text-red-500 font-semibold mt-1.5 flex items-center gap-1">
+                                    <i class="fa-solid fa-circle-exclamation"></i> <span>Please select at least one reason.</span>
+                                </p>
+                            </div>
+
+                            <div class="flex flex-col gap-2.5 w-full">
+                                <button id="btn-confirm-cancel" class="w-full bg-[#185adb] hover:bg-[#0f44ad] text-white font-bold py-3 rounded-full transition shadow-md text-sm flex items-center justify-center">
                                     Yes, Cancel Reservation
                                 </button>
-                                <button id="btn-close-cancel" class="w-full bg-white text-[#185adb] hover:bg-blue-50 font-bold py-2.5 sm:py-3 rounded-full transition text-sm">
+                                <button id="btn-close-cancel" class="w-full bg-white text-[#185adb] hover:bg-blue-50 font-bold py-2.5 rounded-full transition text-sm">
                                     No thanks
                                 </button>
                             </div>
@@ -418,6 +510,26 @@
                 const modal = document.getElementById('cancel-modal');
                 const btnConfirm = document.getElementById('btn-confirm-cancel');
                 const btnClose = document.getElementById('btn-close-cancel');
+                const otherCheckbox = document.getElementById('reason-other-checkbox');
+                const otherContainer = document.getElementById('other-reason-container');
+                const otherText = document.getElementById('cancel-reason-other-text');
+                const validationMsg = document.getElementById('cancel-validation-msg');
+
+                otherCheckbox.addEventListener('change', () => {
+                    if (otherCheckbox.checked) {
+                        otherContainer.classList.remove('hidden');
+                        otherText.focus();
+                    } else {
+                        otherContainer.classList.add('hidden');
+                        otherText.classList.remove('border-red-500');
+                    }
+                });
+
+                modal.querySelectorAll('input[name="cancel_reason"]').forEach(cb => {
+                    cb.addEventListener('change', () => {
+                        validationMsg.classList.add('hidden');
+                    });
+                });
 
                 const destroyModal = () => {
                     modal.classList.add('opacity-0');
@@ -427,21 +539,56 @@
                 btnClose.addEventListener('click', destroyModal);
 
                 btnConfirm.addEventListener('click', async () => {
+                    const checkedBoxes = Array.from(modal.querySelectorAll('input[name="cancel_reason"]:checked'));
+                    if (checkedBoxes.length === 0) {
+                        validationMsg.querySelector('span').textContent = 'Please select at least one reason.';
+                        validationMsg.classList.remove('hidden');
+                        return;
+                    }
+
+                    const isOtherChecked = otherCheckbox.checked;
+                    const otherVal = otherText.value.trim();
+
+                    if (isOtherChecked && !otherVal) {
+                        validationMsg.querySelector('span').textContent = "Please specify your reason for 'Other'.";
+                        validationMsg.classList.remove('hidden');
+                        otherText.focus();
+                        otherText.classList.add('border-red-500');
+                        return;
+                    }
+
+                    const reasons = [];
+                    checkedBoxes.forEach(cb => {
+                        if (cb.value === 'Other') {
+                            reasons.push(`Other: ${otherVal}`);
+                        } else {
+                            reasons.push(cb.value);
+                        }
+                    });
+
+                    const combinedReason = reasons.join('; ');
+
                     btnConfirm.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Cancelling...';
                     btnConfirm.disabled = true;
                     btnClose.disabled = true;
                     
                     try {
-                        const { error } = await supabase.from('reservations').update({ status: 'cancelled' }).eq('id', id);
+                        const { error } = await supabase.from('reservations').update({ 
+                            status: 'cancelled',
+                            notes: combinedReason
+                        }).eq('id', id);
                         if (error) throw error;
                         
-                        modal.querySelector('.p-8').innerHTML = `
-                            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i class="fa-solid fa-check text-2xl text-green-600"></i>
-                            </div>
-                            <h2 class="text-xl font-bold text-gray-800 mb-2">Cancelled</h2>
-                            <p class="text-gray-500 text-[14px]">Reservation moved to archive.</p>
-                        `;
+                        const contentBox = modal.querySelector('.p-6, .p-8') || modal.querySelector('.text-center');
+                        if (contentBox) {
+                            contentBox.innerHTML = `
+                                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fa-solid fa-check text-2xl text-green-600"></i>
+                                </div>
+                                <h2 class="text-xl font-bold text-gray-800 mb-2">Cancelled</h2>
+                                <p class="text-gray-500 text-[14px]">Reservation moved to archive.</p>
+                            `;
+                        }
                         setTimeout(() => window.location.reload(), 1500);
                     } catch(err) {
                         btnConfirm.innerHTML = 'Yes, Cancel Reservation';

@@ -83,12 +83,12 @@ agreeCheckbox.addEventListener('change', function () {
 
 window.goBack = function () {
     const data = JSON.parse(localStorage.getItem('pgsoReservationData'));
-    if (!data) return window.location.href = '../index.html';
-    const venueName = data.event.venue;
+    if (!data) return window.location.href = '../venues.html';
+    const venueName = data.event?.venue;
     let backUrl = "../venues.html";
-    if (venueName.includes("Palispis")) backUrl = "../palispis-reservation/palispis-reservation.html";
-    else if (venueName.includes("PCL")) backUrl = "../pcl-reservation/pcl-reservation.html";
-    else if (venueName.includes("Gymnasium")) backUrl = "../gym-reservation/gym-reservation.html";
+    if (venueName) {
+        backUrl = `../generic-reservation/generic-reservation.html?venue=${encodeURIComponent(venueName)}`;
+    }
     window.location.href = backUrl;
 };
 
@@ -260,8 +260,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const editLink = document.getElementById('edit-reservation-link');
     let backUrl = "../venues.html";
-    if (data.event.venue.includes("Palispis")) backUrl = "../palispis-reservation/palispis-reservation.html";
-    else if (data.event.venue.includes("PCL")) backUrl = "../pcl-reservation/pcl-reservation.html";
-    else if (data.event.venue.includes("Gymnasium")) backUrl = "../gym-reservation/gym-reservation.html";
-    editLink.href = backUrl;
+    if (data && data.event && data.event.venue) {
+        backUrl = `../generic-reservation/generic-reservation.html?venue=${encodeURIComponent(data.event.venue)}`;
+    }
+    if (editLink) editLink.href = backUrl;
 });

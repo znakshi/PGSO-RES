@@ -357,10 +357,29 @@
                     container.classList.remove('hidden');
                     container.innerHTML = '';
                     
+                    const isPastReservation = (dateStr) => {
+                        if (!dateStr) return false;
+                        const datesArray = dateStr.split(',').map(d => d.trim()).filter(d => d);
+                        if (datesArray.length === 0) return false;
+                        
+                        let maxTime = -Infinity;
+                        datesArray.forEach(dStr => {
+                            const d = new Date(dStr + (dStr.includes('T') ? '' : 'T23:59:59'));
+                            if (!isNaN(d.getTime()) && d.getTime() > maxTime) {
+                                maxTime = d.getTime();
+                            }
+                        });
+                        
+                        if (maxTime === -Infinity) return false;
+                        return maxTime < Date.now();
+                    };
+
                     filtered.forEach(res => {
                             const isPending = res.status.toLowerCase() === 'pending';
                             const isApproved = res.status.toLowerCase() === 'confirmed' || res.status.toLowerCase() === 'approved' || res.status.toLowerCase() === 'accepted';
-                            const isCancelled = res.status.toLowerCase() === 'cancelled' || res.status.toLowerCase() === 'rejected';
+                            const isDeclined = res.status.toLowerCase() === 'declined' || res.status.toLowerCase() === 'rejected';
+                            const isCancelled = res.status.toLowerCase() === 'cancelled';
+                            const isPast = isPastReservation(res.event?.dates);
                             
                             let statusColor = "bg-yellow-100 text-yellow-800 border-yellow-200";
                             let statusIcon = "fa-clock";
@@ -368,7 +387,7 @@
                                 statusColor = "bg-green-100 text-green-800 border-green-200";
                                 statusIcon = "fa-check-circle";
                             }
-                            if (isCancelled) {
+                            if (isCancelled || isDeclined) {
                                 statusColor = "bg-red-100 text-red-800 border-red-200";
                                 statusIcon = "fa-times-circle";
                             }
@@ -380,27 +399,35 @@
                             const grandTotal = formatCurrency(res.pricing?.grandTotal || 0);
                             
                             let canCancel = false;
+                            let canArchive = false;
                             let cancelMsg = "";
                             
-                            if (isPending) {
-                                canCancel = true;
-                            } else if (isApproved) {
-                                let eventDate = null;
-                                if (res.event?.dates) {
-                                    const firstDateStr = res.event.dates.split(',')[0].trim();
-                                    eventDate = new Date(firstDateStr);
+                            if (isPast) {
+                                // If reservation is past the date, do not show 4-day lock warning; allow archiving
+                                if (isApproved || isDeclined || isCancelled) {
+                                    canArchive = true;
                                 }
-                                
-                                if (eventDate && !isNaN(eventDate)) {
-                                    const today = new Date();
-                                    eventDate.setHours(0,0,0,0);
-                                    today.setHours(0,0,0,0);
-                                    const diffDays = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                            } else {
+                                if (isPending) {
+                                    canCancel = true;
+                                } else if (isApproved) {
+                                    let firstEventDate = null;
+                                    if (res.event?.dates) {
+                                        const firstDateStr = res.event.dates.split(',')[0].trim();
+                                        firstEventDate = new Date(firstDateStr + (firstDateStr.includes('T') ? '' : 'T00:00:00'));
+                                    }
                                     
-                                    if (diffDays >= 4) {
-                                        canCancel = true;
-                                    } else {
-                                        cancelMsg = "Cancellations must be made at least 4 days in advance.";
+                                    if (firstEventDate && !isNaN(firstEventDate.getTime())) {
+                                        const today = new Date();
+                                        firstEventDate.setHours(0,0,0,0);
+                                        today.setHours(0,0,0,0);
+                                        const diffDays = Math.ceil((firstEventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                                        
+                                        if (diffDays >= 4) {
+                                            canCancel = true;
+                                        } else if (diffDays >= 0) {
+                                            cancelMsg = "Cancellations must be made at least 4 days in advance.";
+                                        }
                                     }
                                 }
                             }
@@ -424,7 +451,11 @@
                                     <button class="view-btn flex-1 md:flex-none justify-center bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition" data-id="${res.id}">
                                         <i class="fa-solid fa-eye"></i> View
                                     </button>
-                                    ${canCancel ? `
+                                    ${canArchive ? `
+                                        <button class="archive-btn flex-1 md:flex-none justify-center bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition" data-id="${res.id}">
+                                            <i class="fa-solid fa-box-archive text-slate-500"></i> Archive
+                                        </button>
+                                    ` : canCancel ? `
                                         <button class="cancel-btn flex-1 md:flex-none justify-center bg-white text-red-600 hover:bg-red-50 hover:text-red-700 border border-red-200 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition" data-id="${res.id}">
                                             <i class="fa-solid fa-ban"></i> Cancel
                                         </button>
@@ -439,6 +470,9 @@
                             
                             const cancelBtn = card.querySelector('.cancel-btn');
                             if(cancelBtn) cancelBtn.addEventListener('click', () => handleCancel(res.id));
+
+                            const archiveBtn = card.querySelector('.archive-btn');
+                            if(archiveBtn) archiveBtn.addEventListener('click', () => handleArchive(res.id, res.event?.venue));
                         });
                     }
             };
@@ -517,33 +551,152 @@
                 });
             };
 
+            const showArchiveModal = (id, venueName) => {
+                const existing = document.getElementById('archive-modal');
+                if (existing) existing.remove();
+
+                const modalHTML = `
+                <div id="archive-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 p-3 sm:p-4 overflow-y-auto">
+                    <div class="bg-white rounded-2xl shadow-2xl flex flex-col w-full max-w-sm relative my-8 overflow-visible">
+                        <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md z-20 border-4 border-white">
+                            <div class="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-white shadow-inner">
+                                <i class="fa-solid fa-box-archive text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="p-6 sm:p-8 pt-11 sm:pt-12 text-center flex flex-col items-center">
+                            <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-2 tracking-wide">Archive Reservation?</h2>
+                            <p class="text-gray-500 mb-6 text-xs sm:text-sm leading-relaxed">
+                                Move this past reservation for <strong class="text-slate-700">${venueName || 'this venue'}</strong> to your archive? You can still view it anytime in the Archive tab.
+                            </p>
+                            <div class="flex flex-col gap-2.5 w-full">
+                                <button id="btn-confirm-archive" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-full transition shadow-md text-sm flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-box-archive"></i> Move to Archive
+                                </button>
+                                <button id="btn-close-archive" class="w-full bg-white text-slate-600 hover:bg-slate-100 font-bold py-2.5 rounded-full transition text-sm">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+                const modal = document.getElementById('archive-modal');
+                const btnConfirm = document.getElementById('btn-confirm-archive');
+                const btnClose = document.getElementById('btn-close-archive');
+
+                const destroyModal = () => {
+                    modal.classList.add('opacity-0');
+                    setTimeout(() => modal.remove(), 300);
+                };
+
+                btnClose.addEventListener('click', destroyModal);
+
+                btnConfirm.addEventListener('click', async () => {
+                    btnConfirm.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Archiving...';
+                    btnConfirm.disabled = true;
+                    btnClose.disabled = true;
+
+                    try {
+                        const { error } = await supabase.from('reservations').update({ is_archived: true }).eq('id', id);
+                        if (error) throw error;
+
+                        const contentBox = modal.querySelector('.p-6, .p-8') || modal.querySelector('.text-center');
+                        if (contentBox) {
+                            contentBox.innerHTML = `
+                                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-700">
+                                    <i class="fa-solid fa-box-archive text-2xl"></i>
+                                </div>
+                                <h2 class="text-xl font-bold text-gray-800 mb-2">Archived</h2>
+                                <p class="text-gray-500 text-sm">Reservation moved to your archive.</p>
+                            `;
+                        }
+                        setTimeout(async () => {
+                            destroyModal();
+                            await fetchReservations();
+                        }, 1200);
+                    } catch (err) {
+                        btnConfirm.innerHTML = '<i class="fa-solid fa-box-archive"></i> Move to Archive';
+                        btnConfirm.disabled = false;
+                        btnClose.disabled = false;
+                        alert("Failed to archive: " + err.message);
+                    }
+                });
+            };
+
+            const handleArchive = (id, venueName) => {
+                showArchiveModal(id, venueName);
+            };
+
             const showCancelModal = (id) => {
                 // Remove existing if any
                 const existing = document.getElementById('cancel-modal');
                 if(existing) existing.remove();
 
                 const modalHTML = `
-                <div id="cancel-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 p-3 sm:p-4">
-                    <div class="bg-white rounded-xl shadow-2xl flex flex-col w-full max-w-sm max-h-[90vh] overflow-y-auto transform transition-transform duration-300 relative mt-8">
-                        <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm z-10 border border-gray-100">
-                            <div class="w-12 h-12 bg-[#2b6cb0] rounded-full flex items-center justify-center shadow-inner">
-                                <img src="pgso.png" alt="PGSO" class="w-8 h-8 opacity-90 brightness-0 invert">
+                <div id="cancel-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 p-3 sm:p-4 overflow-y-auto">
+                    <div class="bg-white rounded-2xl shadow-2xl flex flex-col w-full max-w-md relative my-8 overflow-visible">
+                        <!-- Floating circular icon (Unclipped) -->
+                        <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md z-20 border-4 border-white">
+                            <div class="w-12 h-12 bg-[#185adb] rounded-full flex items-center justify-center shadow-inner text-white">
+                                <i class="fa-solid fa-calendar-xmark text-xl"></i>
                             </div>
                         </div>
-                        <div class="p-5 sm:p-8 pt-10 sm:pt-12 text-center flex flex-col items-center">
-                            <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-2 sm:mb-3 tracking-wide">Cancel Reservation?</h2>
-                            <p class="text-gray-500 mb-4 text-xs sm:text-sm leading-relaxed">
-                                Are you sure you want to cancel this reservation? It will be moved to the archive and this action cannot be undone.
-                            </p>
-                            <div class="w-full text-left mb-6">
-                                <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Reason for Cancellation <span class="text-red-500">*</span></label>
-                                <textarea id="cancel-reason" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 resize-none h-24 transition-colors" placeholder="Please briefly explain why you are cancelling..." required></textarea>
+
+                        <div class="p-6 sm:p-8 pt-11 sm:pt-12 flex flex-col">
+                            <div class="text-center mb-4">
+                                <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-1.5 tracking-wide">Cancel Reservation?</h2>
+                                <p class="text-gray-500 text-xs sm:text-sm leading-relaxed">
+                                    Are you sure you want to cancel this reservation? It will be moved to the archive and this action cannot be undone.
+                                </p>
                             </div>
-                            <div class="flex flex-col gap-3 w-full">
-                                <button id="btn-confirm-cancel" class="w-full bg-[#185adb] hover:bg-[#0f44ad] text-white font-bold py-3 sm:py-3.5 rounded-full transition shadow-md text-sm">
+
+                            <!-- Reason Checkboxes -->
+                            <div class="w-full text-left mb-5">
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Reason for Cancellation <span class="text-red-500">*</span></label>
+                                
+                                <div class="space-y-2.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs sm:text-sm" id="cancel-reasons-group">
+                                    <label class="flex items-start gap-2.5 cursor-pointer hover:text-blue-700 transition select-none">
+                                        <input type="checkbox" name="cancel_reason" value="Change of event schedule / Postponed" class="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                        <span class="text-slate-700 font-medium leading-tight">Change of event schedule / Postponed</span>
+                                    </label>
+                                    <label class="flex items-start gap-2.5 cursor-pointer hover:text-blue-700 transition select-none">
+                                        <input type="checkbox" name="cancel_reason" value="Organizer or key participants unavailable" class="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                        <span class="text-slate-700 font-medium leading-tight">Organizer or key participants unavailable</span>
+                                    </label>
+                                    <label class="flex items-start gap-2.5 cursor-pointer hover:text-blue-700 transition select-none">
+                                        <input type="checkbox" name="cancel_reason" value="Found alternative venue or location" class="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                        <span class="text-slate-700 font-medium leading-tight">Found alternative venue or location</span>
+                                    </label>
+                                    <label class="flex items-start gap-2.5 cursor-pointer hover:text-blue-700 transition select-none">
+                                        <input type="checkbox" name="cancel_reason" value="Inclement weather or emergency circumstance" class="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                        <span class="text-slate-700 font-medium leading-tight">Inclement weather or emergency circumstance</span>
+                                    </label>
+                                    <label class="flex items-start gap-2.5 cursor-pointer hover:text-blue-700 transition select-none">
+                                        <input type="checkbox" name="cancel_reason" value="Budget or funding constraints" class="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                        <span class="text-slate-700 font-medium leading-tight">Budget or funding constraints</span>
+                                    </label>
+                                    <label class="flex items-start gap-2.5 cursor-pointer hover:text-blue-700 transition select-none">
+                                        <input type="checkbox" id="reason-other-checkbox" name="cancel_reason" value="Other" class="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                        <span class="text-slate-700 font-bold leading-tight">Other</span>
+                                    </label>
+
+                                    <!-- Other reason text area -->
+                                    <div id="other-reason-container" class="hidden pt-1 pl-6">
+                                        <textarea id="cancel-reason-other-text" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs sm:text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none h-20 transition" placeholder="Please specify your reason for cancellation..."></textarea>
+                                    </div>
+                                </div>
+                                <p id="cancel-validation-msg" class="hidden text-xs text-red-500 font-semibold mt-1.5 flex items-center gap-1">
+                                    <i class="fa-solid fa-circle-exclamation"></i> <span>Please select at least one reason.</span>
+                                </p>
+                            </div>
+
+                            <div class="flex flex-col gap-2.5 w-full">
+                                <button id="btn-confirm-cancel" class="w-full bg-[#185adb] hover:bg-[#0f44ad] text-white font-bold py-3 rounded-full transition shadow-md text-sm flex items-center justify-center">
                                     Yes, Cancel Reservation
                                 </button>
-                                <button id="btn-close-cancel" class="w-full bg-white text-[#185adb] hover:bg-blue-50 font-bold py-2.5 sm:py-3 rounded-full transition text-sm">
+                                <button id="btn-close-cancel" class="w-full bg-white text-[#185adb] hover:bg-blue-50 font-bold py-2.5 rounded-full transition text-sm">
                                     No thanks
                                 </button>
                             </div>
@@ -556,6 +709,27 @@
                 const modal = document.getElementById('cancel-modal');
                 const btnConfirm = document.getElementById('btn-confirm-cancel');
                 const btnClose = document.getElementById('btn-close-cancel');
+                const otherCheckbox = document.getElementById('reason-other-checkbox');
+                const otherContainer = document.getElementById('other-reason-container');
+                const otherText = document.getElementById('cancel-reason-other-text');
+                const validationMsg = document.getElementById('cancel-validation-msg');
+
+                otherCheckbox.addEventListener('change', () => {
+                    if (otherCheckbox.checked) {
+                        otherContainer.classList.remove('hidden');
+                        otherText.focus();
+                    } else {
+                        otherContainer.classList.add('hidden');
+                        otherText.classList.remove('border-red-500');
+                    }
+                });
+
+                // Clear validation error when checkboxes change
+                modal.querySelectorAll('input[name="cancel_reason"]').forEach(cb => {
+                    cb.addEventListener('change', () => {
+                        validationMsg.classList.add('hidden');
+                    });
+                });
 
                 const destroyModal = () => {
                     modal.classList.add('opacity-0');
@@ -565,14 +739,35 @@
                 btnClose.addEventListener('click', destroyModal);
 
                 btnConfirm.addEventListener('click', async () => {
-                    const reasonInput = document.getElementById('cancel-reason');
-                    const reason = reasonInput.value.trim();
-                    if (!reason) {
-                        reasonInput.classList.add('border-red-500', 'bg-red-50');
-                        reasonInput.focus();
+                    const checkedBoxes = Array.from(modal.querySelectorAll('input[name="cancel_reason"]:checked'));
+                    if (checkedBoxes.length === 0) {
+                        validationMsg.querySelector('span').textContent = 'Please select at least one reason.';
+                        validationMsg.classList.remove('hidden');
                         return;
                     }
-                    
+
+                    const isOtherChecked = otherCheckbox.checked;
+                    const otherVal = otherText.value.trim();
+
+                    if (isOtherChecked && !otherVal) {
+                        validationMsg.querySelector('span').textContent = "Please specify your reason for 'Other'.";
+                        validationMsg.classList.remove('hidden');
+                        otherText.focus();
+                        otherText.classList.add('border-red-500');
+                        return;
+                    }
+
+                    const reasons = [];
+                    checkedBoxes.forEach(cb => {
+                        if (cb.value === 'Other') {
+                            reasons.push(`Other: ${otherVal}`);
+                        } else {
+                            reasons.push(cb.value);
+                        }
+                    });
+
+                    const combinedReason = reasons.join('; ');
+
                     btnConfirm.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Cancelling...';
                     btnConfirm.disabled = true;
                     btnClose.disabled = true;
@@ -580,7 +775,7 @@
                     try {
                         const { error } = await supabase.from('reservations').update({ 
                             status: 'cancelled',
-                            notes: reason // Save the reason in the notes field so admin can see it
+                            notes: combinedReason // Save the structured reason in the notes field
                         }).eq('id', id);
                         if (error) throw error;
                         
@@ -589,17 +784,20 @@
                             await supabase.from('notifications').insert([{
                                 user_email: null,
                                 title: 'Reservation Cancelled',
-                                message: `${fullName} has cancelled their reservation. Reason: ${reason}`
+                                message: `${fullName} has cancelled their reservation. Reason: ${combinedReason}`
                             }]);
                         } catch(e) { console.warn('Notification failed', e); }
                         
-                        modal.querySelector('.p-8').innerHTML = `
-                            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i class="fa-solid fa-check text-2xl text-green-600"></i>
-                            </div>
-                            <h2 class="text-xl font-bold text-gray-800 mb-2">Cancelled</h2>
-                            <p class="text-gray-500 text-[14px]">Reservation moved to archive.</p>
-                        `;
+                        const contentBox = modal.querySelector('.p-6, .p-8') || modal.querySelector('.text-center');
+                        if (contentBox) {
+                            contentBox.innerHTML = `
+                                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fa-solid fa-check text-2xl text-green-600"></i>
+                                </div>
+                                <h2 class="text-xl font-bold text-gray-800 mb-2">Cancelled</h2>
+                                <p class="text-gray-500 text-[14px]">Reservation moved to archive.</p>
+                            `;
+                        }
                         setTimeout(() => window.location.reload(), 1500);
                     } catch(err) {
                         btnConfirm.innerHTML = 'Yes, Cancel Reservation';

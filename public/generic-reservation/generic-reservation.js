@@ -674,7 +674,26 @@ document.addEventListener('DOMContentLoaded', async function () {
             notesInput.value = clean(data.notes);
         }
 
-        // Note: Equipment restoration is ignored here to ensure users re-validate available stock
+        // Restore equipment selections
+        if (data.equipment && data.equipment.length > 0 && tableBody) {
+            data.equipment.forEach(savedItem => {
+                const row = Array.from(tableBody.querySelectorAll('tr')).find(r => 
+                    r.dataset.name === savedItem.name || (savedItem.id && r.dataset.id === String(savedItem.id))
+                );
+                if (row) {
+                    const chk = row.querySelector('.equipment-checkbox');
+                    const qtyInput = row.querySelector('.equipment-quantity');
+                    const qtyBtns = row.querySelectorAll('.qty-btn');
+                    if (chk && qtyInput) {
+                        chk.checked = true;
+                        qtyInput.disabled = false;
+                        qtyBtns.forEach(btn => btn.disabled = false);
+                        qtyInput.value = savedItem.qty || 1;
+                    }
+                }
+            });
+        }
+
         calculateTotal();
     }
 
