@@ -1839,7 +1839,42 @@ window.printReservation = function(id, event) {
             listDiv.innerHTML = "";
             let total = 0;
 
-            if (mode === 'monthly') {
+            if (status === 'venue') {
+                const venueCounts = {};
+                reservations.forEach(r => {
+                    if (r.status === 'declined' || r.status === 'cancelled' || r.status === 'rejected') return;
+                    const d = getReservationDate(r);
+                    let include = false;
+                    if (mode === 'monthly') {
+                        include = d && d.getFullYear() === targetYear && d.getMonth() === targetMonth;
+                    } else if (mode === 'all') {
+                        include = true;
+                    } else {
+                        include = d && d.getFullYear() === targetYear;
+                    }
+                    if (include && r.event && r.event.venue) {
+                        const v = r.event.venue;
+                        venueCounts[v] = (venueCounts[v] || 0) + 1;
+                        total++;
+                    }
+                });
+
+                const sortedVenues = Object.keys(venueCounts).sort((a,b) => venueCounts[b] - venueCounts[a]);
+                if (sortedVenues.length === 0) {
+                    listDiv.innerHTML = `<p class="text-sm text-slate-400 text-center py-6 font-medium">No venue reservations found.</p>`;
+                } else {
+                    sortedVenues.forEach((v, idx) => {
+                        const count = venueCounts[v];
+                        const isTop = idx === 0;
+                        listDiv.innerHTML += `
+                            <div class="flex justify-between items-center ${isTop ? 'bg-purple-50 border-purple-200 shadow-sm' : 'bg-slate-50 border-slate-100'} border p-3 rounded-lg">
+                                <span class="font-bold ${isTop ? 'text-purple-800' : 'text-slate-700'} text-sm break-words mr-2">${v} ${isTop ? '<span class="text-[9px] bg-purple-200 text-purple-800 px-1.5 py-0.5 rounded font-black ml-1 uppercase">Top</span>' : ''}</span>
+                                <span class="font-black ${isTop ? 'text-purple-700' : 'text-slate-800'} text-base flex-shrink-0">${count}</span>
+                            </div>
+                        `;
+                    });
+                }
+            } else if (mode === 'monthly') {
                 const venueCounts = {};
                 reservations.forEach(r => {
                     if (!filterStatus(r)) return;
@@ -1936,7 +1971,15 @@ window.printReservation = function(id, event) {
             const icon = document.getElementById('mb-icon');
             const topBorder = document.querySelector('#monthlyBreakdownModal > div.bg-white');
 
-            if (status === 'all') {
+            if (status === 'venue') {
+                titleEl.innerText = "Top Venue";
+                subtitleEl.innerText = mode === 'monthly'
+                    ? `Venue Breakdown (${months[targetMonth]} ${targetYear})`
+                    : (mode === 'all' ? `All-Time Venue Breakdown` : `Venue Breakdown (${targetYear})`);
+                if(iconWrap) iconWrap.className = "w-14 h-14 bg-purple-600 rounded-full flex items-center justify-center";
+                if(icon) icon.className = "fa-solid fa-building text-white text-xl";
+                if(topBorder) topBorder.className = "bg-white rounded-2xl shadow-xl w-full max-w-sm relative flex flex-col mt-8 border-t-8 border-purple-600";
+            } else if (status === 'all') {
                 titleEl.innerText = "Total Bookings";
                 if(iconWrap) iconWrap.className = "w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center";
                 if(icon) icon.className = "fa-solid fa-calendar-check text-white text-xl";
@@ -1954,6 +1997,19 @@ window.printReservation = function(id, event) {
             }
 
             document.getElementById('monthlyBreakdownModal').classList.remove('hidden');
+        };
+
+        window.toggleTopVenueName = function() {
+            const el = document.getElementById('stat-venue');
+            if (!el || el.innerText === 'N/A' || !el.innerText) return;
+            
+            if (el.classList.contains('truncate')) {
+                el.classList.remove('truncate', 'text-2xl');
+                el.classList.add('break-words', 'whitespace-normal', 'text-xl', 'leading-tight');
+            } else {
+                el.classList.remove('break-words', 'whitespace-normal', 'text-xl', 'leading-tight');
+                el.classList.add('truncate', 'text-2xl');
+            }
         };
 
         // --- ANALYTICS ---
@@ -2035,7 +2091,17 @@ window.printReservation = function(id, event) {
                     topV = v; 
                 } 
             }
-            document.getElementById('stat-venue').innerText = topV;
+            const statVenue = document.getElementById('stat-venue');
+            if (statVenue) {
+                statVenue.classList.remove('break-words', 'whitespace-normal', 'text-xl', 'leading-tight');
+                statVenue.classList.add('truncate', 'text-2xl');
+                statVenue.innerText = topV;
+                statVenue.title = topV !== "N/A" ? `${topV} (${max} bookings) - Click to toggle full name` : "";
+            }
+            const cardVenue = document.getElementById('card-top-venue');
+            if (cardVenue) {
+                cardVenue.title = topV !== "N/A" ? `${topV} (${max} bookings) - Click to toggle full name` : "Top Venue";
+            }
 
             const venueTitleEl = document.getElementById('venue-chart-title');
             if (venueTitleEl) venueTitleEl.innerText = `Venue Popularity (${timeframeShort})`;

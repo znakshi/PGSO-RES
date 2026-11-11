@@ -400,6 +400,13 @@
                 </div>
 
                 <div id="section-calendar" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+                    <!-- Calendar Section Header -->
+                    <div class="col-span-1 lg:col-span-3">
+                        <h2 class="text-lg sm:text-xl font-bold text-slate-800 tracking-tight flex items-center gap-3">
+                            <i class="fa-regular fa-calendar text-blue-600"></i> Calendar
+                        </h2>
+                    </div>
+
                     <div
                         class="col-span-1 lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 lg:p-8 min-h-[500px] h-auto lg:h-[650px] flex flex-col">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 px-1 sm:px-2 border-b border-slate-100 pb-4 gap-3 sm:gap-0">
@@ -472,13 +479,13 @@
                         </div>
                     </div>
 
-                    <!-- All Reservations Table -->
+                    <!-- Bookings Table -->
                     <div
                         class="col-span-1 lg:col-span-3 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 lg:p-8 flex flex-col">
                         <div
                             class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 pb-4 border-b border-slate-100 gap-4">
                             <h2 class="text-lg sm:text-xl font-bold text-slate-800 tracking-tight flex items-center gap-3"><i
-                                    class="fa-solid fa-list-ul text-blue-600"></i> All Reservations</h2>
+                                    class="fa-solid fa-list-ul text-blue-600"></i> Bookings</h2>
                             <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
                                 <input type="text" id="search-all-reservations" oninput="renderAllReservations()" placeholder="Search client name..." class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition w-full sm:w-56">
                                 <select id="filter-venue-reservations" onchange="renderAllReservations()" class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition w-full sm:w-auto">
@@ -650,16 +657,24 @@
                             </div>
                             <p class="text-4xl font-black text-red-500 relative z-10" id="stat-cancelled">0</p>
                         </div>
-                        <div
-                            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group">
+                        <div onclick="window.toggleTopVenueName()"
+                            id="card-top-venue"
+                            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group cursor-pointer hover:border-purple-500 hover:shadow-md transition-all select-none"
+                            title="Click to view full venue name">
                             <div
                                 class="absolute right-[-10%] top-[-10%] w-24 h-24 bg-purple-50 rounded-full opacity-50 group-hover:scale-110 transition-transform duration-500">
                             </div>
                             <div class="flex items-center justify-between mb-2 relative z-10">
-                                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Top Venue</p>
+                                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                                    <span>Top Venue</span>
+                                    <button type="button" onclick="event.stopPropagation(); window.showMonthlyBreakdownModal('venue');"
+                                        class="text-purple-400 hover:text-purple-700 transition" title="View all venues breakdown">
+                                        <i class="fa-solid fa-circle-info text-xs"></i>
+                                    </button>
+                                </p>
                                 <span class="analytics-timeframe-tag text-[9px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">2026</span>
                             </div>
-                            <p class="text-2xl font-bold text-purple-700 truncate relative z-10 mt-2" id="stat-venue">
+                            <p class="text-2xl font-bold text-purple-700 truncate relative z-10 mt-2 transition-all cursor-pointer" id="stat-venue">
                                 N/A</p>
                         </div>
                     </div>
@@ -1298,7 +1313,7 @@
             <div id="venueModal"
                 class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-2 sm:p-4 transition-opacity duration-300">
                 <div
-                    class="bg-white rounded-2xl shadow-xl w-full max-w-xl relative flex flex-col max-h-[90vh] mt-6 sm:mt-8 border-t-8 border-blue-600 overflow-hidden">
+                    class="bg-white rounded-2xl shadow-xl w-full max-w-xl relative flex flex-col max-h-[90vh] mt-6 sm:mt-8 border-t-8 border-blue-600">
                     
                     <!-- Overlapping Icon -->
                     <div
@@ -1318,7 +1333,7 @@
                                 class="fa-solid fa-xmark text-xl"></i></button>
                     </div>
 
-                    <div class="p-4 sm:p-8 overflow-y-auto w-full flex-grow">
+                    <div class="p-4 sm:p-8 overflow-y-auto w-full flex-grow rounded-b-2xl">
                         <form id="venueForm" onsubmit="window.saveVenue(event)" class="space-y-4 sm:space-y-6">
                             <input type="hidden" id="venue-id">
 
