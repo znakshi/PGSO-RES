@@ -208,6 +208,100 @@ console.log('[PGSO] admin-dashboard.js initialized, supabase client ready:', !!s
             return groups.map(formatGrp).join(', ');
         };
 
+        // --- RESERVATION DATE & URGENCY HELPERS ---
+        window.getReservationEarliestDateInfo = function(res) {
+            if (!res || !res.event) {
+                return {
+                    timestamp: Infinity,
+                    dateStr: null,
+                    timeStr: null,
+                    diffDays: Infinity,
+                    isPast: false
+                };
+            }
+
+            let dateStr = null;
+            if (res.event.dates) {
+                if (Array.isArray(res.event.dates)) {
+                    const valid = res.event.dates.map(d => String(d).trim()).filter(Boolean).sort();
+                    dateStr = valid[0];
+                } else if (typeof res.event.dates === 'string') {
+                    const valid = res.event.dates.split(',').map(d => d.trim()).filter(Boolean).sort();
+                    dateStr = valid[0];
+                }
+            } else if (res.event.date) {
+                dateStr = typeof res.event.date === 'string' ? res.event.date.trim() : null;
+            }
+
+            if (!dateStr) {
+                return {
+                    timestamp: Infinity,
+                    dateStr: null,
+                    timeStr: null,
+                    diffDays: Infinity,
+                    isPast: false
+                };
+            }
+
+            let timeStr = '00:00';
+            if (res.event.startTime) {
+                const match = String(res.event.startTime).match(/(\d{1,2}):(\d{2})/);
+                if (match) {
+                    const h = match[1].padStart(2, '0');
+                    const m = match[2];
+                    timeStr = `${h}:${m}`;
+                }
+            }
+
+            const iso = `${dateStr}T${timeStr}:00`;
+            let dt = new Date(iso);
+            if (isNaN(dt.getTime())) {
+                dt = new Date(dateStr + 'T00:00:00');
+            }
+
+            const timestamp = isNaN(dt.getTime()) ? Infinity : dt.getTime();
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const eventDay = new Date(dateStr + 'T00:00:00');
+            const dayMs = 24 * 60 * 60 * 1000;
+            const diffDays = Math.round((eventDay.getTime() - today.getTime()) / dayMs);
+
+            return {
+                timestamp,
+                dateStr,
+                timeStr,
+                diffDays,
+                isPast: diffDays < 0
+            };
+        };
+
+        window.compareReservationsByUrgency = function(a, b) {
+            const infoA = window.getReservationEarliestDateInfo(a);
+            const infoB = window.getReservationEarliestDateInfo(b);
+
+            // 1. Both upcoming or happening today (diffDays >= 0)
+            if (!infoA.isPast && !infoB.isPast) {
+                if (infoA.timestamp !== infoB.timestamp) {
+                    return infoA.timestamp - infoB.timestamp; // closest upcoming event date & time first
+                }
+                // Tie-breaker: earlier booking submission first (FIFO)
+                const subA = new Date(a.created_at || a.timestamp || 0).getTime();
+                const subB = new Date(b.created_at || b.timestamp || 0).getTime();
+                return subA - subB;
+            }
+
+            // 2. Upcoming events always take priority over already-passed dates
+            if (!infoA.isPast && infoB.isPast) return -1;
+            if (infoA.isPast && !infoB.isPast) return 1;
+
+            // 3. Both in the past: sort closest past event first (e.g. yesterday before 10 days ago)
+            if (infoA.timestamp !== infoB.timestamp) {
+                return infoB.timestamp - infoA.timestamp;
+            }
+            return 0;
+        };
+
         // --- DASHBOARD HELPERS & JUMP LINKS ---
         window.openBlockModal = function() {
             const modal = document.getElementById('blockDateModal');
@@ -280,6 +374,8 @@ console.log('[PGSO] admin-dashboard.js initialized, supabase client ready:', !!s
                 r.status === 'pending' && 
                 !(r.event?.eventType && r.event.eventType.startsWith('Blocked:'))
             );
+            // Sort by event date & time urgency: closest upcoming event to today appears first
+            pendingList.sort(window.compareReservationsByUrgency);
             
             const todayConfirmedList = reservations.filter(r => 
                 r.status === 'confirmed' && 
@@ -354,6 +450,20 @@ console.log('[PGSO] admin-dashboard.js initialized, supabase client ready:', !!s
                         const timeRange = (res.event?.startTime && res.event?.endTime) ? `${res.event.startTime} - ${res.event.endTime}` : 'All Day';
                         const grandTotal = (res.pricing?.grandTotal || 0).toLocaleString();
 
+                        const dateInfo = window.getReservationEarliestDateInfo(res);
+                        let urgencyBadge = '';
+                        if (dateInfo.diffDays === 0) {
+                            urgencyBadge = `<span class="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-rose-200/60 shadow-xs"><i class="fa-solid fa-triangle-exclamation"></i> Today</span>`;
+                        } else if (dateInfo.diffDays === 1) {
+                            urgencyBadge = `<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-amber-200/60 shadow-xs"><i class="fa-solid fa-bolt"></i> Tomorrow</span>`;
+                        } else if (dateInfo.diffDays > 1 && dateInfo.diffDays <= 7) {
+                            urgencyBadge = `<span class="bg-orange-50 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-orange-200"><i class="fa-regular fa-clock"></i> In ${dateInfo.diffDays} days</span>`;
+                        } else if (dateInfo.diffDays > 7 && !dateInfo.isPast && dateInfo.diffDays !== Infinity) {
+                            urgencyBadge = `<span class="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-blue-200"><i class="fa-regular fa-calendar"></i> In ${dateInfo.diffDays} days</span>`;
+                        } else if (dateInfo.isPast) {
+                            urgencyBadge = `<span class="bg-slate-100 text-slate-500 text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1 border border-slate-200"><i class="fa-solid fa-circle-exclamation"></i> Past Event</span>`;
+                        }
+
                         return `
                             <div class="border border-slate-200 hover:border-amber-400/80 rounded-xl p-4 transition-all bg-white hover:shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 group">
                                 <div class="flex items-start gap-3.5 min-w-0">
@@ -364,6 +474,7 @@ console.log('[PGSO] admin-dashboard.js initialized, supabase client ready:', !!s
                                         <div class="flex flex-wrap items-center gap-2">
                                             <h4 class="text-sm font-bold text-slate-800 group-hover:text-blue-700 transition cursor-pointer truncate" onclick="window.viewReservation('${res.id}')">${clientName}</h4>
                                             <span class="bg-amber-100/80 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Pending Action</span>
+                                            ${urgencyBadge}
                                         </div>
                                         <p class="text-xs font-semibold text-slate-600 flex items-center gap-1.5 truncate">
                                             <i class="fa-solid fa-location-dot text-blue-500 text-[11px]"></i>
@@ -390,7 +501,7 @@ console.log('[PGSO] admin-dashboard.js initialized, supabase client ready:', !!s
                                         title="Accept / Confirm Booking">
                                         <i class="fa-solid fa-check"></i> Approve
                                     </button>
-                                    <button onclick="window.setStatus('${res.id}', 'declined', event); setTimeout(window.renderAdminDashboard, 200);"
+                                    <button onclick="window.openDeclineModal('${res.id}', event);"
                                         class="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition flex items-center gap-1.5"
                                         title="Decline Booking">
                                         <i class="fa-solid fa-xmark"></i> Decline
@@ -1338,14 +1449,184 @@ window.printReservation = function(id, event) {
 
         fetchReservations();
 
-        // --- STATUS & DELETE ACTIONS ---
-        window.setStatus = async function(id, status, event) {
+        // --- STATUS & DECLINE MODAL ACTIONS ---
+        window.openDeclineModal = function(id, event) {
+            if (event) event.stopPropagation();
+
+            const res = reservations.find(r => r.id === id);
+            const clientName = res?.contact?.fullName || 'Client';
+            const venue = res?.event?.venue || 'Venue';
+
+            // Remove existing modal if any
+            const existing = document.getElementById('admin-decline-modal');
+            if (existing) existing.remove();
+
+            const modalHTML = `
+            <div id="admin-decline-modal" class="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 p-3 sm:p-4 overflow-y-auto">
+                <div class="bg-white rounded-2xl shadow-2xl flex flex-col w-full max-w-md relative my-8 overflow-visible">
+                    <!-- Floating circular icon (Unclipped) -->
+                    <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md z-20 border-4 border-white">
+                        <div class="w-12 h-12 bg-rose-600 rounded-full flex items-center justify-center shadow-inner text-white">
+                            <i class="fa-solid fa-calendar-xmark text-xl"></i>
+                        </div>
+                    </div>
+
+                    <div class="p-6 sm:p-8 pt-11 sm:pt-12 flex flex-col">
+                        <div class="text-center mb-4">
+                            <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-1.5 tracking-wide">Decline Reservation?</h2>
+                            <p class="text-gray-500 text-xs sm:text-sm leading-relaxed">
+                                You are about to decline the reservation for <span class="font-bold text-slate-700">${clientName}</span> (${venue}). Please provide the reason below.
+                            </p>
+                        </div>
+
+                        <!-- Reason Checkboxes -->
+                        <div class="w-full text-left mb-5">
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Reason for Declining <span class="text-rose-500">*</span></label>
+                            
+                            <div class="space-y-2.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs sm:text-sm" id="admin-decline-reasons-group">
+                                <label class="flex items-start gap-2.5 cursor-pointer hover:text-rose-700 transition select-none">
+                                    <input type="checkbox" name="admin_decline_reason" value="Venue unavailable or undergoing maintenance / repair" class="mt-0.5 w-4 h-4 text-rose-600 rounded border-gray-300 focus:ring-rose-500">
+                                    <span class="text-slate-700 font-medium leading-tight">Venue unavailable or undergoing maintenance / repair</span>
+                                </label>
+                                <label class="flex items-start gap-2.5 cursor-pointer hover:text-rose-700 transition select-none">
+                                    <input type="checkbox" name="admin_decline_reason" value="Schedule conflict with priority government / official event" class="mt-0.5 w-4 h-4 text-rose-600 rounded border-gray-300 focus:ring-rose-500">
+                                    <span class="text-slate-700 font-medium leading-tight">Schedule conflict with priority government / official event</span>
+                                </label>
+                                <label class="flex items-start gap-2.5 cursor-pointer hover:text-rose-700 transition select-none">
+                                    <input type="checkbox" name="admin_decline_reason" value="Incomplete or non-compliant booking requirements / documents" class="mt-0.5 w-4 h-4 text-rose-600 rounded border-gray-300 focus:ring-rose-500">
+                                    <span class="text-slate-700 font-medium leading-tight">Incomplete or non-compliant booking requirements / documents</span>
+                                </label>
+                                <label class="flex items-start gap-2.5 cursor-pointer hover:text-rose-700 transition select-none">
+                                    <input type="checkbox" name="admin_decline_reason" value="Exceeds venue capacity or violates safety regulations" class="mt-0.5 w-4 h-4 text-rose-600 rounded border-gray-300 focus:ring-rose-500">
+                                    <span class="text-slate-700 font-medium leading-tight">Exceeds venue capacity or violates safety regulations</span>
+                                </label>
+                                <label class="flex items-start gap-2.5 cursor-pointer hover:text-rose-700 transition select-none">
+                                    <input type="checkbox" name="admin_decline_reason" value="Requested equipment or facility amenities are unavailable" class="mt-0.5 w-4 h-4 text-rose-600 rounded border-gray-300 focus:ring-rose-500">
+                                    <span class="text-slate-700 font-medium leading-tight">Requested equipment or facility amenities are unavailable</span>
+                                </label>
+                                <label class="flex items-start gap-2.5 cursor-pointer hover:text-rose-700 transition select-none">
+                                    <input type="checkbox" id="admin-decline-other-checkbox" name="admin_decline_reason" value="Other" class="mt-0.5 w-4 h-4 text-rose-600 rounded border-gray-300 focus:ring-rose-500">
+                                    <span class="text-slate-700 font-bold leading-tight">Other</span>
+                                </label>
+
+                                <!-- Other reason text area -->
+                                <div id="admin-decline-other-container" class="hidden pt-1 pl-6">
+                                    <textarea id="admin-decline-other-text" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs sm:text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500 resize-none h-20 transition" placeholder="Please specify the reason for declining..."></textarea>
+                                </div>
+                            </div>
+                            <p id="admin-decline-validation-msg" class="hidden text-xs text-rose-600 font-semibold mt-1.5 flex items-center gap-1">
+                                <i class="fa-solid fa-circle-exclamation"></i> <span>Please select or specify at least one reason.</span>
+                            </p>
+                        </div>
+
+                        <div class="flex flex-col gap-2.5 w-full">
+                            <button id="admin-btn-confirm-decline" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-full transition shadow-md text-sm flex items-center justify-center">
+                                Yes, Decline Reservation
+                            </button>
+                            <button id="admin-btn-close-decline" class="w-full bg-white text-slate-600 hover:bg-slate-100 font-bold py-2.5 rounded-full transition text-sm">
+                                No thanks
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+            const modal = document.getElementById('admin-decline-modal');
+            const btnConfirm = document.getElementById('admin-btn-confirm-decline');
+            const btnClose = document.getElementById('admin-btn-close-decline');
+            const otherCheckbox = document.getElementById('admin-decline-other-checkbox');
+            const otherContainer = document.getElementById('admin-decline-other-container');
+            const otherText = document.getElementById('admin-decline-other-text');
+            const validationMsg = document.getElementById('admin-decline-validation-msg');
+
+            otherCheckbox.addEventListener('change', () => {
+                if (otherCheckbox.checked) {
+                    otherContainer.classList.remove('hidden');
+                    otherText.focus();
+                } else {
+                    otherContainer.classList.add('hidden');
+                    otherText.classList.remove('border-rose-500');
+                }
+            });
+
+            // Clear validation error when checkboxes change
+            modal.querySelectorAll('input[name="admin_decline_reason"]').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    validationMsg.classList.add('hidden');
+                });
+            });
+
+            otherText.addEventListener('input', () => {
+                if (otherText.value.trim()) {
+                    validationMsg.classList.add('hidden');
+                    otherText.classList.remove('border-rose-500');
+                }
+            });
+
+            const destroyModal = () => {
+                modal.classList.add('opacity-0');
+                setTimeout(() => modal.remove(), 300);
+            };
+
+            btnClose.addEventListener('click', destroyModal);
+
+            btnConfirm.addEventListener('click', async () => {
+                const checkedBoxes = Array.from(modal.querySelectorAll('input[name="admin_decline_reason"]:checked'));
+                if (checkedBoxes.length === 0) {
+                    validationMsg.querySelector('span').textContent = 'Please select at least one reason.';
+                    validationMsg.classList.remove('hidden');
+                    return;
+                }
+
+                const isOtherChecked = otherCheckbox.checked;
+                const otherVal = otherText.value.trim();
+
+                if (isOtherChecked && !otherVal) {
+                    validationMsg.querySelector('span').textContent = "Please specify the reason for 'Other'.";
+                    validationMsg.classList.remove('hidden');
+                    otherText.focus();
+                    otherText.classList.add('border-rose-500');
+                    return;
+                }
+
+                const reasons = [];
+                checkedBoxes.forEach(cb => {
+                    if (cb.value === 'Other') {
+                        reasons.push(`Other: ${otherVal}`);
+                    } else {
+                        reasons.push(cb.value);
+                    }
+                });
+
+                const combinedReason = reasons.join('; ');
+
+                btnConfirm.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Declining...';
+                btnConfirm.disabled = true;
+                btnClose.disabled = true;
+
+                destroyModal();
+                await window.setStatus(id, 'declined', null, combinedReason);
+            });
+        };
+
+        window.setStatus = async function(id, status, event, declineReason) {
             if(event) event.stopPropagation();
+
+            // If declining and no reason provided yet, open the decline reason modal
+            if (status === 'declined' && !declineReason) {
+                window.openDeclineModal(id, event);
+                return;
+            }
             
             // Optimistic update for immediate visual feedback
             const resIndex = reservations.findIndex(r => r.id === id);
             if (resIndex > -1) {
                 reservations[resIndex].status = status;
+                if (declineReason) {
+                    reservations[resIndex].notes = declineReason;
+                }
                 const showDateStr = window.currentSelectedDateStr || new Date().toISOString().split('T')[0];
                 renderCalendar();
                 renderReservationList(showDateStr);
@@ -1355,7 +1636,11 @@ window.printReservation = function(id, event) {
             }
 
             try { 
-                const { error } = await supabase.from('reservations').update({ status: status }).eq('id', id); 
+                const updatePayload = { status: status };
+                if (declineReason) {
+                    updatePayload.notes = declineReason;
+                }
+                const { error } = await supabase.from('reservations').update(updatePayload).eq('id', id); 
                 if (error) throw error;
                 if (status === 'confirmed' || status === 'declined') {
                     showAwesomeAlert(`Reservation ${status} successfully!`);
@@ -1363,10 +1648,11 @@ window.printReservation = function(id, event) {
                     // Dispatch notification to the client
                     if (resIndex > -1 && reservations[resIndex].contact?.email) {
                         try {
+                            const reasonSuffix = declineReason ? ` Reason: ${declineReason}` : '';
                             await supabase.from('notifications').insert([{
                                 user_email: reservations[resIndex].contact.email.toLowerCase(),
                                 title: `Reservation ${status.toUpperCase()}`,
-                                message: `Your reservation for ${reservations[resIndex].event?.venue} on ${window.formatReservationDates(reservations[resIndex].event?.dates)} was ${status}.`
+                                message: `Your reservation for ${reservations[resIndex].event?.venue} on ${window.formatReservationDates(reservations[resIndex].event?.dates)} was ${status}.${reasonSuffix}`
                             }]);
                         } catch(e) { console.warn('Notification failed', e); }
                     }
@@ -1544,7 +1830,7 @@ window.printReservation = function(id, event) {
                         <p><strong>Total:</strong> ₱${(res.pricing.grandTotal).toLocaleString()}</p>
                     </div>
                     <div class="flex gap-2 relative z-10">
-                        ${(res.status === 'pending' && (!res.event.eventType || !res.event.eventType.startsWith('Blocked:'))) ? `<button onclick="setStatus('${res.id}', 'confirmed', event)" class="flex-1 bg-green-600 text-white py-1.5 rounded text-xs font-bold hover:bg-green-700">Accept</button><button onclick="setStatus('${res.id}', 'declined', event)" class="flex-1 bg-red-500 text-white py-1.5 rounded text-xs font-bold hover:bg-red-600">Decline</button>` : ''}
+                        ${(res.status === 'pending' && (!res.event.eventType || !res.event.eventType.startsWith('Blocked:'))) ? `<button onclick="setStatus('${res.id}', 'confirmed', event)" class="flex-1 bg-green-600 text-white py-1.5 rounded text-xs font-bold hover:bg-green-700">Accept</button><button onclick="openDeclineModal('${res.id}', event)" class="flex-1 bg-red-500 text-white py-1.5 rounded text-xs font-bold hover:bg-red-600">Decline</button>` : ''}
                         ${(res.status === 'confirmed' && (!res.event.eventType || !res.event.eventType.startsWith('Blocked:'))) ? `<button onclick="printReservation('${res.id}', event)" class="px-3 border border-gray-200 rounded text-blue-600 hover:text-blue-800 hover:bg-blue-50" title="Print Permit"><i class="fa-solid fa-print"></i></button>` : ''}
                         <button onclick="deleteRes('${res.id}', event)" title="${(res.event.eventType && res.event.eventType.startsWith('Blocked:')) ? 'Unblock Date' : 'Archive Reservation'}" class="px-3 border border-gray-200 rounded ${(res.event.eventType && res.event.eventType.startsWith('Blocked:')) ? 'text-red-500 hover:text-red-700 hover:bg-red-50' : 'text-amber-500 hover:text-amber-700 hover:bg-amber-50'}"><i class="fa-solid ${res.event.eventType && res.event.eventType.startsWith('Blocked:') ? 'fa-unlock' : 'fa-box-archive'}"></i></button>
                     </div>
@@ -1592,11 +1878,15 @@ window.printReservation = function(id, event) {
                 filtered = filtered.filter(r => r.contact?.fullName?.toLowerCase().includes(searchQuery));
             }
             
-            filtered.sort((a, b) => {
-                const dateA = new Date(a.created_at || a.timestamp || 0);
-                const dateB = new Date(b.created_at || b.timestamp || 0);
-                return dateB - dateA;
-            });
+            if (filter === 'pending') {
+                filtered.sort(window.compareReservationsByUrgency);
+            } else {
+                filtered.sort((a, b) => {
+                    const dateA = new Date(a.created_at || a.timestamp || 0);
+                    const dateB = new Date(b.created_at || b.timestamp || 0);
+                    return dateB - dateA;
+                });
+            }
 
             tbody.innerHTML = '';
             
@@ -1634,7 +1924,7 @@ window.printReservation = function(id, event) {
                 
                 if(res.status === 'pending') {
                     actionsStr += `<button onclick="setStatus('${res.id}', 'confirmed', event)" class="px-3 border border-green-200 rounded text-green-700 bg-green-50 hover:bg-green-100 py-1 font-bold text-xs" title="Approve"><i class="fa-solid fa-check"></i></button>`;
-                    actionsStr += `<button onclick="setStatus('${res.id}', 'declined', event)" class="px-3 border border-red-200 rounded text-red-700 bg-red-50 hover:bg-red-100 py-1 font-bold text-xs" title="Decline"><i class="fa-solid fa-xmark"></i></button>`;
+                    actionsStr += `<button onclick="openDeclineModal('${res.id}', event)" class="px-3 border border-red-200 rounded text-red-700 bg-red-50 hover:bg-red-100 py-1 font-bold text-xs" title="Decline"><i class="fa-solid fa-xmark"></i></button>`;
                 } else if(res.status === 'confirmed') {
                     actionsStr += `<button onclick="printReservation('${res.id}', event)" class="px-3 border border-gray-200 rounded text-slate-600 hover:text-blue-700 hover:bg-blue-50 py-1 font-bold text-xs" title="Print Form"><i class="fa-solid fa-print"></i></button>`;
                 }

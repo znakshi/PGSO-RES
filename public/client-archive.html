@@ -332,6 +332,11 @@
                             
                             const grandTotal = formatCurrency(res.pricing?.grandTotal || 0);
                             
+                            let reasonHtml = '';
+                            if (res.notes && (res.status === 'declined' || res.status === 'cancelled' || res.status === 'rejected')) {
+                                reasonHtml = `<div class="mt-3 text-xs text-rose-700 bg-rose-50/80 p-2.5 rounded-lg border border-rose-100 text-left"><strong class="uppercase text-[9px] tracking-wider text-rose-500 mb-0.5 block">${res.status === 'declined' ? 'Reason for Declining' : 'Reason for Cancellation'}</strong>${res.notes}</div>`;
+                            }
+
                             card.innerHTML = `
                                 <div class="flex-1 w-full">
                                     <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
@@ -346,6 +351,7 @@
                                         <p><i class="fa-solid fa-layer-group w-5 text-gray-400"></i> <strong class="text-slate-700">Event Type:</strong> ${res.event?.eventType || 'N/A'}</p>
                                         <p><i class="fa-solid fa-peso-sign w-5 text-gray-400"></i> <strong class="text-slate-700">Total:</strong> ${grandTotal}</p>
                                     </div>
+                                    ${reasonHtml}
                                 </div>
                                 <div class="flex md:flex-col gap-3 w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-gray-100 md:pl-6 justify-center items-center">
                                     <button class="view-btn w-full justify-center bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition" data-id="${res.id}">
@@ -402,6 +408,12 @@
                                 <h3 class="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1 flex items-center gap-2"><i class="fa-solid fa-box-open text-blue-500"></i> Equipment</h3>
                                 <p class="text-slate-800 text-sm leading-relaxed">${equipText}</p>
                             </div>
+                            ${(res.notes && (res.status === 'declined' || res.status === 'cancelled' || res.status === 'rejected')) ? `
+                            <div class="bg-rose-50 p-3 sm:p-4 rounded-xl border border-rose-100 text-left">
+                                <h3 class="text-xs font-bold text-rose-700 uppercase tracking-wider mb-1 flex items-center gap-1.5"><i class="fa-solid fa-circle-exclamation"></i> ${res.status === 'declined' ? 'Reason for Declining' : 'Reason for Cancellation'}</h3>
+                                <p class="text-slate-700 text-sm leading-relaxed">${res.notes}</p>
+                            </div>
+                            ` : ''}
                             <div class="bg-blue-50 p-3 sm:p-4 rounded-xl border border-blue-100 mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 sm:gap-4">
                                 <p class="text-blue-800 font-bold uppercase tracking-wider text-xs">Total Estimated Cost</p>
                                 <p class="text-xl sm:text-2xl font-black text-blue-700">${grandTotal}</p>
