@@ -1524,56 +1524,56 @@ window.printReservation = function(id, event) {
             if (existing) existing.remove();
 
             const modalHTML = `
-            <div id="admin-payment-notice-modal" class="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 p-3 sm:p-4 overflow-y-auto">
-                <div class="bg-white rounded-2xl shadow-2xl flex flex-col w-full max-w-lg relative my-8 overflow-visible">
+            <div id="admin-payment-notice-modal" class="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 p-4 sm:p-6 py-12 sm:py-16 overflow-y-auto">
+                <div class="bg-white rounded-3xl shadow-2xl flex flex-col w-full max-w-xl sm:max-w-2xl relative my-auto overflow-visible border-t-8 border-indigo-600">
                     <!-- Floating circular icon (Unclipped) -->
-                    <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md z-20 border-4 border-white">
-                        <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center shadow-inner text-white">
-                            <i class="fa-solid fa-file-invoice-dollar text-xl"></i>
+                    <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg z-20 border-4 border-white">
+                        <div class="w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center shadow-inner text-white">
+                            <i class="fa-solid fa-file-invoice-dollar text-2xl"></i>
                         </div>
                     </div>
 
-                    <div class="p-6 sm:p-8 pt-11 sm:pt-12 flex flex-col">
-                        <div class="text-center mb-4">
-                            <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-1.5 tracking-wide">Approve for Payment</h2>
-                            <p class="text-gray-500 text-xs sm:text-sm leading-relaxed">
+                    <div class="p-7 sm:p-10 pt-12 sm:pt-14 flex flex-col">
+                        <div class="text-center mb-6">
+                            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-2 tracking-tight">Approve for Payment</h2>
+                            <p class="text-slate-500 text-sm sm:text-base leading-relaxed max-w-lg mx-auto">
                                 Pre-approve booking request for <span class="font-bold text-slate-800">${clientName}</span>. Set a payment deadline and instructions before notifying the client.
                             </p>
                         </div>
 
                         <!-- Booking Summary Box -->
-                        <div class="bg-indigo-50/60 border border-indigo-100 rounded-xl p-3.5 mb-4 text-xs space-y-1.5">
+                        <div class="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-4 sm:p-5 mb-5 space-y-2.5 text-sm">
                             <div class="flex justify-between items-center">
-                                <span class="font-semibold text-slate-500 uppercase text-[10px] tracking-wider">Facility</span>
-                                <span class="font-bold text-slate-800">${venue}</span>
+                                <span class="font-bold text-slate-500 uppercase text-xs tracking-wider">Facility</span>
+                                <span class="font-bold text-slate-800 text-sm sm:text-base">${venue}</span>
                             </div>
                             <div class="flex justify-between items-center">
-                                <span class="font-semibold text-slate-500 uppercase text-[10px] tracking-wider">Schedule</span>
-                                <span class="font-medium text-slate-700">${datesFormatted} (${timeRange})</span>
+                                <span class="font-bold text-slate-500 uppercase text-xs tracking-wider">Schedule</span>
+                                <span class="font-medium text-slate-700 text-xs sm:text-sm">${datesFormatted} (${timeRange})</span>
                             </div>
-                            <div class="flex justify-between items-center pt-2 border-t border-indigo-100/80">
-                                <span class="font-bold text-indigo-900 uppercase text-[11px] tracking-wider">Total Amount Due</span>
-                                <span class="font-black text-indigo-700 text-base">₱${grandTotal}</span>
+                            <div class="flex justify-between items-center pt-2.5 border-t border-indigo-100">
+                                <span class="font-bold text-indigo-900 uppercase text-xs sm:text-sm tracking-wider">Total Amount Due</span>
+                                <span class="font-black text-indigo-700 text-xl sm:text-2xl">₱${grandTotal}</span>
                             </div>
                         </div>
 
                         <!-- Form inputs -->
-                        <div class="space-y-3.5 mb-5 text-left">
+                        <div class="space-y-4 mb-6 text-left">
                             <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                <label class="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wide mb-1.5">
                                     Payment Deadline <span class="text-rose-500">*</span>
                                 </label>
                                 <input type="date" id="payment-notice-deadline" value="${defaultDeadlineStr}" min="${today.toISOString().split('T')[0]}"
-                                    class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs sm:text-sm font-semibold focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
-                                <p class="text-[11px] text-slate-400 mt-1">Clients must settle payment on or before this date.</p>
+                                    class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 sm:p-3.5 text-sm sm:text-base font-semibold focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100 outline-none transition">
+                                <p class="text-xs text-slate-400 mt-1">Clients must settle payment on or before this date.</p>
                             </div>
 
                             <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                <label class="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wide mb-1.5">
                                     Payment Instructions / Note to Client
                                 </label>
-                                <textarea id="payment-notice-instructions" rows="2"
-                                    class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs sm:text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none transition"
+                                <textarea id="payment-notice-instructions" rows="3"
+                                    class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 sm:p-3.5 text-sm leading-relaxed focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100 outline-none resize-none transition"
                                     placeholder="Enter payment instructions...">Please present your reservation reference number and settle payment at the Provincial Treasury Office / PGSO Cashier on or before the deadline to confirm your booking.</textarea>
                             </div>
                             
@@ -1582,16 +1582,16 @@ window.printReservation = function(id, event) {
                             </p>
                         </div>
 
-                        <div class="flex flex-col gap-2.5 w-full">
-                            <button id="btn-submit-payment-notice" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-full transition shadow-md text-sm flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-paper-plane text-xs"></i> Send Payment Notice & Pre-Approve
+                        <div class="flex flex-col gap-3 w-full">
+                            <button id="btn-submit-payment-notice" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 sm:py-4 rounded-xl transition shadow-lg hover:shadow-indigo-200 text-sm sm:text-base flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-paper-plane text-xs sm:text-sm"></i> Send Payment Notice & Pre-Approve
                             </button>
                             
                             <div class="flex items-center justify-between pt-1">
-                                <button id="btn-switch-to-confirm-paid" type="button" class="text-xs text-emerald-700 hover:text-emerald-800 font-bold hover:underline flex items-center gap-1">
+                                <button id="btn-switch-to-confirm-paid" type="button" class="text-xs sm:text-sm text-emerald-700 hover:text-emerald-800 font-bold hover:underline flex items-center gap-1.5">
                                     <i class="fa-solid fa-receipt"></i> Client already paid? Confirm directly
                                 </button>
-                                <button id="btn-close-payment-notice" type="button" class="text-xs text-slate-400 hover:text-slate-600 font-semibold">
+                                <button id="btn-close-payment-notice" type="button" class="text-xs sm:text-sm text-slate-400 hover:text-slate-600 font-semibold px-2 py-1">
                                     Cancel
                                 </button>
                             </div>
@@ -1669,53 +1669,53 @@ window.printReservation = function(id, event) {
             if (existing) existing.remove();
 
             const modalHTML = `
-            <div id="admin-confirm-payment-modal" class="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 p-3 sm:p-4 overflow-y-auto">
-                <div class="bg-white rounded-2xl shadow-2xl flex flex-col w-full max-w-md relative my-8 overflow-visible">
+            <div id="admin-confirm-payment-modal" class="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 p-4 sm:p-6 py-12 sm:py-16 overflow-y-auto">
+                <div class="bg-white rounded-3xl shadow-2xl flex flex-col w-full max-w-xl sm:max-w-2xl relative my-auto overflow-visible border-t-8 border-emerald-600">
                     <!-- Floating circular icon (Unclipped) -->
-                    <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md z-20 border-4 border-white">
-                        <div class="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center shadow-inner text-white">
-                            <i class="fa-solid fa-circle-check text-xl"></i>
+                    <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg z-20 border-4 border-white">
+                        <div class="w-14 h-14 bg-emerald-600 rounded-full flex items-center justify-center shadow-inner text-white">
+                            <i class="fa-solid fa-circle-check text-2xl"></i>
                         </div>
                     </div>
 
-                    <div class="p-6 sm:p-8 pt-11 sm:pt-12 flex flex-col">
-                        <div class="text-center mb-4">
-                            <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-1.5 tracking-wide">Confirm Payment & Approve</h2>
-                            <p class="text-gray-500 text-xs sm:text-sm leading-relaxed">
+                    <div class="p-7 sm:p-10 pt-12 sm:pt-14 flex flex-col">
+                        <div class="text-center mb-6">
+                            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-2 tracking-tight">Confirm Payment & Approve</h2>
+                            <p class="text-slate-500 text-sm sm:text-base leading-relaxed max-w-lg mx-auto">
                                 Confirm that <span class="font-bold text-slate-800">${clientName}</span> has paid for their reservation at <span class="font-bold text-slate-800">${venue}</span> (${datesFormatted}).
                             </p>
                         </div>
 
                         <!-- Amount Highlight Box -->
-                        <div class="bg-emerald-50 border border-emerald-200/80 rounded-xl p-3.5 mb-4 text-center">
-                            <p class="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Total Amount Paid</p>
-                            <p class="text-2xl font-black text-emerald-700 mt-0.5">₱${grandTotal}</p>
+                        <div class="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-5 mb-5 text-center">
+                            <p class="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-1">Total Amount Paid</p>
+                            <p class="text-3xl sm:text-4xl font-black text-emerald-700">₱${grandTotal}</p>
                         </div>
 
                         <!-- Form inputs -->
-                        <div class="space-y-3 mb-5 text-left">
+                        <div class="space-y-4 mb-6 text-left">
                             <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                <label class="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wide mb-1.5">
                                     Payment Date <span class="text-rose-500">*</span>
                                 </label>
                                 <input type="date" id="confirm-payment-date" value="${todayStr}"
-                                    class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs sm:text-sm font-semibold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition">
+                                    class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 sm:p-3.5 text-sm sm:text-base font-semibold focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-100 outline-none transition">
                             </div>
 
                             <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                <label class="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wide mb-1.5">
                                     Official Receipt (O.R.) / Ref Number
                                 </label>
                                 <input type="text" id="confirm-payment-or" placeholder="e.g. OR-8729103"
-                                    class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs sm:text-sm font-mono focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition">
+                                    class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 sm:p-3.5 text-sm sm:text-base font-mono focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-100 outline-none transition">
                             </div>
 
                             <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                <label class="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wide mb-1.5">
                                     Payment Method / Remarks
                                 </label>
                                 <select id="confirm-payment-method"
-                                    class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs sm:text-sm font-medium focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition">
+                                    class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 sm:p-3.5 text-sm sm:text-base font-medium focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-100 outline-none transition">
                                     <option value="Cash (Provincial Treasury)">Cash (Provincial Treasury)</option>
                                     <option value="Cash (PGSO Cashier)">Cash (PGSO Cashier)</option>
                                     <option value="Online / Bank Transfer">Online / Bank Transfer</option>
@@ -1729,11 +1729,11 @@ window.printReservation = function(id, event) {
                             </p>
                         </div>
 
-                        <div class="flex flex-col gap-2.5 w-full">
-                            <button id="btn-submit-confirm-payment" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-full transition shadow-md text-sm flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-check text-xs"></i> Confirm Booking (Mark as Paid)
+                        <div class="flex flex-col gap-3 w-full">
+                            <button id="btn-submit-confirm-payment" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 sm:py-4 rounded-xl transition shadow-lg hover:shadow-emerald-200 text-sm sm:text-base flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-check text-sm"></i> Confirm Booking (Mark as Paid)
                             </button>
-                            <button id="btn-close-confirm-payment" type="button" class="w-full bg-white text-slate-600 hover:bg-slate-100 font-bold py-2.5 rounded-full transition text-sm">
+                            <button id="btn-close-confirm-payment" type="button" class="w-full bg-white text-slate-600 hover:bg-slate-100 font-bold py-3 rounded-xl transition text-sm">
                                 Cancel
                             </button>
                         </div>
