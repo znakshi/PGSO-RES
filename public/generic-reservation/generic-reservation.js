@@ -186,7 +186,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 .from('reservations')
                 .select('*')
                 .or(`event->>venue.eq.${venueDetails.name},event->>venue.eq.All Venues`)
-                .neq('status', 'declined');
+                .neq('status', 'declined')
+                .neq('status', 'cancelled');
 
             if (error) throw error;
 
@@ -382,7 +383,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         try {
             // Find active reservations overlapping with selected dates
-            const { data } = await supabase.from('reservations').select('*').neq('status', 'declined');
+            const { data } = await supabase.from('reservations').select('*').neq('status', 'declined').neq('status', 'cancelled');
             const usageMap = {};
 
             if (data) {

@@ -115,7 +115,8 @@ window.submitReservation = async function () {
                 .from('reservations')
                 .select('id, event, status')
                 .eq('event->>venue', data.event.venue)
-                .neq('status', 'declined');
+                .neq('status', 'declined')
+                .neq('status', 'cancelled');
 
             if (fetchError) throw fetchError;
 

@@ -371,7 +371,7 @@ console.log('[PGSO] admin-dashboard.js initialized, supabase client ready:', !!s
             const todayStr = new Date().toISOString().split('T')[0];
             
             const pendingList = reservations.filter(r => 
-                r.status === 'pending' && 
+                (r.status === 'pending' || r.status === 'awaiting_payment') && 
                 !(r.event?.eventType && r.event.eventType.startsWith('Blocked:'))
             );
             // Sort by event date & time urgency: closest upcoming event to today appears first
@@ -464,16 +464,70 @@ console.log('[PGSO] admin-dashboard.js initialized, supabase client ready:', !!s
                             urgencyBadge = `<span class="bg-slate-100 text-slate-500 text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1 border border-slate-200"><i class="fa-solid fa-circle-exclamation"></i> Past Event</span>`;
                         }
 
+                        const isAwaiting = res.status === 'awaiting_payment';
+                        const statusBadge = isAwaiting ? 
+                            `<span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 border border-indigo-200"><i class="fa-solid fa-file-invoice-dollar"></i> Awaiting Payment</span>` : 
+                            `<span class="bg-amber-100/80 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Pending Review</span>`;
+
+                        const leftIcon = isAwaiting ?
+                            `<div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200/70 text-indigo-600 flex items-center justify-center text-base font-bold flex-shrink-0 mt-0.5"><i class="fa-solid fa-file-invoice-dollar"></i></div>` :
+                            `<div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/70 text-amber-600 flex items-center justify-center text-base font-black flex-shrink-0 mt-0.5"><i class="fa-solid fa-exclamation font-black"></i></div>`;
+
+                        let deadlineNotice = '';
+                        if (isAwaiting) {
+                            const deadlineVal = res.pricing?.payment?.deadline || (res.notes?.match(/Deadline:\s*([^.;\n]+)/i)?.[1]?.trim());
+                            if (deadlineVal) {
+                                deadlineNotice = `<span class="flex items-center gap-1 font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100"><i class="fa-regular fa-clock"></i> Due: ${deadlineVal}</span>`;
+                            }
+                        }
+
+                        let actionButtons = '';
+                        if (isAwaiting) {
+                            actionButtons = `
+                                <button onclick="window.viewReservation('${res.id}')"
+                                    class="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 text-xs font-bold transition flex items-center gap-1.5"
+                                    title="View Details">
+                                    <i class="fa-solid fa-eye"></i> Details
+                                </button>
+                                <button onclick="window.openConfirmPaymentModal('${res.id}', event);"
+                                    class="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5"
+                                    title="Confirm Payment Received">
+                                    <i class="fa-solid fa-check"></i> Confirm Paid
+                                </button>
+                                <button onclick="window.openDeclineModal('${res.id}', event);"
+                                    class="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition flex items-center gap-1.5"
+                                    title="Decline Booking">
+                                    <i class="fa-solid fa-xmark"></i> Decline
+                                </button>
+                            `;
+                        } else {
+                            actionButtons = `
+                                <button onclick="window.viewReservation('${res.id}')"
+                                    class="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 text-xs font-bold transition flex items-center gap-1.5"
+                                    title="View Details">
+                                    <i class="fa-solid fa-eye"></i> Details
+                                </button>
+                                <button onclick="window.openPaymentNoticeModal('${res.id}', event);"
+                                    class="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5"
+                                    title="Approve for Payment / Request Payment">
+                                    <i class="fa-solid fa-file-invoice-dollar"></i> Request Payment
+                                </button>
+                                <button onclick="window.openDeclineModal('${res.id}', event);"
+                                    class="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition flex items-center gap-1.5"
+                                    title="Decline Booking">
+                                    <i class="fa-solid fa-xmark"></i> Decline
+                                </button>
+                            `;
+                        }
+
                         return `
                             <div class="border border-slate-200 hover:border-amber-400/80 rounded-xl p-4 transition-all bg-white hover:shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 group">
                                 <div class="flex items-start gap-3.5 min-w-0">
-                                    <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/70 text-amber-600 flex items-center justify-center text-base font-bold flex-shrink-0 mt-0.5">
-                                        <i class="fa-solid fa-clock-rotate-left"></i>
-                                    </div>
+                                    ${leftIcon}
                                     <div class="space-y-1 min-w-0">
                                         <div class="flex flex-wrap items-center gap-2">
                                             <h4 class="text-sm font-bold text-slate-800 group-hover:text-blue-700 transition cursor-pointer truncate" onclick="window.viewReservation('${res.id}')">${clientName}</h4>
-                                            <span class="bg-amber-100/80 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Pending Action</span>
+                                            ${statusBadge}
                                             ${urgencyBadge}
                                         </div>
                                         <p class="text-xs font-semibold text-slate-600 flex items-center gap-1.5 truncate">
@@ -486,26 +540,13 @@ console.log('[PGSO] admin-dashboard.js initialized, supabase client ready:', !!s
                                             <span class="flex items-center gap-1"><i class="fa-regular fa-calendar"></i> ${datesFormatted}</span>
                                             <span class="flex items-center gap-1"><i class="fa-regular fa-clock"></i> ${timeRange}</span>
                                             <span class="font-bold text-slate-700">₱${grandTotal}</span>
+                                            ${deadlineNotice}
                                         </div>
                                     </div>
                                 </div>
                                 
                                 <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end sm:justify-start flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                                    <button onclick="window.viewReservation('${res.id}')"
-                                        class="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 text-xs font-bold transition flex items-center gap-1.5"
-                                        title="View / Edit Details">
-                                        <i class="fa-solid fa-eye"></i> Details
-                                    </button>
-                                    <button onclick="window.setStatus('${res.id}', 'confirmed', event); setTimeout(window.renderAdminDashboard, 200);"
-                                        class="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5"
-                                        title="Accept / Confirm Booking">
-                                        <i class="fa-solid fa-check"></i> Approve
-                                    </button>
-                                    <button onclick="window.openDeclineModal('${res.id}', event);"
-                                        class="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition flex items-center gap-1.5"
-                                        title="Decline Booking">
-                                        <i class="fa-solid fa-xmark"></i> Decline
-                                    </button>
+                                    ${actionButtons}
                                 </div>
                             </div>
                         `;
@@ -1449,7 +1490,305 @@ window.printReservation = function(id, event) {
 
         fetchReservations();
 
-        // --- STATUS & DECLINE MODAL ACTIONS ---
+        // --- STATUS & MODAL ACTIONS (PAYMENT NOTICE, CONFIRM PAYMENT, DECLINE) ---
+        window.openPaymentNoticeModal = function(id, event) {
+            if (event) event.stopPropagation();
+
+            const res = reservations.find(r => r.id === id);
+            if (!res) return;
+
+            const clientName = res.contact?.fullName || 'Client';
+            const venue = res.event?.venue || 'Venue';
+            const datesFormatted = window.formatReservationDates(res.event?.dates);
+            const timeRange = (res.event?.startTime && res.event?.endTime) ? `${res.event.startTime} - ${res.event.endTime}` : 'All Day';
+            const grandTotal = (res.pricing?.grandTotal || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+            // Calculate suggested deadline: 3 business days from today, or 1 day before earliest event date
+            const today = new Date();
+            let defaultDeadline = new Date(today);
+            defaultDeadline.setDate(defaultDeadline.getDate() + 3);
+
+            const earliestInfo = window.getReservationEarliestDateInfo(res);
+            if (earliestInfo && earliestInfo.dateStr) {
+                const eventDate = new Date(earliestInfo.dateStr + 'T00:00:00');
+                const dayBeforeEvent = new Date(eventDate);
+                dayBeforeEvent.setDate(dayBeforeEvent.getDate() - 1);
+                if (dayBeforeEvent > today && dayBeforeEvent < defaultDeadline) {
+                    defaultDeadline = dayBeforeEvent;
+                }
+            }
+            const defaultDeadlineStr = defaultDeadline.toISOString().split('T')[0];
+
+            // Remove existing modal if any
+            const existing = document.getElementById('admin-payment-notice-modal');
+            if (existing) existing.remove();
+
+            const modalHTML = `
+            <div id="admin-payment-notice-modal" class="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 p-3 sm:p-4 overflow-y-auto">
+                <div class="bg-white rounded-2xl shadow-2xl flex flex-col w-full max-w-lg relative my-8 overflow-visible">
+                    <!-- Floating circular icon (Unclipped) -->
+                    <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md z-20 border-4 border-white">
+                        <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center shadow-inner text-white">
+                            <i class="fa-solid fa-file-invoice-dollar text-xl"></i>
+                        </div>
+                    </div>
+
+                    <div class="p-6 sm:p-8 pt-11 sm:pt-12 flex flex-col">
+                        <div class="text-center mb-4">
+                            <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-1.5 tracking-wide">Approve for Payment</h2>
+                            <p class="text-gray-500 text-xs sm:text-sm leading-relaxed">
+                                Pre-approve booking request for <span class="font-bold text-slate-800">${clientName}</span>. Set a payment deadline and instructions before notifying the client.
+                            </p>
+                        </div>
+
+                        <!-- Booking Summary Box -->
+                        <div class="bg-indigo-50/60 border border-indigo-100 rounded-xl p-3.5 mb-4 text-xs space-y-1.5">
+                            <div class="flex justify-between items-center">
+                                <span class="font-semibold text-slate-500 uppercase text-[10px] tracking-wider">Facility</span>
+                                <span class="font-bold text-slate-800">${venue}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="font-semibold text-slate-500 uppercase text-[10px] tracking-wider">Schedule</span>
+                                <span class="font-medium text-slate-700">${datesFormatted} (${timeRange})</span>
+                            </div>
+                            <div class="flex justify-between items-center pt-2 border-t border-indigo-100/80">
+                                <span class="font-bold text-indigo-900 uppercase text-[11px] tracking-wider">Total Amount Due</span>
+                                <span class="font-black text-indigo-700 text-base">₱${grandTotal}</span>
+                            </div>
+                        </div>
+
+                        <!-- Form inputs -->
+                        <div class="space-y-3.5 mb-5 text-left">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                    Payment Deadline <span class="text-rose-500">*</span>
+                                </label>
+                                <input type="date" id="payment-notice-deadline" value="${defaultDeadlineStr}" min="${today.toISOString().split('T')[0]}"
+                                    class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs sm:text-sm font-semibold focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
+                                <p class="text-[11px] text-slate-400 mt-1">Clients must settle payment on or before this date.</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                    Payment Instructions / Note to Client
+                                </label>
+                                <textarea id="payment-notice-instructions" rows="2"
+                                    class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs sm:text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none transition"
+                                    placeholder="Enter payment instructions...">Please present your reservation reference number and settle payment at the Provincial Treasury Office / PGSO Cashier on or before the deadline to confirm your booking.</textarea>
+                            </div>
+                            
+                            <p id="payment-notice-validation" class="hidden text-xs text-rose-600 font-semibold flex items-center gap-1">
+                                <i class="fa-solid fa-circle-exclamation"></i> <span>Please specify a valid payment deadline date.</span>
+                            </p>
+                        </div>
+
+                        <div class="flex flex-col gap-2.5 w-full">
+                            <button id="btn-submit-payment-notice" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-full transition shadow-md text-sm flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-paper-plane text-xs"></i> Send Payment Notice & Pre-Approve
+                            </button>
+                            
+                            <div class="flex items-center justify-between pt-1">
+                                <button id="btn-switch-to-confirm-paid" type="button" class="text-xs text-emerald-700 hover:text-emerald-800 font-bold hover:underline flex items-center gap-1">
+                                    <i class="fa-solid fa-receipt"></i> Client already paid? Confirm directly
+                                </button>
+                                <button id="btn-close-payment-notice" type="button" class="text-xs text-slate-400 hover:text-slate-600 font-semibold">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+            const modal = document.getElementById('admin-payment-notice-modal');
+            const btnSubmit = document.getElementById('btn-submit-payment-notice');
+            const btnClose = document.getElementById('btn-close-payment-notice');
+            const btnSwitchToPaid = document.getElementById('btn-switch-to-confirm-paid');
+            const deadlineInput = document.getElementById('payment-notice-deadline');
+            const instructionsInput = document.getElementById('payment-notice-instructions');
+            const validationMsg = document.getElementById('payment-notice-validation');
+
+            const destroyModal = () => {
+                modal.classList.add('opacity-0');
+                setTimeout(() => modal.remove(), 300);
+            };
+
+            btnClose.addEventListener('click', destroyModal);
+
+            if (btnSwitchToPaid) {
+                btnSwitchToPaid.addEventListener('click', () => {
+                    destroyModal();
+                    window.openConfirmPaymentModal(id);
+                });
+            }
+
+            btnSubmit.addEventListener('click', async () => {
+                const deadlineVal = deadlineInput.value;
+                if (!deadlineVal) {
+                    validationMsg.classList.remove('hidden');
+                    deadlineInput.focus();
+                    return;
+                }
+
+                const instructionsVal = instructionsInput.value.trim();
+
+                btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Processing...';
+                btnSubmit.disabled = true;
+                btnClose.disabled = true;
+
+                destroyModal();
+
+                await window.setStatus(id, 'awaiting_payment', null, {
+                    notes: `Payment Deadline: ${deadlineVal}. ${instructionsVal}`.trim(),
+                    payment: {
+                        status: 'awaiting_payment',
+                        deadline: deadlineVal,
+                        instructions: instructionsVal,
+                        approvedAt: new Date().toISOString()
+                    }
+                });
+            });
+        };
+
+        window.openConfirmPaymentModal = function(id, event) {
+            if (event) event.stopPropagation();
+
+            const res = reservations.find(r => r.id === id);
+            if (!res) return;
+
+            const clientName = res.contact?.fullName || 'Client';
+            const venue = res.event?.venue || 'Venue';
+            const datesFormatted = window.formatReservationDates(res.event?.dates);
+            const grandTotal = (res.pricing?.grandTotal || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            // Remove existing modal if any
+            const existing = document.getElementById('admin-confirm-payment-modal');
+            if (existing) existing.remove();
+
+            const modalHTML = `
+            <div id="admin-confirm-payment-modal" class="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 p-3 sm:p-4 overflow-y-auto">
+                <div class="bg-white rounded-2xl shadow-2xl flex flex-col w-full max-w-md relative my-8 overflow-visible">
+                    <!-- Floating circular icon (Unclipped) -->
+                    <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md z-20 border-4 border-white">
+                        <div class="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center shadow-inner text-white">
+                            <i class="fa-solid fa-circle-check text-xl"></i>
+                        </div>
+                    </div>
+
+                    <div class="p-6 sm:p-8 pt-11 sm:pt-12 flex flex-col">
+                        <div class="text-center mb-4">
+                            <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-1.5 tracking-wide">Confirm Payment & Approve</h2>
+                            <p class="text-gray-500 text-xs sm:text-sm leading-relaxed">
+                                Confirm that <span class="font-bold text-slate-800">${clientName}</span> has paid for their reservation at <span class="font-bold text-slate-800">${venue}</span> (${datesFormatted}).
+                            </p>
+                        </div>
+
+                        <!-- Amount Highlight Box -->
+                        <div class="bg-emerald-50 border border-emerald-200/80 rounded-xl p-3.5 mb-4 text-center">
+                            <p class="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Total Amount Paid</p>
+                            <p class="text-2xl font-black text-emerald-700 mt-0.5">₱${grandTotal}</p>
+                        </div>
+
+                        <!-- Form inputs -->
+                        <div class="space-y-3 mb-5 text-left">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                    Payment Date <span class="text-rose-500">*</span>
+                                </label>
+                                <input type="date" id="confirm-payment-date" value="${todayStr}"
+                                    class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs sm:text-sm font-semibold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                    Official Receipt (O.R.) / Ref Number
+                                </label>
+                                <input type="text" id="confirm-payment-or" placeholder="e.g. OR-8729103"
+                                    class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs sm:text-sm font-mono focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                    Payment Method / Remarks
+                                </label>
+                                <select id="confirm-payment-method"
+                                    class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs sm:text-sm font-medium focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition">
+                                    <option value="Cash (Provincial Treasury)">Cash (Provincial Treasury)</option>
+                                    <option value="Cash (PGSO Cashier)">Cash (PGSO Cashier)</option>
+                                    <option value="Online / Bank Transfer">Online / Bank Transfer</option>
+                                    <option value="Government / Official Exemption">Government / Official Exemption</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <p id="confirm-payment-validation" class="hidden text-xs text-rose-600 font-semibold flex items-center gap-1">
+                                <i class="fa-solid fa-circle-exclamation"></i> <span>Please enter a valid payment date.</span>
+                            </p>
+                        </div>
+
+                        <div class="flex flex-col gap-2.5 w-full">
+                            <button id="btn-submit-confirm-payment" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-full transition shadow-md text-sm flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-check text-xs"></i> Confirm Booking (Mark as Paid)
+                            </button>
+                            <button id="btn-close-confirm-payment" type="button" class="w-full bg-white text-slate-600 hover:bg-slate-100 font-bold py-2.5 rounded-full transition text-sm">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+            const modal = document.getElementById('admin-confirm-payment-modal');
+            const btnSubmit = document.getElementById('btn-submit-confirm-payment');
+            const btnClose = document.getElementById('btn-close-confirm-payment');
+            const dateInput = document.getElementById('confirm-payment-date');
+            const orInput = document.getElementById('confirm-payment-or');
+            const methodInput = document.getElementById('confirm-payment-method');
+            const validationMsg = document.getElementById('confirm-payment-validation');
+
+            const destroyModal = () => {
+                modal.classList.add('opacity-0');
+                setTimeout(() => modal.remove(), 300);
+            };
+
+            btnClose.addEventListener('click', destroyModal);
+
+            btnSubmit.addEventListener('click', async () => {
+                const payDate = dateInput.value;
+                if (!payDate) {
+                    validationMsg.classList.remove('hidden');
+                    dateInput.focus();
+                    return;
+                }
+
+                const orVal = orInput.value.trim();
+                const methodVal = methodInput.value;
+
+                btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Confirming...';
+                btnSubmit.disabled = true;
+                btnClose.disabled = true;
+
+                destroyModal();
+
+                const noteText = `Paid on ${payDate}${orVal ? `. O.R. #${orVal}` : ''} (${methodVal})`;
+                await window.setStatus(id, 'confirmed', null, {
+                    notes: noteText,
+                    payment: {
+                        status: 'paid',
+                        paymentDate: payDate,
+                        orNumber: orVal,
+                        paymentMethod: methodVal,
+                        confirmedAt: new Date().toISOString()
+                    }
+                });
+            });
+        };
+
         window.openDeclineModal = function(id, event) {
             if (event) event.stopPropagation();
 
@@ -1611,21 +1950,43 @@ window.printReservation = function(id, event) {
             });
         };
 
-        window.setStatus = async function(id, status, event, declineReason) {
+        window.setStatus = async function(id, status, event, extraData) {
             if(event) event.stopPropagation();
 
             // If declining and no reason provided yet, open the decline reason modal
-            if (status === 'declined' && !declineReason) {
+            if (status === 'declined' && !extraData) {
                 window.openDeclineModal(id, event);
                 return;
+            }
+
+            // If requesting payment and no details provided yet, open payment notice modal
+            if (status === 'awaiting_payment' && !extraData) {
+                window.openPaymentNoticeModal(id, event);
+                return;
+            }
+
+            // Parse extraData (string notes or object with notes & payment)
+            let newNotes = null;
+            let paymentPayload = null;
+            if (typeof extraData === 'string') {
+                newNotes = extraData;
+            } else if (extraData && typeof extraData === 'object') {
+                if (extraData.notes) newNotes = extraData.notes;
+                if (extraData.payment) paymentPayload = extraData.payment;
             }
             
             // Optimistic update for immediate visual feedback
             const resIndex = reservations.findIndex(r => r.id === id);
             if (resIndex > -1) {
                 reservations[resIndex].status = status;
-                if (declineReason) {
-                    reservations[resIndex].notes = declineReason;
+                if (newNotes) {
+                    reservations[resIndex].notes = newNotes;
+                }
+                if (paymentPayload) {
+                    reservations[resIndex].pricing = {
+                        ...(reservations[resIndex].pricing || {}),
+                        payment: paymentPayload
+                    };
                 }
                 const showDateStr = window.currentSelectedDateStr || new Date().toISOString().split('T')[0];
                 renderCalendar();
@@ -1637,25 +1998,51 @@ window.printReservation = function(id, event) {
 
             try { 
                 const updatePayload = { status: status };
-                if (declineReason) {
-                    updatePayload.notes = declineReason;
+                if (newNotes) {
+                    updatePayload.notes = newNotes;
+                }
+                if (paymentPayload && resIndex > -1) {
+                    updatePayload.pricing = {
+                        ...(reservations[resIndex].pricing || {}),
+                        payment: paymentPayload
+                    };
                 }
                 const { error } = await supabase.from('reservations').update(updatePayload).eq('id', id); 
                 if (error) throw error;
-                if (status === 'confirmed' || status === 'declined') {
-                    showAwesomeAlert(`Reservation ${status} successfully!`);
-                    
-                    // Dispatch notification to the client
-                    if (resIndex > -1 && reservations[resIndex].contact?.email) {
-                        try {
-                            const reasonSuffix = declineReason ? ` Reason: ${declineReason}` : '';
-                            await supabase.from('notifications').insert([{
-                                user_email: reservations[resIndex].contact.email.toLowerCase(),
-                                title: `Reservation ${status.toUpperCase()}`,
-                                message: `Your reservation for ${reservations[resIndex].event?.venue} on ${window.formatReservationDates(reservations[resIndex].event?.dates)} was ${status}.${reasonSuffix}`
-                            }]);
-                        } catch(e) { console.warn('Notification failed', e); }
-                    }
+                
+                let successMsg = `Reservation ${status.replace('_', ' ')} successfully!`;
+                if (status === 'awaiting_payment') {
+                    successMsg = "Reservation pre-approved! Client notified to settle payment.";
+                } else if (status === 'confirmed') {
+                    successMsg = "Reservation confirmed and marked as paid!";
+                }
+                showAwesomeAlert(successMsg);
+                
+                // Dispatch notification to the client
+                if (resIndex > -1 && reservations[resIndex].contact?.email) {
+                    try {
+                        let notifTitle = `Reservation ${status.toUpperCase().replace('_', ' ')}`;
+                        let notifMsg = `Your reservation for ${reservations[resIndex].event?.venue} on ${window.formatReservationDates(reservations[resIndex].event?.dates)} was ${status.replace('_', ' ')}.`;
+
+                        if (status === 'awaiting_payment') {
+                            const deadline = paymentPayload?.deadline || '';
+                            const total = (reservations[resIndex].pricing?.grandTotal || 0).toLocaleString();
+                            notifTitle = "Reservation Pre-Approved (Payment Required)";
+                            notifMsg = `Your reservation request for ${reservations[resIndex].event?.venue} on ${window.formatReservationDates(reservations[resIndex].event?.dates)} has been approved for payment. Total due: ₱${total}.${deadline ? ` Please settle on or before ${deadline}.` : ''}`;
+                        } else if (status === 'confirmed') {
+                            const orNum = paymentPayload?.orNumber ? ` (O.R. #${paymentPayload.orNumber})` : '';
+                            notifTitle = "Reservation CONFIRMED";
+                            notifMsg = `Your reservation for ${reservations[resIndex].event?.venue} on ${window.formatReservationDates(reservations[resIndex].event?.dates)} is now fully CONFIRMED! Payment verified${orNum}.`;
+                        } else if (status === 'declined' && newNotes) {
+                            notifMsg += ` Reason: ${newNotes}`;
+                        }
+
+                        await supabase.from('notifications').insert([{
+                            user_email: reservations[resIndex].contact.email.toLowerCase(),
+                            title: notifTitle,
+                            message: notifMsg
+                        }]);
+                    } catch(e) { console.warn('Notification failed', e); }
                 }
             }
             catch(e) { 
@@ -1737,6 +2124,7 @@ window.printReservation = function(id, event) {
 
                 if (events.length > 0) {
                     const hasConfirmed = events.some(e => (!e.event?.eventType || !e.event.eventType.startsWith('Blocked:')) && (e.status === 'confirmed' || e.status === 'approved' || e.status === 'accepted'));
+                    const hasAwaiting = events.some(e => (!e.event?.eventType || !e.event.eventType.startsWith('Blocked:')) && e.status === 'awaiting_payment');
                     const hasPending = events.some(e => (!e.event?.eventType || !e.event.eventType.startsWith('Blocked:')) && e.status === 'pending');
                     const hasCancelled = events.some(e => (!e.event?.eventType || !e.event.eventType.startsWith('Blocked:')) && (e.status === 'cancelled' || e.status === 'declined' || e.status === 'rejected'));
                     const hasBlocked = events.some(e => e.event?.eventType && e.event.eventType.startsWith('Blocked:'));
@@ -1744,16 +2132,22 @@ window.printReservation = function(id, event) {
                     const dotsContainer = document.createElement('div');
                     dotsContainer.className = "cal-dots";
 
-                    if (hasConfirmed) {
-                        const dot = document.createElement('span');
-                        dot.className = "cal-dot cal-dot-confirmed";
-                        dot.title = "Confirmed";
-                        dotsContainer.appendChild(dot);
-                    }
                     if (hasPending) {
                         const dot = document.createElement('span');
                         dot.className = "cal-dot cal-dot-pending";
                         dot.title = "Pending";
+                        dotsContainer.appendChild(dot);
+                    }
+                    if (hasAwaiting) {
+                        const dot = document.createElement('span');
+                        dot.className = "cal-dot cal-dot-awaiting";
+                        dot.title = "Awaiting Payment";
+                        dotsContainer.appendChild(dot);
+                    }
+                    if (hasConfirmed) {
+                        const dot = document.createElement('span');
+                        dot.className = "cal-dot cal-dot-confirmed";
+                        dot.title = "Confirmed";
                         dotsContainer.appendChild(dot);
                     }
                     if (hasCancelled) {
@@ -1816,23 +2210,40 @@ window.printReservation = function(id, event) {
                 const card = document.createElement('div');
                 card.className = "border border-gray-200 rounded-lg p-4 hover:shadow-md transition bg-white cursor-pointer relative group";
                 card.onclick = () => viewReservation(res.id);
-                let badge = res.status === 'pending' ? "bg-yellow-100 text-yellow-800" : res.status === 'confirmed' ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+                let badge = res.status === 'pending' ? "bg-yellow-100 text-yellow-800" : 
+                            res.status === 'awaiting_payment' ? "bg-indigo-100 text-indigo-800" :
+                            res.status === 'confirmed' ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+                let statusDisplay = res.status === 'awaiting_payment' ? 'Awaiting Payment' : res.status;
                 if (res.event.eventType && res.event.eventType.startsWith('Blocked:')) {
                     badge = "bg-slate-200 text-slate-800";
+                    statusDisplay = 'BLOCKED';
                 }
+
+                let actionsHtml = '';
+                if (!res.event.eventType || !res.event.eventType.startsWith('Blocked:')) {
+                    if (res.status === 'pending') {
+                        actionsHtml += `<button onclick="openPaymentNoticeModal('${res.id}', event)" class="flex-1 bg-indigo-600 text-white py-1.5 rounded text-xs font-bold hover:bg-indigo-700">Request Payment</button>`;
+                        actionsHtml += `<button onclick="openDeclineModal('${res.id}', event)" class="flex-1 bg-red-500 text-white py-1.5 rounded text-xs font-bold hover:bg-red-600">Decline</button>`;
+                    } else if (res.status === 'awaiting_payment') {
+                        actionsHtml += `<button onclick="openConfirmPaymentModal('${res.id}', event)" class="flex-1 bg-green-600 text-white py-1.5 rounded text-xs font-bold hover:bg-green-700">Confirm Paid</button>`;
+                        actionsHtml += `<button onclick="openDeclineModal('${res.id}', event)" class="flex-1 bg-red-500 text-white py-1.5 rounded text-xs font-bold hover:bg-red-600">Decline</button>`;
+                    } else if (res.status === 'confirmed') {
+                        actionsHtml += `<button onclick="printReservation('${res.id}', event)" class="px-3 border border-gray-200 rounded text-blue-600 hover:text-blue-800 hover:bg-blue-50" title="Print Permit"><i class="fa-solid fa-print"></i></button>`;
+                    }
+                }
+                actionsHtml += `<button onclick="deleteRes('${res.id}', event)" title="${(res.event.eventType && res.event.eventType.startsWith('Blocked:')) ? 'Unblock Date' : 'Archive Reservation'}" class="px-3 border border-gray-200 rounded ${(res.event.eventType && res.event.eventType.startsWith('Blocked:')) ? 'text-red-500 hover:text-red-700 hover:bg-red-50' : 'text-amber-500 hover:text-amber-700 hover:bg-amber-50'}"><i class="fa-solid ${res.event.eventType && res.event.eventType.startsWith('Blocked:') ? 'fa-unlock' : 'fa-box-archive'}"></i></button>`;
+
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
                         <div><h4 class="font-bold text-gray-900 group-hover:text-pgso-blue transition">${res.contact.fullName}</h4><p class="text-xs text-gray-500">${res.event.venue}</p></div>
-                        <span class="${badge} text-[10px] px-2 py-1 rounded uppercase font-bold tracking-wider">${res.event.eventType && res.event.eventType.startsWith('Blocked:') ? 'BLOCKED' : res.status}</span>
+                        <span class="${badge} text-[10px] px-2 py-1 rounded uppercase font-bold tracking-wider">${statusDisplay}</span>
                     </div>
                     <div class="text-xs text-gray-600 space-y-1 mb-3 pt-2 border-t border-gray-100">
                         <p><strong>Time:</strong> ${res.event.startTime} - ${res.event.endTime}</p>
                         <p><strong>Total:</strong> ₱${(res.pricing.grandTotal).toLocaleString()}</p>
                     </div>
                     <div class="flex gap-2 relative z-10">
-                        ${(res.status === 'pending' && (!res.event.eventType || !res.event.eventType.startsWith('Blocked:'))) ? `<button onclick="setStatus('${res.id}', 'confirmed', event)" class="flex-1 bg-green-600 text-white py-1.5 rounded text-xs font-bold hover:bg-green-700">Accept</button><button onclick="openDeclineModal('${res.id}', event)" class="flex-1 bg-red-500 text-white py-1.5 rounded text-xs font-bold hover:bg-red-600">Decline</button>` : ''}
-                        ${(res.status === 'confirmed' && (!res.event.eventType || !res.event.eventType.startsWith('Blocked:'))) ? `<button onclick="printReservation('${res.id}', event)" class="px-3 border border-gray-200 rounded text-blue-600 hover:text-blue-800 hover:bg-blue-50" title="Print Permit"><i class="fa-solid fa-print"></i></button>` : ''}
-                        <button onclick="deleteRes('${res.id}', event)" title="${(res.event.eventType && res.event.eventType.startsWith('Blocked:')) ? 'Unblock Date' : 'Archive Reservation'}" class="px-3 border border-gray-200 rounded ${(res.event.eventType && res.event.eventType.startsWith('Blocked:')) ? 'text-red-500 hover:text-red-700 hover:bg-red-50' : 'text-amber-500 hover:text-amber-700 hover:bg-amber-50'}"><i class="fa-solid ${res.event.eventType && res.event.eventType.startsWith('Blocked:') ? 'fa-unlock' : 'fa-box-archive'}"></i></button>
+                        ${actionsHtml}
                     </div>
                 `;
                 list.appendChild(card);
@@ -1859,7 +2270,7 @@ window.printReservation = function(id, event) {
                 lastAllReservationsVenueFilter = venueFilter;
             }
             
-            let filtered = reservations.filter(r => r.status === 'pending' || r.status === 'confirmed' || r.status === 'declined' || r.status === 'cancelled');
+            let filtered = reservations.filter(r => r.status === 'pending' || r.status === 'awaiting_payment' || r.status === 'confirmed' || r.status === 'declined' || r.status === 'cancelled');
             
             if (venueFilter !== 'all') {
                 filtered = filtered.filter(r => r.event && r.event.venue === venueFilter);
@@ -1878,7 +2289,7 @@ window.printReservation = function(id, event) {
                 filtered = filtered.filter(r => r.contact?.fullName?.toLowerCase().includes(searchQuery));
             }
             
-            if (filter === 'pending') {
+            if (filter === 'pending' || filter === 'awaiting_payment') {
                 filtered.sort(window.compareReservationsByUrgency);
             } else {
                 filtered.sort((a, b) => {
@@ -1914,6 +2325,7 @@ window.printReservation = function(id, event) {
                 let isBlocked = res.event && res.event.eventType && res.event.eventType.startsWith('Blocked:');
                 let badge = isBlocked ? "bg-slate-200 text-slate-800 border-slate-300" :
                             res.status === 'pending' ? "bg-yellow-100 text-yellow-800 border-yellow-200" : 
+                            res.status === 'awaiting_payment' ? "bg-indigo-100 text-indigo-800 border-indigo-200" : 
                             res.status === 'confirmed' ? "bg-green-100 text-green-800 border-green-200" : 
                             "bg-red-100 text-red-800 border-red-200";
 
@@ -1923,7 +2335,10 @@ window.printReservation = function(id, event) {
                 actionsStr += `<button onclick="viewReservation('${res.id}')" class="px-3 border border-gray-200 rounded text-blue-600 hover:text-blue-800 hover:bg-blue-50 py-1 font-bold text-xs" title="View Details"><i class="fa-solid fa-eye"></i></button>`;
                 
                 if(res.status === 'pending') {
-                    actionsStr += `<button onclick="setStatus('${res.id}', 'confirmed', event)" class="px-3 border border-green-200 rounded text-green-700 bg-green-50 hover:bg-green-100 py-1 font-bold text-xs" title="Approve"><i class="fa-solid fa-check"></i></button>`;
+                    actionsStr += `<button onclick="openPaymentNoticeModal('${res.id}', event)" class="px-3 border border-indigo-200 rounded text-indigo-700 bg-indigo-50 hover:bg-indigo-100 py-1 font-bold text-xs" title="Approve for Payment / Request Payment"><i class="fa-solid fa-file-invoice-dollar"></i></button>`;
+                    actionsStr += `<button onclick="openDeclineModal('${res.id}', event)" class="px-3 border border-red-200 rounded text-red-700 bg-red-50 hover:bg-red-100 py-1 font-bold text-xs" title="Decline"><i class="fa-solid fa-xmark"></i></button>`;
+                } else if(res.status === 'awaiting_payment') {
+                    actionsStr += `<button onclick="openConfirmPaymentModal('${res.id}', event)" class="px-3 border border-green-200 rounded text-green-700 bg-green-50 hover:bg-green-100 py-1 font-bold text-xs" title="Confirm Payment Received"><i class="fa-solid fa-check"></i></button>`;
                     actionsStr += `<button onclick="openDeclineModal('${res.id}', event)" class="px-3 border border-red-200 rounded text-red-700 bg-red-50 hover:bg-red-100 py-1 font-bold text-xs" title="Decline"><i class="fa-solid fa-xmark"></i></button>`;
                 } else if(res.status === 'confirmed') {
                     actionsStr += `<button onclick="printReservation('${res.id}', event)" class="px-3 border border-gray-200 rounded text-slate-600 hover:text-blue-700 hover:bg-blue-50 py-1 font-bold text-xs" title="Print Form"><i class="fa-solid fa-print"></i></button>`;
@@ -1958,7 +2373,7 @@ window.printReservation = function(id, event) {
                         <div class="text-xs text-slate-500">${res.event?.startTime || ''} - ${res.event?.endTime || ''}</div>
                     </td>
                     <td class="px-4 py-3 text-center align-top">
-                        <span class="${badge} text-[10px] px-2 py-1 rounded uppercase font-bold tracking-wider inline-block border">${isBlocked ? 'BLOCKED' : res.status}</span>
+                        <span class="${badge} text-[10px] px-2 py-1 rounded uppercase font-bold tracking-wider inline-block border">${isBlocked ? 'BLOCKED' : (res.status === 'awaiting_payment' ? 'AWAITING PAYMENT' : res.status)}</span>
                         ${reasonHtml}
                     </td>
                     <td class="px-4 py-3 font-bold text-blue-700 text-right whitespace-nowrap align-top">
@@ -2164,7 +2579,7 @@ window.printReservation = function(id, event) {
                 if (status === 'all') {
                     return r.status !== 'archived' && r.status !== 'rejected';
                 } else if (status === 'pending') {
-                    return r.status === 'pending';
+                    return r.status === 'pending' || r.status === 'awaiting_payment';
                 } else if (status === 'declined') {
                     return r.status === 'declined' || r.status === 'cancelled';
                 }
@@ -2401,7 +2816,7 @@ window.printReservation = function(id, event) {
                 return true;
             });
 
-            const pending = filteredReservations.filter(r => r.status === 'pending').length;
+            const pending = filteredReservations.filter(r => r.status === 'pending' || r.status === 'awaiting_payment').length;
             const declined = filteredReservations.filter(r => r.status === 'declined' || r.status === 'cancelled').length;
 
             document.getElementById('stat-total-bookings').innerText = filteredReservations.length;
@@ -2786,27 +3201,27 @@ function renderInventory() {
         if (cat === 'PACKAGE') catColor = 'text-purple-600 bg-purple-50';
         if (cat === 'SERVICE') catColor = 'text-orange-600 bg-orange-50';
 
-        let venueBadge = venue === 'All Venues' ? '' : `<span class="text-[9px] font-bold px-2 py-0.5 rounded-full text-blue-700 bg-blue-50 border border-blue-100 uppercase tracking-widest block mt-1 w-max">${venue}</span>`;
+        let venueBadge = venue === 'All Venues' ? '' : `<span class="text-[9px] font-bold px-1.5 py-0.2 rounded-full text-blue-700 bg-blue-50 border border-blue-100 uppercase tracking-wider block mt-0.5 w-max truncate max-w-[140px]">${venue}</span>`;
 
         tbody.innerHTML += `
             <tr class="hover:bg-gray-50 border-b border-gray-50">
-                <td class="px-4 py-3 font-medium">
-                    <div class="flex items-center">
-                        <span class="text-[10px] font-bold px-2 py-1 rounded ${catColor} mr-2 w-16 inline-block text-center flex-shrink-0">${cat}</span>
-                        <div>
-                            <span>${item.name}</span>
+                <td class="px-3 py-2.5 font-medium max-w-[200px] sm:max-w-[240px]">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${catColor} text-center flex-shrink-0">${cat}</span>
+                        <div class="min-w-0 flex-1">
+                            <span class="text-xs sm:text-sm font-semibold text-slate-800 block truncate" title="${item.name}">${item.name}</span>
                             ${venueBadge}
                         </div>
                     </div>
                 </td>
-                <td class="px-4 py-3 text-gray-500">${item.unit}</td>
-                <td class="px-4 py-3">₱${item.price}</td>
-                <td class="px-4 py-3 text-center font-bold">${item.qty}</td>
-                <td class="px-4 py-3 text-center text-orange-600">${used > 0 ? used : '-'}</td>
-                <td class="px-4 py-3 text-center">${item.is_standalone_reservable ? '<i class="fa-solid fa-check text-green-600"></i>' : '<i class="fa-solid fa-xmark text-red-400"></i>'}</td>
-                <td class="px-4 py-3 text-center font-bold ${avail<=0?'text-red-600':'text-green-600'}">${avail}</td>
-                <td class="px-4 py-3 text-right">
-                    <button onclick="openInventoryModal('${item.id}')" class="text-blue-600 hover:underline text-xs mr-3 font-medium">Edit</button>
+                <td class="px-2 py-2.5 text-gray-500 whitespace-nowrap text-xs sm:text-sm">${item.unit}</td>
+                <td class="px-2 py-2.5 whitespace-nowrap text-xs sm:text-sm">₱${item.price}</td>
+                <td class="px-2 py-2.5 text-center font-bold whitespace-nowrap text-xs sm:text-sm">${item.qty}</td>
+                <td class="px-2 py-2.5 text-center text-orange-600 whitespace-nowrap text-xs sm:text-sm">${used > 0 ? used : '-'}</td>
+                <td class="px-2 py-2.5 text-center whitespace-nowrap">${item.is_standalone_reservable ? '<i class="fa-solid fa-check text-green-600"></i>' : '<i class="fa-solid fa-xmark text-red-400"></i>'}</td>
+                <td class="px-2 py-2.5 text-center font-bold whitespace-nowrap text-xs sm:text-sm ${avail<=0?'text-red-600':'text-green-600'}">${avail}</td>
+                <td class="px-3 py-2.5 text-right whitespace-nowrap">
+                    <button onclick="openInventoryModal('${item.id}')" class="text-blue-600 hover:underline text-xs mr-2 font-medium">Edit</button>
                     <button onclick="deleteInventoryItem('${item.id}')" class="text-amber-600 hover:underline text-xs font-medium"><i class="fa-solid fa-box-archive"></i> Archive</button>
                 </td>
             </tr>

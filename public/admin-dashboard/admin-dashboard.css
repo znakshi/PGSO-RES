@@ -50,6 +50,7 @@
         }
 
         .cal-dot-pending { background-color: #eab308; } 
+        .cal-dot-awaiting { background-color: #6366f1; } 
         .cal-dot-confirmed { background-color: #22c55e; } 
         .cal-dot-cancelled { background-color: #ef4444; } 
         .cal-dot-blocked { background-color: #64748b; } 
