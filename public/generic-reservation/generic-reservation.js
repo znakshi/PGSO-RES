@@ -290,16 +290,18 @@ document.addEventListener('DOMContentLoaded', async function () {
                 row.dataset.name = item.name;
 
                 row.innerHTML = `
-                    <td class="p-3"><input type="checkbox" class="equipment-checkbox w-4 h-4 rounded border-gray-300"></td>
-                    <td class="py-3 font-semibold text-slate-900 equipment-name">${item.name}</td>
-                    <td class="py-3 text-slate-500">${item.unit}</td>
-                    <td class="py-3 font-bold">₱${item.price}</td>
-                    <td class="py-3 text-center text-slate-500 font-bold">${item.qty || 0}</td>
-                    <td class="py-3 text-center">
-                        <div class="flex items-center justify-center space-x-2">
-                            <button type="button" class="qty-btn qty-minus w-6 h-6 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center font-bold" disabled><i class="fa-solid fa-minus text-[10px]"></i></button>
-                            <input type="number" min="0" max="${item.qty || 0}" value="0" class="equipment-quantity w-10 text-center border border-gray-200 rounded p-0.5 hide-arrows" disabled>
-                            <button type="button" class="qty-btn qty-plus w-6 h-6 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center font-bold" disabled><i class="fa-solid fa-plus text-[10px]"></i></button>
+                    <td class="py-2.5 px-2 text-center w-9 sm:w-10">
+                        <input type="checkbox" class="equipment-checkbox w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                    </td>
+                    <td class="py-2.5 px-2 font-semibold text-slate-800 equipment-name leading-snug text-xs">${item.name}</td>
+                    <td class="py-2.5 px-2 text-slate-500 whitespace-nowrap text-[11px]">${item.unit}</td>
+                    <td class="py-2.5 px-2 font-bold text-slate-800 whitespace-nowrap text-xs">₱${item.price}</td>
+                    <td class="py-2.5 px-2 text-center text-slate-500 font-bold whitespace-nowrap text-xs">${item.qty || 0}</td>
+                    <td class="py-2.5 px-2 text-center whitespace-nowrap w-24 sm:w-28">
+                        <div class="flex items-center justify-center space-x-1 sm:space-x-1.5">
+                            <button type="button" class="qty-btn qty-minus w-5 h-5 sm:w-6 sm:h-6 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center font-bold" disabled><i class="fa-solid fa-minus text-[9px] sm:text-[10px]"></i></button>
+                            <input type="number" min="0" max="${item.qty || 0}" value="0" class="equipment-quantity w-8 sm:w-9 text-center border border-gray-200 rounded p-0.5 hide-arrows text-xs font-bold" disabled>
+                            <button type="button" class="qty-btn qty-plus w-5 h-5 sm:w-6 sm:h-6 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center font-bold" disabled><i class="fa-solid fa-plus text-[9px] sm:text-[10px]"></i></button>
                         </div>
                     </td>
                 `;
