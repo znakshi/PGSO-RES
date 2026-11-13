@@ -165,10 +165,10 @@
                             <div class="absolute -right-6 -top-6 w-24 h-24 bg-amber-50 rounded-full opacity-60 group-hover:scale-125 transition-transform duration-500"></div>
                             <div class="flex items-center justify-between mb-3 relative z-10">
                                 <span class="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-                                    <i class="fa-solid fa-exclamation text-amber-500 font-black text-[10px]"></i> Urgent Action
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span> Urgent Action
                                 </span>
-                                <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm font-black">
-                                    <i class="fa-solid fa-exclamation font-black text-base"></i>
+                                <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm">
+                                    <i class="fa-solid fa-clock-rotate-left"></i>
                                 </div>
                             </div>
                             <p class="text-3xl font-black text-slate-800 relative z-10" id="dash-stat-pending">0</p>
@@ -759,19 +759,19 @@
                                     class="fa-solid fa-plus mr-2"></i> Register Item</button>
                         </div>
                         <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left text-slate-600">
+                            <table class="w-full text-sm text-left text-slate-600 whitespace-nowrap">
                                 <thead
-                                    class="text-[11px] text-slate-400 uppercase tracking-wider bg-slate-50 border-y border-slate-200">
+                                    class="text-[11px] text-slate-400 uppercase tracking-widest bg-slate-50 border-y border-slate-200">
                                     <tr>
-                                        <th class="py-3 px-3 font-bold max-w-[200px] sm:max-w-[240px]">Item Identifier</th>
-                                        <th class="py-3 px-2 font-bold whitespace-nowrap">Base Unit</th>
-                                        <th class="py-3 px-2 font-bold whitespace-nowrap">Price</th>
-                                        <th class="py-3 px-2 text-center font-bold whitespace-nowrap">Total Stock</th>
-                                        <th class="py-3 px-2 text-center font-bold whitespace-nowrap">Booked Today</th>
-                                        <th class="py-3 px-2 text-center font-bold whitespace-nowrap">Standalone</th>
-                                        <th class="py-3 px-2 text-center font-bold text-green-700 whitespace-nowrap"><i
+                                        <th class="py-4 px-5 font-bold">Item Identifier</th>
+                                        <th class="py-4 px-5 font-bold">Base Unit</th>
+                                        <th class="py-4 px-5 font-bold">Price</th>
+                                        <th class="py-4 px-5 text-center font-bold">Total Stock</th>
+                                        <th class="py-4 px-5 text-center font-bold">Booked Today</th>
+                                        <th class="py-4 px-5 text-center font-bold">Standalone</th>
+                                        <th class="py-4 px-5 text-center font-bold text-green-700"><i
                                                 class="fa-solid fa-check-circle mr-1"></i> Available</th>
-                                        <th class="py-3 px-3 text-right font-bold w-20 whitespace-nowrap">Actions</th>
+                                        <th class="py-4 px-5 text-right font-bold w-24">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 font-medium" id="inventory-table-body"></tbody>
@@ -849,9 +849,9 @@
             </main>
 
             <div id="reservationModal"
-                class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-3 sm:p-4 py-12 sm:py-16 overflow-y-auto transition-opacity duration-300">
+                class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-2 sm:p-4 transition-opacity duration-300">
                 <div
-                    class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl relative flex flex-col max-h-[85vh] sm:max-h-[90vh] my-auto border-t-8 border-blue-700 overflow-visible">
+                    class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl relative flex flex-col max-h-[90vh] mt-6 sm:mt-8 border-t-8 border-blue-700">
                     <!-- Overlapping Icon -->
                     <div
                         class="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-md border-4 border-white z-10">
@@ -982,9 +982,9 @@
 
             <!-- Add Reservation Modal -->
             <div id="addReservationModal"
-                class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-3 sm:p-4 py-12 sm:py-16 overflow-y-auto transition-opacity duration-300">
+                class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-2 sm:p-4 transition-opacity duration-300">
                 <div
-                    class="bg-white rounded-2xl shadow-xl w-full max-w-3xl relative flex flex-col max-h-[85vh] sm:max-h-[90vh] my-auto border-t-8 border-blue-700 overflow-visible">
+                    class="bg-white rounded-2xl shadow-xl w-full max-w-3xl relative flex flex-col max-h-[90vh] mt-6 sm:mt-8 border-t-8 border-blue-700">
                     <div
                         class="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-md border-4 border-white z-10">
                         <div class="w-14 h-14 bg-blue-700 rounded-full flex items-center justify-center">
@@ -1123,9 +1123,9 @@
 
             <!-- Inventory Modal Redesign -->
             <div id="inventoryModal"
-                class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-3 sm:p-4 py-12 sm:py-16 overflow-y-auto transition-opacity duration-300">
+                class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-2 sm:p-4 transition-opacity duration-300">
                 <div
-                    class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative flex flex-col max-h-[85vh] sm:max-h-[90vh] my-auto border-t-8 border-[#8b5cf6] overflow-visible">
+                    class="bg-white rounded-2xl shadow-xl w-full max-w-md relative flex flex-col mt-6 sm:mt-8 border-t-8 border-[#8b5cf6]">
                     <!-- Overlapping Icon -->
                     <div
                         class="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-md border-4 border-white z-10">
@@ -1134,23 +1134,24 @@
                         </div>
                     </div>
 
-                    <div class="p-4 sm:p-6 pt-10 sm:pt-12 text-center border-b border-gray-100 relative flex-shrink-0 bg-white rounded-t-2xl">
-                        <h3 class="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight" id="inv-modal-title">Add Equipment</h3>
+                    <div class="p-5 sm:p-8 pt-12 sm:pt-14 text-center border-b border-gray-100 relative">
+                        <h3 class="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight" id="inv-modal-title">Add Equipment
+                        </h3>
                         <p class="text-xs sm:text-sm text-slate-500 mt-1">Manage physical inventory bounds</p>
                         <button type="button" onclick="closeModal('inventoryModal')"
-                            class="absolute top-4 right-4 w-9 h-9 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition flex items-center justify-center"><i
-                                class="fa-solid fa-xmark text-lg"></i></button>
+                            class="absolute top-4 right-4 w-10 h-10 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition flex items-center justify-center"><i
+                                class="fa-solid fa-xmark text-xl"></i></button>
                     </div>
 
-                    <div class="p-4 sm:p-6 overflow-y-auto flex-1 w-full">
-                        <form id="inventory-form" onsubmit="saveInventoryItem(event)" class="space-y-3.5 sm:space-y-4">
+                    <div class="p-5 sm:p-8">
+                        <form id="inventory-form" onsubmit="saveInventoryItem(event)">
                             <input type="hidden" id="inv-id">
 
-                            <div>
+                            <div class="mb-5">
                                 <label
-                                    class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Category</label>
+                                    class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Category</label>
                                 <select id="inv-category"
-                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 sm:p-3 text-sm font-medium focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition">
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-medium focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition">
                                     <option value="equipment">Equipment (Hardware)</option>
                                     <option value="service" class="font-bold text-purple-700">Additional Service
                                     </option>
@@ -1159,12 +1160,12 @@
                                 </select>
                             </div>
 
-                            <div>
+                            <div class="mb-5">
                                 <label
-                                    class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Target
+                                    class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Target
                                     Venue</label>
                                 <select id="inv-venue"
-                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 sm:p-3 text-sm font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
                                     <option value="All Venues" class="font-bold text-blue-700">All Venues</option>
                                     <option value="Provincial Gymnasium">Provincial Gymnasium</option>
                                     <option value="Gov. Ben Palispis Auditorium">Gov. Ben Palispis Auditorium</option>
@@ -1172,55 +1173,53 @@
                                 </select>
                             </div>
 
-                            <div>
+                            <div class="mb-5">
                                 <label
-                                    class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Item
+                                    class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Item
                                     Name</label>
                                 <input type="text" id="inv-name"
-                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 sm:p-3 text-sm font-medium focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition"
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-medium focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition"
                                     required placeholder="e.g. Projector Component">
                             </div>
-                            <div>
+                            <div class="mb-5">
                                 <label
-                                    class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Unit
+                                    class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Unit
                                     Metric</label>
                                 <input type="text" id="inv-unit"
-                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 sm:p-3 text-sm font-medium focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition"
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-medium focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition"
                                     required placeholder="e.g. per day, per set">
                             </div>
-                            <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
-                                <input type="checkbox" id="inv-standalone" class="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500 cursor-pointer">
-                                <label for="inv-standalone" class="text-xs sm:text-sm font-bold text-slate-700 cursor-pointer select-none">Available for Standalone Reservation</label>
+                            <div class="mb-5 flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl p-4 mt-2">
+                                <input type="checkbox" id="inv-standalone" class="w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500">
+                                <label for="inv-standalone" class="text-sm font-bold text-slate-700">Available for Standalone Reservation</label>
                             </div>
-                            <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                            <div class="grid grid-cols-2 gap-4 sm:gap-5 mb-8">
                                 <div>
                                     <label
-                                        class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Price
+                                        class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Price
                                         Base</label>
                                     <div class="relative">
                                         <span
-                                            class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold text-sm">₱</span>
+                                            class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">₱</span>
                                         <input type="number" id="inv-price" step="any"
-                                            class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 sm:py-3 pl-8 pr-3 text-sm font-bold text-slate-700 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition"
+                                            class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-8 pr-3 text-sm font-bold text-slate-700 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition"
                                             required>
                                     </div>
                                 </div>
                                 <div>
                                     <label
-                                        class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total
+                                        class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Total
                                         Quantity</label>
                                     <input type="number" id="inv-qty" step="any"
-                                        class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 sm:p-3 text-sm font-bold text-slate-700 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition text-center"
+                                        class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition text-center"
                                         required>
                                 </div>
                             </div>
 
-                            <div class="pt-2">
-                                <button type="submit"
-                                    class="w-full bg-[#8b5cf6] hover:bg-purple-600 text-white font-bold py-3 rounded-xl transition shadow-md uppercase tracking-wider text-xs sm:text-sm flex items-center justify-center gap-2">
-                                    <i class="fa-solid fa-cloud-arrow-up"></i> Push to Database
-                                </button>
-                            </div>
+                            <button type="submit"
+                                class="w-full bg-[#8b5cf6] hover:bg-purple-600 text-white font-bold py-3.5 rounded-xl transition shadow-md uppercase tracking-wider text-sm flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Push to Database
+                            </button>
                         </form>
                     </div>
                 </div>

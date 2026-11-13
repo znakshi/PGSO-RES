@@ -471,7 +471,7 @@ console.log('[PGSO] admin-dashboard.js initialized, supabase client ready:', !!s
 
                         const leftIcon = isAwaiting ?
                             `<div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200/70 text-indigo-600 flex items-center justify-center text-base font-bold flex-shrink-0 mt-0.5"><i class="fa-solid fa-file-invoice-dollar"></i></div>` :
-                            `<div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/70 text-amber-600 flex items-center justify-center text-base font-black flex-shrink-0 mt-0.5"><i class="fa-solid fa-exclamation font-black"></i></div>`;
+                            `<div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/70 text-amber-600 flex items-center justify-center text-base font-bold flex-shrink-0 mt-0.5"><i class="fa-solid fa-clock-rotate-left"></i></div>`;
 
                         let deadlineNotice = '';
                         if (isAwaiting) {
@@ -3201,27 +3201,27 @@ function renderInventory() {
         if (cat === 'PACKAGE') catColor = 'text-purple-600 bg-purple-50';
         if (cat === 'SERVICE') catColor = 'text-orange-600 bg-orange-50';
 
-        let venueBadge = venue === 'All Venues' ? '' : `<span class="text-[9px] font-bold px-1.5 py-0.2 rounded-full text-blue-700 bg-blue-50 border border-blue-100 uppercase tracking-wider block mt-0.5 w-max truncate max-w-[140px]">${venue}</span>`;
+        let venueBadge = venue === 'All Venues' ? '' : `<span class="text-[9px] font-bold px-2 py-0.5 rounded-full text-blue-700 bg-blue-50 border border-blue-100 uppercase tracking-widest block mt-1 w-max">${venue}</span>`;
 
         tbody.innerHTML += `
             <tr class="hover:bg-gray-50 border-b border-gray-50">
-                <td class="px-3 py-2.5 font-medium max-w-[200px] sm:max-w-[240px]">
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${catColor} text-center flex-shrink-0">${cat}</span>
-                        <div class="min-w-0 flex-1">
-                            <span class="text-xs sm:text-sm font-semibold text-slate-800 block truncate" title="${item.name}">${item.name}</span>
+                <td class="px-4 py-3 font-medium">
+                    <div class="flex items-center">
+                        <span class="text-[10px] font-bold px-2 py-1 rounded ${catColor} mr-2 w-16 inline-block text-center flex-shrink-0">${cat}</span>
+                        <div>
+                            <span>${item.name}</span>
                             ${venueBadge}
                         </div>
                     </div>
                 </td>
-                <td class="px-2 py-2.5 text-gray-500 whitespace-nowrap text-xs sm:text-sm">${item.unit}</td>
-                <td class="px-2 py-2.5 whitespace-nowrap text-xs sm:text-sm">₱${item.price}</td>
-                <td class="px-2 py-2.5 text-center font-bold whitespace-nowrap text-xs sm:text-sm">${item.qty}</td>
-                <td class="px-2 py-2.5 text-center text-orange-600 whitespace-nowrap text-xs sm:text-sm">${used > 0 ? used : '-'}</td>
-                <td class="px-2 py-2.5 text-center whitespace-nowrap">${item.is_standalone_reservable ? '<i class="fa-solid fa-check text-green-600"></i>' : '<i class="fa-solid fa-xmark text-red-400"></i>'}</td>
-                <td class="px-2 py-2.5 text-center font-bold whitespace-nowrap text-xs sm:text-sm ${avail<=0?'text-red-600':'text-green-600'}">${avail}</td>
-                <td class="px-3 py-2.5 text-right whitespace-nowrap">
-                    <button onclick="openInventoryModal('${item.id}')" class="text-blue-600 hover:underline text-xs mr-2 font-medium">Edit</button>
+                <td class="px-4 py-3 text-gray-500">${item.unit}</td>
+                <td class="px-4 py-3">₱${item.price}</td>
+                <td class="px-4 py-3 text-center font-bold">${item.qty}</td>
+                <td class="px-4 py-3 text-center text-orange-600">${used > 0 ? used : '-'}</td>
+                <td class="px-4 py-3 text-center">${item.is_standalone_reservable ? '<i class="fa-solid fa-check text-green-600"></i>' : '<i class="fa-solid fa-xmark text-red-400"></i>'}</td>
+                <td class="px-4 py-3 text-center font-bold ${avail<=0?'text-red-600':'text-green-600'}">${avail}</td>
+                <td class="px-4 py-3 text-right">
+                    <button onclick="openInventoryModal('${item.id}')" class="text-blue-600 hover:underline text-xs mr-3 font-medium">Edit</button>
                     <button onclick="deleteInventoryItem('${item.id}')" class="text-amber-600 hover:underline text-xs font-medium"><i class="fa-solid fa-box-archive"></i> Archive</button>
                 </td>
             </tr>
